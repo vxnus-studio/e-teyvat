@@ -1,0 +1,1 @@
+ALTER TABLE "entities" ADD COLUMN "custom_image_url" text;

@@ -1,0 +1,31 @@
+name: Sync Genshin knowledge
+
+on:
+  schedule:
+    - cron: "17 3 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: genshin-knowledge-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GENSHIN_API_BASE_URL: https://genshin-db-api.vercel.app/api/v5
+      GENSHIN_SYNC_CONCURRENCY: "3"
+      GENSHIN_SYNC_FOLDERS: characters,constellations,talents,weapons,materials,weaponmaterialtypes,talentmaterialtypes,artifacts,domains,enemies,crafts,foods,geographies,elements
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run db:migrate
+      - run: bun run sync:genshin
+
