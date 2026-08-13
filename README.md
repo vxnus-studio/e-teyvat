@@ -1,5 +1,7 @@
 # E-Teyvat
 
+**Website:** [https://eteyvat.vxnus.xyz](https://eteyvat.vxnus.xyz)
+
 E-Teyvat is an open structured knowledge base for **Genshin Impact**, designed for both humans and AI systems.
 
 Rather than acting as another wiki, E-Teyvat exposes canonical entities, relationships, and searchable knowledge through public APIs. It can be used for AI retrieval, applications, websites, bots, and research that require consistent Genshin data.

@@ -77,7 +77,7 @@ export default function AdminDashboard() {
       if (!updateRes.ok) throw new Error("Failed to update database");
 
       // 3. Update local state
-      const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.eteyvat.krzgn.xyz";
+      const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.eteyvat.vxnus.xyz";
       const fullUrl = `${cdnUrl}/${data.url}`;
       setEntities(prev => prev.map(ent => 
         ent.id === uploadingId ? { ...ent, image: fullUrl } : ent

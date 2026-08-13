@@ -56,10 +56,10 @@ export function Topbar() {
   return (
     <header className="topbar">
       <Link className="topbar-logo" href="/" aria-label="E-Teyvat home"><BrandMark /></Link>
-      <Link className="topbar-brand" href="/">
-        <strong>E-Teyvat</strong>
-        <span>Genshin Database</span>
-      </Link>
+      <div className="topbar-brand">
+        <Link href="/"><strong>E-Teyvat</strong></Link>
+        <span>by <a href="https://vxnus.xyz" target="_blank" rel="noopener noreferrer">VXNUS</a></span>
+      </div>
       <KnowledgeStatus />
     </header>
   );
