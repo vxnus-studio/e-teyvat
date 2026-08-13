@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#66d9a7" />
+      <stop offset="100%" stop-color="#28765a" />
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(32, 32)">
+    <!-- Base rotated shape -->
+    <rect x="-15.5" y="-15.5" width="31" height="31" rx="8" fill="url(#bg)" transform="rotate(45)" />
+    
+    <!-- Inner border rotated 45deg -->
+    <rect x="-10.5" y="-10.5" width="21" height="21" rx="5" fill="none" stroke="rgba(4,31,22,0.4)" stroke-width="1" transform="rotate(45)" />
+    
+    <!-- The cross is rotated -45 relative to the container, so it ends up upright (0 deg) -->
+    <rect x="-1.5" y="-6" width="3" height="12" fill="#d9f8e9" />
+    <rect x="-6" y="-1.5" width="12" height="3" fill="#d9f8e9" />
+  </g>
+</svg>
