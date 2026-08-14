@@ -11,6 +11,8 @@ export const metadata = {
   description: "Chronological timeline of Genshin Impact banner phases.",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function BannerRotationPage() {
   const db = getDatabase();
   const phases = await db.select().from(bannerPhases).orderBy(desc(bannerPhases.sequenceIndex)).limit(20);

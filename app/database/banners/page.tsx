@@ -12,11 +12,12 @@ export const metadata = {
   description: "Live Genshin Impact banner rotation and rerun intelligence.",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function BannersPage() {
   const db = getDatabase();
   const [currentPhase, stats] = await Promise.all([
     db.query.bannerPhases.findFirst({
-      where: or(eq(bannerPhases.status, "active"), eq(bannerPhases.status, "upcoming")),
       orderBy: (phases, { desc: orderDesc }) => [orderDesc(phases.sequenceIndex)],
     }),
     db.select({ currentWait: bannerCharacterStatistics.currentWait })

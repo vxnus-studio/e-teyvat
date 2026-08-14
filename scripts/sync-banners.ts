@@ -83,6 +83,10 @@ async function main() {
   });
 
   console.log(`Upserting ${phases.length} phases...`);
+  
+  // Prevent unique constraint conflicts when sequence indices shift
+  await database.execute(sql`UPDATE banner_phases SET sequence_index = -id`);
+
   // 1. Upsert Phases
   for (const phase of phases) {
     await database.insert(bannerPhases)
@@ -108,7 +112,10 @@ async function main() {
         });
     }
 
-    // Load created phases to get phase IDs for foreign keys
+  // Remove phases that are no longer in the upstream source
+  await database.delete(bannerPhases).where(sql`sequence_index < 0`);
+
+  // Load created phases to get phase IDs for foreign keys
   const dbPhases = await database.select({ id: bannerPhases.id, phaseKey: bannerPhases.phaseKey }).from(bannerPhases);
   const phaseIdMap = new Map(dbPhases.map(p => [p.phaseKey, p.id]));
 
