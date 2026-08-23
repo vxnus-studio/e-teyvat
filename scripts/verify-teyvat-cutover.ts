@@ -42,7 +42,8 @@ try {
     "SELECT (SELECT count(*)::text FROM e_entities) AS entities, (SELECT count(*)::text FROM e_aliases) AS aliases, (SELECT count(*)::text FROM e_relations) AS relations, (SELECT count(*)::text FROM e_documents) AS documents",
   );
   const counts = Object.fromEntries(Object.entries(countsResult.rows[0] ?? {}).map(([key, value]) => [key, Number(value)])) as SnapshotCounts;
-  if (JSON.stringify(counts) !== JSON.stringify(active.counts)) throw new Error(`Active snapshot counts do not match public tables: ${JSON.stringify({ active: active.counts, public: counts })}`);
+  const countKeys: (keyof SnapshotCounts)[] = ["entities", "aliases", "relations", "documents"];
+  if (countKeys.some((key) => counts[key] !== active.counts[key])) throw new Error(`Active snapshot counts do not match public tables: ${JSON.stringify({ active: active.counts, public: counts })}`);
 
   const integrity = await target.query<{ orphan_aliases: string; orphan_subjects: string; orphan_objects: string; orphan_documents: string }>(
     "SELECT (SELECT count(*)::text FROM e_aliases a LEFT JOIN e_entities e ON e.id = a.entity_id WHERE e.id IS NULL) AS orphan_aliases, (SELECT count(*)::text FROM e_relations r LEFT JOIN e_entities e ON e.id = r.subject_id WHERE e.id IS NULL) AS orphan_subjects, (SELECT count(*)::text FROM e_relations r LEFT JOIN e_entities e ON e.id = r.object_id WHERE e.id IS NULL) AS orphan_objects, (SELECT count(*)::text FROM e_documents d LEFT JOIN e_entities e ON e.id = d.entity_id WHERE e.id IS NULL) AS orphan_documents",

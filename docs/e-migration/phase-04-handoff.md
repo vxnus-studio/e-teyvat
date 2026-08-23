@@ -31,6 +31,7 @@ Current evidence: the configured E and Drizzle Neon endpoints are distinct, but 
 ## Acceptance gates
 
 - [ ] Read-only cutover gate passes against the intended production-like E target.
+- [x] Read-only cutover gate passes against a disposable lifecycle-managed PostgreSQL target (full 8,696 / 8,468 / 14,244 / 11,610 snapshot; zero orphan records).
 - [x] E and Drizzle target separation is enforced by fingerprint checks in existing parity/finalizer harnesses.
 - [x] Snapshot promotion and rollback pass against a disposable PostgreSQL target.
 - [x] Entity and farming parity pass with `TEYVAT_RUNTIME_BACKEND=e-postgres`.
