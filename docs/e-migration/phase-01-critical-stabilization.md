@@ -1,6 +1,6 @@
 # Phase 1 — Critical Stabilization
 
-Status: complete — upstream adapter release follow-up remains
+Status: complete — upstream adapter release follow-up transferred to Phase 3
 
 Owner: E platform + E-Teyvat integration
 
@@ -75,7 +75,7 @@ The harness must not report production readiness while ingestion remains indepen
 
 ## Acceptance criteria
 
-- [x] The broken upstream alias query is explicitly isolated behind `compat.ts`; upstream PostgreSQL regression/release remains a follow-up.
+- [x] The broken upstream alias query is explicitly isolated behind `compat.ts`; the upstream patch and release are now tracked as the first critical workstream in Phase 3.
 - [x] E-Teyvat `npx tsc --noEmit` passes.
 - [x] New E-Teyvat lint errors are resolved.
 - [x] `git diff --check` is clean for Phase 1 changes.
@@ -87,7 +87,7 @@ The harness must not report production readiness while ingestion remains indepen
 - Added `lib/teyvat/e-postgres/compat.ts`, a compatibility query using `EXISTS` for exact alias resolution without the broken `DISTINCT ... ORDER BY` SQL.
 - Updated both E/Postgres verification scripts to use the compatibility query.
 - Added `@types/pg` and `@types/bun`; corrected new ingestion/parity typing errors.
-- Kept the published `@vxnus/e-postgres@0.2.0` dependency unchanged; the upstream adapter is still not fixed.
+- Kept the published `@vxnus/e-postgres@0.2.0` dependency unchanged; the upstream adapter patch and release are Phase 3 prerequisites.
 
 ## Current evidence
 
