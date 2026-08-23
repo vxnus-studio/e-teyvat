@@ -10,7 +10,7 @@ This plan governs the migration from the current Drizzle-backed Teyvat persisten
 |---|---|---|---|
 | 1 | Critical stabilization | Complete — compatibility isolation delivered | E/Postgres defects are fixed or explicitly isolated; the new code typechecks and the verification harness is trustworthy |
 | 2 | Safe snapshot lifecycle | Complete — local PostgreSQL lifecycle verified | Repeatable, atomic, recoverable ingestion is demonstrated |
-| 3 | Upstream E patch, release, and runtime/domain parity | In progress — adapter adopted; runtime parity remains | The fixed E adapter is released and adopted; API and domain behavior match the current Teyvat contract |
+| 3 | Upstream E patch, release, and runtime/domain parity | Complete — opt-in entity/farming parity verified | The fixed E adapter is released and adopted; API and domain behavior match the current Teyvat contract |
 | 4 | Cutover readiness | Planned | Production-like performance, rollback, and operational checks pass |
 
 ## Non-negotiable rules

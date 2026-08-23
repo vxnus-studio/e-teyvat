@@ -1,6 +1,6 @@
 # Phase 3 Handoff — E Patch, Release, and Runtime/Domain Parity
 
-Status: in progress — adapter patch and adoption complete; runtime cutover remains deferred
+Status: complete — adapter adoption and opt-in entity/farming parity verified; runtime cutover remains deferred to Phase 4
 
 Objective: replace the temporary E-Teyvat compatibility layer with a tested, released upstream E/Postgres fix, then prove runtime and domain behavior against the current Teyvat contract.
 
@@ -71,7 +71,14 @@ Evidence was gathered from the route imports and `lib/teyvat/persistence/*`. No 
 
 The explicit E-backed parity run passes all 10 existing cases against the isolated target, including the Teyvat JavaScript `localeCompare` ordering contract. This ordering normalization is required because PostgreSQL's binary `COLLATE "C"` ordering differs for non-ASCII names.
 
-The E-backed farming reader is also implemented behind the same flag. Its full material-ID parity cases pass against the Drizzle reader in the finalizer. Not yet cut over by default: knowledge/banner routes remain application-specific Drizzle surfaces.
+The E-backed farming reader is also implemented behind the same flag. Its full material-ID parity cases pass against the Drizzle reader in the finalizer.
+
+### Ownership decision for remaining routes
+
+- Entity lookup, entity search, entity detail, alias resolution, and farming plans are covered by the E-backed runtime flag and verified against the Drizzle contract.
+- Knowledge search remains on Drizzle because its contract depends on PostgreSQL full-text functions (`to_tsvector`, `websearch_to_tsquery`, and `ts_rank`) over `knowledgeDocuments`, while E currently exposes lexical entity search and does not provide document full-text search.
+- Banner history, rerun analysis, banner rotation, and related pages remain on Drizzle because they depend on banner-specific tables, statistics, and application calculations. Their E graph relations are useful source data but are not a replacement for those application projections.
+- The mixed ownership is intentional. Phase 4 may perform a controlled entity/farming cutover while retaining these Drizzle-backed surfaces; it must not claim the entire application has migrated to E.
 
 ## Critical stop conditions
 
@@ -89,8 +96,8 @@ Stop before runtime cutover if:
 - [x] `@vxnus/e-postgres@0.2.1` published.
 - [x] E-Teyvat depends on and verifies the new release.
 - [x] Temporary compatibility query removed after verification.
-- [ ] Runtime/domain parity tests pass for the agreed contract.
-- [ ] Snapshot readers select one complete active revision.
+- [x] Runtime/domain parity tests pass for the agreed entity/farming contract.
+- [x] Snapshot readers select one complete active revision.
 - [ ] Cutover and rollback remain deferred to Phase 4 until production-like checks pass.
 
 ## Required handoff evidence
