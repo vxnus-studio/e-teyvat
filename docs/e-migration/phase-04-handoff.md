@@ -68,6 +68,20 @@ Do not enable the E backend broadly if:
 
 No production cutover is authorized by this document; the unchecked gates are required first.
 
+## Canary approval record
+
+Complete this record before enabling `TEYVAT_RUNTIME_BACKEND=e-postgres` for any deployed traffic:
+
+- Approver / incident owner: ____________________
+- Approved target and deployment: ____________________
+- Scope and traffic limit: ____________________
+- Maintenance window or start/end time (UTC): ____________________
+- Pre-canary gate run timestamp and active revision: ____________________
+- Rollback trigger and decision owner: ____________________
+- Post-canary outcome: ____________________
+
+The approval must explicitly confirm that the Drizzle path remains available, the E target is the separate `TEYVAT_E_DATABASE_URL` target, and rollback has an operator and a tested command.
+
 ## Phase 4 evidence record
 
 The five-sample live benchmark against the earlier isolated Neon E target and Drizzle baseline reported zero errors. E p50 latency was approximately 151 ms for entity lookup, 258 ms for entity search, 362 ms for entity detail, 156 ms for alias resolution, and 497 ms for a farming plan. A three-sample benchmark on the updated snapshot-managed target also reported zero errors, with E p50 latency of approximately 235 ms for lookup, 302 ms for search, 415 ms for detail, 700 ms for alias resolution, and 757 ms for farming. These are directional measurements, not Neon capacity or SLO claims; larger representative traffic testing remains required.
