@@ -40,7 +40,7 @@ Current evidence: the updated E and Drizzle Neon endpoints are distinct. The E t
 - [x] Entity and farming parity pass with `TEYVAT_RUNTIME_BACKEND=e-postgres`.
 - [x] Initial representative latency and error baseline recorded with the E reader on the updated target (3 samples per operation; zero errors).
 - [ ] Full snapshot install is measured against a Neon-like target, including connection count, request count, duration, and storage growth.
-- [ ] Rollback is rehearsed after a successful E-backed read window, with entity and farming responses compared before and after.
+- [x] Rollback is rehearsed after a successful E-backed read, restoring the original revision while the cutover gate remains green.
 - [x] A deployment runbook names the exact revision, adapter version (`@vxnus/e-postgres@0.2.1`), environment variables, health checks, and rollback command.
 - [ ] A controlled canary or maintenance-window cutover is approved.
 
@@ -73,5 +73,7 @@ The five-sample live benchmark against the earlier isolated Neon E target and Dr
 The updated target’s current public E table footprint is approximately 37.9 MB including indexes and Teyvat extension tables. This is a point-in-time storage measurement; growth across revisions and production traffic remains unmeasured.
 
 The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata.
+
+The updated Neon target accepted a full same-data rehearsal revision in approximately 26.5 seconds (control-row creation to activation). During rollback, the E alias read succeeded while the rehearsal revision was active; rollback restored the original revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, with the rehearsal retained for recovery. Public storage was approximately 38.1 MB and the retained retired schema approximately 38.0 MB afterward. The installer does not yet expose per-install SQL request or connection-usage counters, so those measurements remain open.
 
 The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.
