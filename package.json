@@ -18,6 +18,7 @@
     "teyvat:verify-domain": "node --experimental-strip-types scripts/verify-teyvat-domain.ts",
     "teyvat:ingest": "node --experimental-strip-types scripts/ingest-teyvat.ts",
     "teyvat:install-snapshot": "node --experimental-strip-types scripts/install-teyvat-snapshot.ts",
+    "teyvat:bridge-legacy": "node --experimental-strip-types scripts/bridge-e-snapshot-to-legacy.ts",
     "teyvat:rollback-snapshot": "node --experimental-strip-types scripts/rollback-teyvat-snapshot.ts",
     "teyvat:verify-snapshot": "node --experimental-strip-types scripts/verify-teyvat-snapshot.ts",
     "teyvat:cleanup-staging": "node --experimental-strip-types scripts/cleanup-teyvat-staging.ts",

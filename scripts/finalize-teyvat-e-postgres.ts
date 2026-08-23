@@ -10,6 +10,7 @@ import pg from "pg";
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
 const baselineUrl = process.env.DATABASE_URL;
 if (!targetUrl || !baselineUrl) throw new Error("Both database URLs are required.");
+const allowSharedTarget = process.env.TEYVAT_ALLOW_SHARED_TARGET === "1";
 const projection = readArtifact();
 const target = new pg.Pool({ connectionString: targetUrl, max: 2 });
 const baseline = new pg.Pool({ connectionString: baselineUrl, max: 1 });
@@ -27,7 +28,8 @@ const relationKey = (item: { subjectId?: unknown; subject_id?: unknown; predicat
 
 const targetMeta = await databaseMeta(target, new URL(targetUrl).hostname);
 const baselineMeta = await databaseMeta(baseline, new URL(baselineUrl).hostname);
-if (targetMeta.endpoint === baselineMeta.endpoint && JSON.stringify(targetMeta) === JSON.stringify(baselineMeta)) throw new Error("Target matches baseline; refusing final checks.");
+const sharedTarget = targetMeta.endpoint === baselineMeta.endpoint && JSON.stringify(targetMeta) === JSON.stringify(baselineMeta);
+if (sharedTarget && !allowSharedTarget) throw new Error("Target matches baseline; refusing final checks. Set TEYVAT_ALLOW_SHARED_TARGET=1 only after the unified target has been populated and reviewed.");
 
 const counts: Record<string, number> = {};
 for (const table of ["e_entities", "e_aliases", "e_relations", "e_documents", "e_claims", "e_schema_migrations", "teyvat_e_dataset_revisions", "teyvat_e_document_metadata"]) counts[table] = Number((await rows(target, `select count(*)::int as n from ${table}`))[0].n);
@@ -86,7 +88,7 @@ for (const query of farmingCases) {
 }
 if (farming.some((item) => !item.equal)) throw new Error(`Farming parity failure: ${JSON.stringify(farming)}`);
 
-console.log(JSON.stringify({ target: { database: targetMeta.database, schema: targetMeta.schema, separateFromBaseline: true }, counts, integrity, entityChecks, relationParity, documentParity, capabilities: capabilities.capabilities, queryTimings: { lookupMs: queryTimings.lookup.ms, searchMs: queryTimings.search.ms, aliasMs: queryTimings.alias.ms, traversalMs: queryTimings.traversal.ms, documentsMs: queryTimings.documents.ms, searchCount: queryTimings.search.value.search?.entities?.length, traversalPaths: queryTimings.traversal.value.traversal?.paths?.length }, farming }, null, 2));
+console.log(JSON.stringify({ target: { database: targetMeta.database, schema: targetMeta.schema, separateFromBaseline: !sharedTarget, sharedTarget }, counts, integrity, entityChecks, relationParity, documentParity, capabilities: capabilities.capabilities, queryTimings: { lookupMs: queryTimings.lookup.ms, searchMs: queryTimings.search.ms, aliasMs: queryTimings.alias.ms, traversalMs: queryTimings.traversal.ms, documentsMs: queryTimings.documents.ms, searchCount: queryTimings.search.value.search?.entities?.length, traversalPaths: queryTimings.traversal.value.traversal?.paths?.length }, farming }, null, 2));
 await engine.close();
 await eFarming.close();
 await target.end();

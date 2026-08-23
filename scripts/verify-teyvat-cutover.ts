@@ -6,6 +6,7 @@ const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
 const baselineUrl = process.env.DATABASE_URL;
 if (!targetUrl) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
 if (!baselineUrl) throw new Error("DATABASE_URL is required for the baseline check.");
+const allowSharedTarget = process.env.TEYVAT_ALLOW_SHARED_TARGET === "1";
 
 const target = new pg.Pool({ connectionString: targetUrl, max: 1 });
 const baseline = new pg.Pool({ connectionString: baselineUrl, max: 1 });
@@ -27,7 +28,8 @@ function sameDatabase(left: Fingerprint, right: Fingerprint): boolean {
 
 try {
   const [targetMeta, baselineMeta] = await Promise.all([fingerprint(target, new URL(targetUrl).hostname), fingerprint(baseline, new URL(baselineUrl).hostname)]);
-  if (sameDatabase(targetMeta, baselineMeta)) throw new Error("E target matches the Drizzle baseline; refusing cutover verification.");
+  const sharedTarget = sameDatabase(targetMeta, baselineMeta);
+  if (sharedTarget && !allowSharedTarget) throw new Error("E target matches the Drizzle baseline; refusing cutover verification. Set TEYVAT_ALLOW_SHARED_TARGET=1 only after the new shared target has been explicitly populated and reviewed.");
 
   let activeResult: pg.QueryResult<{ revision: string; counts: SnapshotCounts }>;
   try {
@@ -51,7 +53,13 @@ try {
   const integrityValues = Object.fromEntries(Object.entries(integrity.rows[0] ?? {}).map(([key, value]) => [key, Number(value)]));
   if (Object.values(integrityValues).some((value) => value !== 0)) throw new Error(`E target integrity failure: ${JSON.stringify(integrityValues)}`);
 
-  console.log(JSON.stringify({ status: "PASS", separateFromBaseline: true, activeRevision: active.revision, counts, integrity: integrityValues }, null, 2));
+  let legacyCounts: Record<string, number> | undefined;
+  if (sharedTarget) {
+    const legacy = await target.query<Record<string, string>>("SELECT (SELECT count(*)::text FROM entities) AS entities, (SELECT count(*)::text FROM aliases) AS aliases, (SELECT count(*)::text FROM relations) AS relations, (SELECT count(*)::text FROM knowledge_documents) AS knowledge_documents, (SELECT count(*)::text FROM banner_phases) AS banner_phases, (SELECT count(*)::text FROM banner_phase_characters) AS banner_phase_characters, (SELECT count(*)::text FROM banner_character_statistics) AS banner_character_statistics");
+    legacyCounts = Object.fromEntries(Object.entries(legacy.rows[0] ?? {}).map(([key, value]) => [key, Number(value)]));
+    if (!legacyCounts.entities || !legacyCounts.aliases || !legacyCounts.relations || !legacyCounts.knowledge_documents || !legacyCounts.banner_phases || !legacyCounts.banner_phase_characters || !legacyCounts.banner_character_statistics) throw new Error(`Shared target compatibility tables are not populated: ${JSON.stringify(legacyCounts)}`);
+  }
+  console.log(JSON.stringify({ status: "PASS", separateFromBaseline: !sharedTarget, sharedTarget, activeRevision: active.revision, counts, legacyCounts, integrity: integrityValues }, null, 2));
 } finally {
   await target.end();
   await baseline.end();

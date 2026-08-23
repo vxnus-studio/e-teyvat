@@ -1,6 +1,6 @@
 # Phase 4 Handoff — Cutover Readiness
 
-Status: in progress — read-only readiness gate and install measurement instrumentation added
+Status: in progress — new-Neon unified target populated; controlled cutover remains pending
 
 Objective: prove that E-Teyvat can be switched to the E snapshot safely, measured under representative load, and rolled back without losing the legacy Drizzle path.
 
@@ -12,32 +12,32 @@ Phase 4 owns operational readiness and controlled cutover. It does not redesign 
 
 - `TEYVAT_RUNTIME_BACKEND=e-postgres` enables E-native entity and farming reads.
 - Without that flag, the application continues to use Drizzle.
-- `TEYVAT_E_DATABASE_URL` points to the E snapshot target; `DATABASE_URL` remains the legacy baseline.
+- `DATABASE_URL` and `TEYVAT_E_DATABASE_URL` now point to the same new Neon target. That target contains the E snapshot and the compatibility/application projections required by existing routes.
 - Snapshot installation promotes a complete revision into public `e_*` tables and retains the previous revision for rollback.
-- Knowledge search and banner/rerun surfaces intentionally remain on Drizzle.
+- Knowledge search and banner/rerun surfaces remain on Drizzle-compatible tables in the new Neon target; they no longer depend on the old Neon.
 
 ## Read-only gate
 
-Run in an isolated environment:
+Run against the unified new-Neon target after setting `TEYVAT_ALLOW_SHARED_TARGET=1`:
 
 ```text
 npm run teyvat:verify-cutover
 npm run teyvat:benchmark-cutover
 ```
 
-The gate refuses to continue when the E target and Drizzle baseline have the same database fingerprint. It then verifies exactly one active snapshot, matches its recorded counts against public E tables, and checks for orphan aliases, relations, and documents.
+The gate refuses same-target verification by default. In explicit shared-target mode it additionally requires non-empty compatibility entities, aliases, relations, knowledge documents, and banner projections, then verifies exactly one active snapshot, matches its recorded counts against public E tables, and checks for orphan aliases, relations, and documents.
 
 The benchmark runs representative entity lookup/search/detail/alias and farming operations after a warmup, reporting p50/p95/max latency and errors for both E and Drizzle. Set `TEYVAT_BENCHMARK_ITERATIONS` to increase the sample count.
 
 `npm run teyvat:install-snapshot` now reports the install duration, exact SQL request count, distinct checked-out connections observed, peak pool connections observed, and database storage before/after the operation. An already-active revision is detected before staging and therefore produces a no-op measurement; it must not be used as evidence for a full installation.
 
-Current evidence: the updated E and Drizzle Neon endpoints are distinct. The E target is now snapshot-managed with revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, full expected counts, and zero orphan records. The previous proof target was not modified.
+Current evidence: the new Neon target is snapshot-managed with revision `5a805b7aebf8d58951857fd25aad34fcd29f0729253bb3a05fa959`, full E counts, zero E orphan records, 8,696 compatibility entities, 8,468 aliases, 10,476 compatibility relations, 11,610 knowledge documents, 105 banner phases, 527 banner appearances, and 112 banner statistics. The reachable old target was used only as a read-only source check; it contained zero populated application tables and was not deleted.
 
 ## Acceptance gates
 
 - [x] Read-only cutover gate passes against the intended production-like E target.
 - [x] Read-only cutover gate passes against a disposable lifecycle-managed PostgreSQL target (full 8,696 / 8,468 / 14,244 / 11,610 snapshot; zero orphan records).
-- [x] E and Drizzle target separation is enforced by fingerprint checks in existing parity/finalizer harnesses.
+- [x] Shared-target use is explicit and guarded by a fingerprint opt-in plus compatibility-table population checks.
 - [x] Snapshot promotion and rollback pass against a disposable PostgreSQL target.
 - [x] Entity and farming parity pass with `TEYVAT_RUNTIME_BACKEND=e-postgres`.
 - [x] Initial representative latency and error baseline recorded with the E reader on the updated target (3 samples per operation; zero errors).
@@ -60,11 +60,12 @@ Do not enable the E backend broadly if:
 ## Operational runbook draft
 
 1. Build and verify the artifact revision.
-2. Install it with `npm run teyvat:install-snapshot` against the E target.
-3. Run `npm run teyvat:verify-cutover`, `npm run teyvat:finalize-e-postgres`, and `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`.
-4. Confirm the deployed adapter is `@vxnus/e-postgres@0.2.1`, then enable `TEYVAT_RUNTIME_BACKEND=e-postgres` for the canary deployment only.
-5. Monitor entity/farming errors and latency while retaining Drizzle for rollback and all non-E surfaces.
-6. Roll back with `npm run teyvat:rollback-snapshot -- <active-revision>` if any stop condition occurs, then remove the E backend flag.
+2. Install it with `npm run teyvat:install-snapshot` against the new Neon target. For the unified target, set both `DATABASE_URL` and `TEYVAT_E_DATABASE_URL` to that same reviewed URL.
+3. On an empty compatibility schema, run `npm run teyvat:bridge-legacy` once, then `npm run sync:banners` to materialize the application projections on the new Neon.
+4. Run `TEYVAT_ALLOW_SHARED_TARGET=1 npm run teyvat:verify-cutover`, `TEYVAT_ALLOW_SHARED_TARGET=1 npm run teyvat:finalize-e-postgres`, and `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`.
+5. Confirm the deployed adapter is `@vxnus/e-postgres@0.2.1`, set `TEYVAT_ALLOW_SHARED_TARGET=1`, then enable `TEYVAT_RUNTIME_BACKEND=e-postgres` for the canary deployment only.
+6. Monitor entity/farming errors and latency while retaining the compatibility path for rollback and all application-specific surfaces.
+7. Roll back with `npm run teyvat:rollback-snapshot -- <active-revision>` if any stop condition occurs, then remove the E backend flag.
 
 No production cutover is authorized by this document; the unchecked gates are required first.
 
@@ -80,7 +81,7 @@ Complete this record before enabling `TEYVAT_RUNTIME_BACKEND=e-postgres` for any
 - Rollback trigger and decision owner: ____________________
 - Post-canary outcome: ____________________
 
-The approval must explicitly confirm that the Drizzle path remains available, the E target is the separate `TEYVAT_E_DATABASE_URL` target, and rollback has an operator and a tested command.
+The approval must explicitly confirm that the compatibility/Drizzle path remains available on the new Neon, both database URLs identify that reviewed target, and rollback has an operator and a tested command.
 
 ## Phase 4 evidence record
 
@@ -91,6 +92,10 @@ A ten-iteration benchmark on the updated target also passed with zero errors for
 The updated target’s current public E table footprint is approximately 37.9 MB including indexes and Teyvat extension tables. This is a point-in-time storage measurement; growth across revisions and production traffic remains unmeasured.
 
 An isolated local PostgreSQL measurement target loaded the complete revision in 2.64 seconds, using 151 SQL requests, 2 observed connections, and 2 peak connections. Database storage grew from 7,935,679 to 46,118,591 bytes, a growth of 38,182,912 bytes (~36.4 MiB). Reinstalling the already-active revision took 11.8 ms, used 4 SQL requests, and added 0 bytes. The isolated target then passed the cutover gate and E-backed parity (10/10). These figures validate the instrumentation and lifecycle behavior but are not Neon-like capacity evidence.
+
+The new Neon unified target was populated from the active E snapshot into compatibility tables with guarded bridge logic: 8,696 entities, 8,468 aliases, 10,476 deduplicated legacy relations, and 11,610 knowledge documents. Banner synchronization then imported 105 phases, 527 character appearances, and 112 statistics rows, with 527 character matches and no unmatched records. Shared-target cutover verification passed, the E finalizer passed with five entity checks, 51-relation parity, 11-document parity, and seven farming cases, and the old target's application tables were confirmed empty before it was left untouched.
+
+A local runtime sweep using both URLs pointed at the new Neon and `TEYVAT_RUNTIME_BACKEND=e-postgres` returned HTTP 200 for the home page, character index/detail, knowledge page, banner pages, health, entity API, and farming API. This verifies the unified target's current application surface; it is not a deployed canary.
 
 The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata. The measurement instrumentation type-checks and passes focused ESLint; a no-op install measurement was not treated as full-install evidence.
 
