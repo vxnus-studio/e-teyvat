@@ -18,7 +18,7 @@ export interface TeyvatSnapshotInstallOptions {
   failAfter?: "entities" | "aliases" | "relations" | "documents";
 }
 
-const ACTIVE_TABLES = ["e_entities", "e_aliases", "e_relations", "e_claims", "e_documents", "teyvat_e_document_metadata", "teyvat_e_dataset_revisions"] as const;
+const ACTIVE_TABLES = ["e_schema_migrations", "e_entities", "e_aliases", "e_relations", "e_claims", "e_documents", "teyvat_e_document_metadata", "teyvat_e_dataset_revisions"] as const;
 
 function identifier(value: string): string {
   if (!/^[a-z0-9_]+$/.test(value)) throw new Error(`Unsafe SQL identifier: ${value}`);
@@ -76,6 +76,9 @@ async function createStage(pool: Pool, schema: string): Promise<void> {
   const s = identifier(schema);
   await pool.query(`CREATE SCHEMA ${s}`);
   await pool.query(`
+    CREATE TABLE ${s}.e_schema_migrations (
+      version INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, applied_at TIMESTAMPTZ NOT NULL
+    );
     CREATE TABLE ${s}.e_entities (
       id VARCHAR(255) PRIMARY KEY, namespace VARCHAR(255) NOT NULL, kind VARCHAR(255) NOT NULL,
       slug VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, data JSONB NOT NULL DEFAULT '{}',
@@ -120,6 +123,7 @@ async function createStage(pool: Pool, schema: string): Promise<void> {
 
 async function loadStage(pool: Pool, schema: string, projection: TeyvatProjection, manifest: TeyvatArtifactManifest, options: TeyvatSnapshotInstallOptions): Promise<void> {
   const s = identifier(schema);
+  await bulkInsert(pool, `${s}.e_schema_migrations`, ["version", "name", "applied_at"], [[1, "add_provenance_and_identities", new Date()]]);
   await bulkInsert(pool, `${s}.e_entities`, ["id", "namespace", "kind", "slug", "name", "data", "identities", "provenance", "temporal"], projection.entities.map((item) => [item.id, item.namespace, item.kind, item.slug, item.name, JSON.stringify(item.data), item.identities ? JSON.stringify(item.identities) : null, item.provenance ? JSON.stringify(item.provenance) : null, item.temporal ? JSON.stringify(item.temporal) : null]));
   if (options.failAfter === "entities") throw new Error("Injected snapshot failure after entities");
   await bulkInsert(pool, `${s}.e_aliases`, ["id", "entity_id", "alias"], projection.aliases.map((item) => [item.id, item.entityId, item.alias]));

@@ -70,4 +70,8 @@ No production cutover is authorized by this document; the unchecked gates are re
 
 The five-sample live benchmark against the earlier isolated Neon E target and Drizzle baseline reported zero errors. E p50 latency was approximately 151 ms for entity lookup, 258 ms for entity search, 362 ms for entity detail, 156 ms for alias resolution, and 497 ms for a farming plan. A three-sample benchmark on the updated snapshot-managed target also reported zero errors, with E p50 latency of approximately 235 ms for lookup, 302 ms for search, 415 ms for detail, 700 ms for alias resolution, and 757 ms for farming. These are directional measurements, not Neon capacity or SLO claims; larger representative traffic testing remains required.
 
+The updated target’s current public E table footprint is approximately 37.9 MB including indexes and Teyvat extension tables. This is a point-in-time storage measurement; growth across revisions and production traffic remains unmeasured.
+
+The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata.
+
 The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.
