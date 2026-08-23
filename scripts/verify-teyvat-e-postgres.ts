@@ -6,10 +6,9 @@ import { ingestTeyvatProjectionInBatches, openTeyvatEPostgres } from "../lib/tey
 import { ingestTeyvatExtensions, provisionTeyvatExtensions } from "../lib/teyvat/e-postgres/extensions.ts";
 
 const { Pool } = pg;
-const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
-const baselineUrl = process.env.DATABASE_URL;
-if (!targetUrl) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
-if (!baselineUrl) throw new Error("DATABASE_URL is not configured for read-only parity checks.");
+const targetUrl = process.env.DATABASE_URL;
+if (!targetUrl) throw new Error("DATABASE_URL is not configured.");
+const baselineUrl = targetUrl;
 
 const projection = readArtifact();
 const manifest = readArtifactManifest();

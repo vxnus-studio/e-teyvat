@@ -30,13 +30,13 @@ function compareEntity(a: Entity, b: Entity): number {
   return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
 }
 
-/** E-native Teyvat entity reads, enabled explicitly through TEYVAT_RUNTIME_BACKEND. */
+/** E-native Teyvat entity reads backed by the application DATABASE_URL. */
 export class TeyvatEPostgresEntityQueries {
   private readonly engine: PostgresEngine;
   private readonly pool: Pool;
 
-  constructor(connectionString = process.env.TEYVAT_E_DATABASE_URL) {
-    if (!connectionString) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
+  constructor(connectionString = process.env.DATABASE_URL) {
+    if (!connectionString) throw new Error("DATABASE_URL is not configured.");
     this.engine = new PostgresEngine({ connectionString, max: 4 });
     this.pool = (this.engine as unknown as { pool: Pool }).pool;
   }

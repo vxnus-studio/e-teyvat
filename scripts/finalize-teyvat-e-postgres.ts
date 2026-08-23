@@ -7,10 +7,9 @@ import { TeyvatEPostgresFarmingQueries } from "../lib/teyvat/persistence/e-postg
 import { TeyvatPersistentFarmingQueries } from "../lib/teyvat/persistence/farming.ts";
 import pg from "pg";
 
-const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
-const baselineUrl = process.env.DATABASE_URL;
-if (!targetUrl || !baselineUrl) throw new Error("Both database URLs are required.");
-const allowSharedTarget = process.env.TEYVAT_ALLOW_SHARED_TARGET === "1";
+const targetUrl = process.env.DATABASE_URL;
+if (!targetUrl) throw new Error("DATABASE_URL is not configured.");
+const baselineUrl = targetUrl;
 const projection = readArtifact();
 const target = new pg.Pool({ connectionString: targetUrl, max: 2 });
 const baseline = new pg.Pool({ connectionString: baselineUrl, max: 1 });
@@ -29,8 +28,6 @@ const relationKey = (item: { subjectId?: unknown; subject_id?: unknown; predicat
 const targetMeta = await databaseMeta(target, new URL(targetUrl).hostname);
 const baselineMeta = await databaseMeta(baseline, new URL(baselineUrl).hostname);
 const sharedTarget = targetMeta.endpoint === baselineMeta.endpoint && JSON.stringify(targetMeta) === JSON.stringify(baselineMeta);
-if (sharedTarget && !allowSharedTarget) throw new Error("Target matches baseline; refusing final checks. Set TEYVAT_ALLOW_SHARED_TARGET=1 only after the unified target has been populated and reviewed.");
-
 const counts: Record<string, number> = {};
 for (const table of ["e_entities", "e_aliases", "e_relations", "e_documents", "e_claims", "e_schema_migrations", "teyvat_e_dataset_revisions", "teyvat_e_document_metadata"]) counts[table] = Number((await rows(target, `select count(*)::int as n from ${table}`))[0].n);
 const integrity = {

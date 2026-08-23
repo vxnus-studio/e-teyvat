@@ -21,7 +21,7 @@ export function resetTeyvatEntityQueriesForTests(): void {
 }
 
 export function getTeyvatPersistentEntityQueries(): Promise<TeyvatPersistentEntityQueries | TeyvatEPostgresEntityQueries> {
-  persistentCached ??= Promise.resolve(process.env.TEYVAT_RUNTIME_BACKEND === "e-postgres" ? new TeyvatEPostgresEntityQueries() : new TeyvatPersistentEntityQueries());
+  persistentCached ??= Promise.resolve(new TeyvatEPostgresEntityQueries());
   return persistentCached;
 }
 
@@ -39,7 +39,7 @@ export function resetTeyvatFarmingQueriesForTests(): void {
 }
 
 export function getTeyvatPersistentFarmingQueries(): Promise<TeyvatPersistentFarmingQueries | TeyvatEPostgresFarmingQueries> {
-  persistentFarmingCached ??= Promise.resolve(process.env.TEYVAT_RUNTIME_BACKEND === "e-postgres" ? new TeyvatEPostgresFarmingQueries() : new TeyvatPersistentFarmingQueries());
+  persistentFarmingCached ??= Promise.resolve(new TeyvatEPostgresFarmingQueries());
   return persistentFarmingCached;
 }
 

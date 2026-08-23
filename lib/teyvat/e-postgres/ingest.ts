@@ -8,8 +8,8 @@ import { provisionTeyvatExtensions, ingestTeyvatExtensions } from "./extensions.
 import type { TeyvatProjection } from "../projection/types.ts";
 
 export async function openTeyvatEPostgres() {
-  const connectionString = process.env.TEYVAT_E_DATABASE_URL;
-  if (!connectionString) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("DATABASE_URL is not configured.");
   const engine = await PostgresEngine.open({ connectionString, max: 8 });
   return { engine, connectionString };
 }

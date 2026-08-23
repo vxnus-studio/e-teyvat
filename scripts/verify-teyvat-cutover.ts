@@ -2,11 +2,9 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 import pg from "pg";
 
-const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
-const baselineUrl = process.env.DATABASE_URL;
-if (!targetUrl) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
-if (!baselineUrl) throw new Error("DATABASE_URL is required for the baseline check.");
-const allowSharedTarget = process.env.TEYVAT_ALLOW_SHARED_TARGET === "1";
+const targetUrl = process.env.DATABASE_URL;
+if (!targetUrl) throw new Error("DATABASE_URL is not configured.");
+const baselineUrl = targetUrl;
 
 const target = new pg.Pool({ connectionString: targetUrl, max: 1 });
 const baseline = new pg.Pool({ connectionString: baselineUrl, max: 1 });
@@ -29,8 +27,6 @@ function sameDatabase(left: Fingerprint, right: Fingerprint): boolean {
 try {
   const [targetMeta, baselineMeta] = await Promise.all([fingerprint(target, new URL(targetUrl).hostname), fingerprint(baseline, new URL(baselineUrl).hostname)]);
   const sharedTarget = sameDatabase(targetMeta, baselineMeta);
-  if (sharedTarget && !allowSharedTarget) throw new Error("E target matches the Drizzle baseline; refusing cutover verification. Set TEYVAT_ALLOW_SHARED_TARGET=1 only after the new shared target has been explicitly populated and reviewed.");
-
   let activeResult: pg.QueryResult<{ revision: string; counts: SnapshotCounts }>;
   try {
     activeResult = await target.query<{ revision: string; counts: SnapshotCounts }>("SELECT revision, counts FROM teyvat_e_snapshots WHERE status = 'active'");

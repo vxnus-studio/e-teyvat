@@ -23,8 +23,8 @@ export class TeyvatEPostgresFarmingQueries {
   private readonly engine: PostgresEngine;
   private readonly pool: Pool;
 
-  constructor(connectionString = process.env.TEYVAT_E_DATABASE_URL) {
-    if (!connectionString) throw new Error("TEYVAT_E_DATABASE_URL is not configured.");
+  constructor(connectionString = process.env.DATABASE_URL) {
+    if (!connectionString) throw new Error("DATABASE_URL is not configured.");
     this.engine = new PostgresEngine({ connectionString, max: 4 });
     this.pool = (this.engine as unknown as { pool: Pool }).pool;
   }
