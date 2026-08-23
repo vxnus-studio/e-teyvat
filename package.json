@@ -17,6 +17,10 @@
     "teyvat:verify-artifact": "node --experimental-strip-types scripts/verify-teyvat-artifact.ts",
     "teyvat:verify-domain": "node --experimental-strip-types scripts/verify-teyvat-domain.ts",
     "teyvat:ingest": "node --experimental-strip-types scripts/ingest-teyvat.ts",
+    "teyvat:install-snapshot": "node --experimental-strip-types scripts/install-teyvat-snapshot.ts",
+    "teyvat:rollback-snapshot": "node --experimental-strip-types scripts/rollback-teyvat-snapshot.ts",
+    "teyvat:verify-snapshot": "node --experimental-strip-types scripts/verify-teyvat-snapshot.ts",
+    "teyvat:cleanup-staging": "node --experimental-strip-types scripts/cleanup-teyvat-staging.ts",
     "teyvat:verify-db": "node --experimental-strip-types scripts/verify-teyvat-db.ts",
     "teyvat:verify-parity": "node --experimental-strip-types scripts/verify-teyvat-parity.ts",
     "teyvat:verify-farming": "node --experimental-strip-types scripts/verify-teyvat-farming.ts"
