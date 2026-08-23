@@ -41,6 +41,8 @@ export class TeyvatEPostgresEntityQueries {
     this.pool = (this.engine as unknown as { pool: Pool }).pool;
   }
 
+  async close(): Promise<void> { await this.engine.close(); }
+
   private async revision(): Promise<string> {
     const result = await this.pool.query<{ revision: string }>("SELECT revision FROM teyvat_e_dataset_revisions ORDER BY installed_at DESC LIMIT 1");
     const revision = result.rows[0]?.revision;
