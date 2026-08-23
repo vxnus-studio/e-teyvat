@@ -236,3 +236,98 @@ export const bannerCharacterStatistics = pgTable("banner_character_statistics", 
   calculatedAt: timestamp("calculated_at", { withTimezone: true }).notNull().defaultNow(),
   modelVersion: text("model_version").notNull().default("rerun-pressure-v1"),
 });
+
+/**
+ * E-compatible canonical snapshot storage. These tables intentionally use
+ * deterministic text IDs and coexist with the legacy integer-ID tables above
+ * until the remaining application domains are migrated.
+ */
+export const teyvatEntities = pgTable(
+  "teyvat_entities",
+  {
+    id: text("id").primaryKey(),
+    namespace: text("namespace").notNull(),
+    kind: text("kind").notNull(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+    provenance: jsonb("provenance").$type<Record<string, unknown>>(),
+    temporal: jsonb("temporal").$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    index("teyvat_entities_kind_slug_idx").on(table.kind, table.slug),
+    index("teyvat_entities_kind_name_idx").on(table.kind, table.name),
+  ],
+);
+
+export const teyvatAliases = pgTable(
+  "teyvat_aliases",
+  {
+    id: text("id").primaryKey(),
+    entityId: text("entity_id")
+      .notNull()
+      .references(() => teyvatEntities.id, { onDelete: "cascade" }),
+    alias: text("alias").notNull(),
+    normalizedAlias: text("normalized_alias").notNull(),
+  },
+  (table) => [
+    uniqueIndex("teyvat_aliases_entity_alias_uidx").on(table.entityId, table.normalizedAlias),
+    index("teyvat_aliases_normalized_idx").on(table.normalizedAlias),
+  ],
+);
+
+export const teyvatRelations = pgTable(
+  "teyvat_relations",
+  {
+    id: text("id").primaryKey(),
+    subjectId: text("subject_id")
+      .notNull()
+      .references(() => teyvatEntities.id, { onDelete: "cascade" }),
+    predicate: text("predicate").notNull(),
+    objectId: text("object_id")
+      .notNull()
+      .references(() => teyvatEntities.id, { onDelete: "cascade" }),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    provenance: jsonb("provenance").$type<Record<string, unknown>>(),
+    temporal: jsonb("temporal").$type<Record<string, unknown>>(),
+  },
+  (table) => [
+    index("teyvat_relations_subject_predicate_idx").on(table.subjectId, table.predicate),
+    index("teyvat_relations_object_predicate_idx").on(table.objectId, table.predicate),
+  ],
+);
+
+export const teyvatDocuments = pgTable(
+  "teyvat_documents",
+  {
+    id: text("id").primaryKey(),
+    entityId: text("entity_id")
+      .notNull()
+      .references(() => teyvatEntities.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    provenance: jsonb("provenance").$type<Record<string, unknown>>(),
+    category: text("category").notNull(),
+    title: text("title").notNull().default(""),
+    parentSourceId: text("parent_source_id").notNull(),
+  },
+  (table) => [index("teyvat_documents_entity_idx").on(table.entityId)],
+);
+
+export const teyvatDatasetRevisions = pgTable("teyvat_dataset_revisions", {
+  revision: text("revision").primaryKey(),
+  projectionVersion: text("projection_version").notNull(),
+  sourceChecksums: jsonb("source_checksums").$type<Record<string, string>>().notNull(),
+  entityCount: integer("entity_count").notNull(),
+  aliasCount: integer("alias_count").notNull(),
+  relationCount: integer("relation_count").notNull(),
+  documentCount: integer("document_count").notNull(),
+  installedAt: timestamp("installed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TeyvatEntity = typeof teyvatEntities.$inferSelect;
+export type NewTeyvatEntity = typeof teyvatEntities.$inferInsert;
+export type TeyvatAlias = typeof teyvatAliases.$inferSelect;
+export type TeyvatRelation = typeof teyvatRelations.$inferSelect;
+export type NewTeyvatRelation = typeof teyvatRelations.$inferInsert;
+export type TeyvatDocument = typeof teyvatDocuments.$inferSelect;
+export type NewTeyvatDocument = typeof teyvatDocuments.$inferInsert;

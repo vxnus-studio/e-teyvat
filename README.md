@@ -15,6 +15,8 @@ Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Dri
 
 * [Architecture and AI Retrieval](docs/architecture.md)
 * [Read API Reference](docs/api.md)
+* [Phase 6 E-Postgres Proof of Concept](docs/phase-6-e-postgres-poc.md)
+* [E-Postgres Problems and Limitations](docs/e-postgres-problems.md)
 
 ## Getting Started
 
