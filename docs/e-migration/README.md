@@ -1,6 +1,6 @@
 # E Migration Plan
 
-Status: Phase 2 complete — Phase 3 Runtime/Domain Parity is next.
+Status: Phase 3 in progress — E adapter release adopted; runtime/domain parity remains.
 
 This plan governs the migration from the current Drizzle-backed Teyvat persistence layer to an E-compatible runtime. Every phase is gated by evidence. A later phase must not be treated as complete merely because its code exists.
 
@@ -10,7 +10,7 @@ This plan governs the migration from the current Drizzle-backed Teyvat persisten
 |---|---|---|---|
 | 1 | Critical stabilization | Complete — compatibility isolation delivered | E/Postgres defects are fixed or explicitly isolated; the new code typechecks and the verification harness is trustworthy |
 | 2 | Safe snapshot lifecycle | Complete — local PostgreSQL lifecycle verified | Repeatable, atomic, recoverable ingestion is demonstrated |
-| 3 | Upstream E patch, release, and runtime/domain parity | Planned — critical upstream patch first | The fixed E adapter is released and adopted; API and domain behavior match the current Teyvat contract |
+| 3 | Upstream E patch, release, and runtime/domain parity | In progress — adapter adopted; runtime parity remains | The fixed E adapter is released and adopted; API and domain behavior match the current Teyvat contract |
 | 4 | Cutover readiness | Planned | Production-like performance, rollback, and operational checks pass |
 
 ## Non-negotiable rules

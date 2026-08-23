@@ -4,7 +4,6 @@ import pg from "pg";
 import { readArtifact, readArtifactManifest } from "../lib/teyvat/artifact.ts";
 import { ingestTeyvatProjectionInBatches, openTeyvatEPostgres } from "../lib/teyvat/e-postgres/ingest.ts";
 import { ingestTeyvatExtensions, provisionTeyvatExtensions } from "../lib/teyvat/e-postgres/extensions.ts";
-import { resolveTeyvatEPostgresAlias } from "../lib/teyvat/e-postgres/compat.ts";
 
 const { Pool } = pg;
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
@@ -130,7 +129,7 @@ assert(documentParity.equal, `Document parity failure: ${signature(documentParit
 
 const alias = projection.aliases.find((item) => item.alias.toLowerCase().includes("raiden") || item.alias.toLowerCase().includes("shogun"));
 assert(alias, "Raiden representative alias missing.");
-const aliasEntities = await resolveTeyvatEPostgresAlias(target, alias.alias, "genshin");
+const aliasEntities = (await engine.query({ type: "resolve", alias: alias.alias, namespace: "genshin" })).entities ?? [];
 const searchResult = await engine.query({ type: "search", search: { query: "Furina", mode: "lexical", limit: 20 } });
 const traversalResult = await engine.query({ type: "traverse", startId: furina, maxDepth: 2, maxPaths: 100 });
 const capabilities = await engine.query({ type: "getCapabilities" });

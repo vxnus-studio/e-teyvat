@@ -1,6 +1,6 @@
 # Phase 3 Handoff — E Patch, Release, and Runtime/Domain Parity
 
-Status: planned — critical upstream patch is the first workstream
+Status: in progress — adapter patch and adoption complete; runtime cutover remains deferred
 
 Objective: replace the temporary E-Teyvat compatibility layer with a tested, released upstream E/Postgres fix, then prove runtime and domain behavior against the current Teyvat contract.
 
@@ -16,7 +16,7 @@ JOIN e_aliases a ON e.id = a.entity_id
 ORDER BY e.id COLLATE "C" ASC
 ```
 
-PostgreSQL rejects the combination of `SELECT DISTINCT` and an `ORDER BY` expression that is not present in the select list with error `42P10`. E-Teyvat currently works around this in `lib/teyvat/e-postgres/compat.ts`. Runtime cutover must remain blocked until the generic adapter is fixed and released.
+PostgreSQL rejected the combination of `SELECT DISTINCT` and an `ORDER BY` expression that is not present in the select list with error `42P10`. It is fixed in the published `@vxnus/e-postgres@0.2.1`; E-Teyvat no longer carries a compatibility wrapper. Runtime cutover remains blocked until the domain parity work and Phase 4 operational gates are complete.
 
 ## Workstream 3.1 — Patch and release `/e` (critical)
 
@@ -38,7 +38,7 @@ In E-Teyvat:
 - verify the installed package resolves to the intended version;
 - run alias, entity, relation, document, and parity checks against an isolated target;
 - compare the released adapter result with the temporary compatibility query;
-- remove `compat.ts` only after the released adapter passes the equivalent checks;
+- remove `compat.ts` only after the released adapter passes the equivalent checks; **complete** — the wrapper was removed after verification;
 - keep the snapshot installer and rollback path unchanged unless parity evidence requires a separate reviewed change.
 
 ## Workstream 3.3 — Runtime/domain parity
@@ -77,10 +77,10 @@ Stop before runtime cutover if:
 
 ## Exit criteria
 
-- [ ] `/e` patch merged and PostgreSQL regression tests pass.
-- [ ] New E packages published and version recorded.
-- [ ] E-Teyvat depends on and verifies the new release.
-- [ ] Temporary compatibility query is removed or explicitly retained with a documented reason.
+- [x] `/e` patch committed and PostgreSQL regression tests pass.
+- [x] `@vxnus/e-postgres@0.2.1` published.
+- [x] E-Teyvat depends on and verifies the new release.
+- [x] Temporary compatibility query removed after verification.
 - [ ] Runtime/domain parity tests pass for the agreed contract.
 - [ ] Snapshot readers select one complete active revision.
 - [ ] Cutover and rollback remain deferred to Phase 4 until production-like checks pass.

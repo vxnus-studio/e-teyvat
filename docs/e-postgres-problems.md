@@ -1,6 +1,6 @@
 # E-Postgres Problems and Limitations
 
-This document records defects and operational limitations found in `@vxnus/e-postgres@0.2.0` during the Phase 6 isolated proof of concept.
+This document records defects and operational limitations found in `@vxnus/e-postgres@0.2.0` during the Phase 6 isolated proof of concept, plus their current status after the Phase 3 adapter release.
 
 These are adapter problems, not problems with the normalized `/gi-data` source or the Teyvat projection contract.
 
@@ -24,9 +24,9 @@ PostgreSQL rejects this with:
 
 The native alias table is populated correctly, but the public E alias-query API is not currently reliable on PostgreSQL.
 
-Impact: alias resolution cannot be used in production without an upstream fix or a wrapper query.
+Resolution: fixed upstream in `@vxnus/e-postgres@0.2.1` with an `EXISTS` query that preserves deduplication, namespace filtering, and deterministic ordering. The published package passes the isolated PostgreSQL regression and E-Teyvat finalizer checks.
 
-E-Teyvat currently isolates this defect with `lib/teyvat/e-postgres/compat.ts`, using an `EXISTS` query. The wrapper has passed the live alias check against the isolated E target; it is temporary until the upstream adapter is fixed and released.
+The temporary E-Teyvat compatibility wrapper has been removed. The remaining limitations below are still applicable unless explicitly marked otherwise.
 
 ## 2. `ingestBatch()` is not idempotent
 
@@ -85,11 +85,11 @@ E provides `e_claims`, but the current Teyvat projection contains no claims. Thi
 
 ## 7. Stability
 
-E and the adapter are version `0.2.0`, pre-1.0, and described as experimental. The adapter is usable for an isolated evaluation, but the SQL defect, ingestion behavior, and lack of snapshot lifecycle make it unsuitable as an unmodified production persistence layer.
+E and the adapter remain pre-1.0 and experimental. The SQL defect is fixed in `0.2.1`, but ingestion behavior, application-specific semantics, and runtime cutover requirements still prevent treating the adapter alone as production-ready.
 
 ## Required fixes before cutover
 
-1. Correct alias-resolution SQL upstream or isolate a tested compatibility wrapper.
+1. ~~Correct alias-resolution SQL upstream or isolate a tested compatibility wrapper.~~ Complete in `@vxnus/e-postgres@0.2.1`; keep the regression test.
 2. Define staging/snapshot replacement semantics.
 3. Add efficient bulk ingestion or a supported bulk-loading path.
 4. Add failure recovery and partial-snapshot detection.

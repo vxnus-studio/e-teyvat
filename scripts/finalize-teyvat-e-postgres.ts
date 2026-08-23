@@ -4,7 +4,6 @@ import { performance } from "node:perf_hooks";
 import { PostgresEngine } from "@vxnus/e-postgres";
 import { readArtifact } from "../lib/teyvat/artifact.ts";
 import { getTeyvatPersistentFarmingQueries } from "../lib/teyvat/domain/index.ts";
-import { resolveTeyvatEPostgresAlias } from "../lib/teyvat/e-postgres/compat.ts";
 import pg from "pg";
 
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
@@ -62,7 +61,7 @@ const capabilities = await engine.query({ type: "getCapabilities" });
 const queryTimings = {
   lookup: await timed(() => engine.query({ type: "getEntity", id: cases.character })),
   search: await timed(() => engine.query({ type: "search", search: { query: "Furina", mode: "lexical", limit: 20 } })),
-  alias: await safeTimed(() => resolveTeyvatEPostgresAlias(target, alias?.alias ?? "Raiden Shogun", "genshin")),
+  alias: await safeTimed(async () => (await engine.query({ type: "resolve", alias: alias?.alias ?? "Raiden Shogun", namespace: "genshin" })).entities ?? []),
   traversal: await timed(() => engine.query({ type: "traverse", startId: cases.character, maxDepth: 2, maxPaths: 100 })),
   documents: await timed(() => engine.query({ type: "findDocuments", entityId: documentEntity, limit: 20 })),
 };
@@ -74,7 +73,7 @@ for (const query of farmingCases) {
   const direct = (await engine.query({ type: "search", search: { query, mode: "lexical", limit: 20 } })).search?.entities?.[0];
   let aliasMatch;
   if (!direct) {
-    try { aliasMatch = (await resolveTeyvatEPostgresAlias(target, query, "genshin"))[0]; } catch { aliasMatch = undefined; }
+    try { aliasMatch = (await engine.query({ type: "resolve", alias: query, namespace: "genshin" })).entities?.[0]; } catch { aliasMatch = undefined; }
   }
   const targetEntity = direct ?? aliasMatch;
   const ePlan = targetEntity ? { id: targetEntity.id, relations: (await engine.query({ type: "findRelations", subjectId: targetEntity.id, limit: 1000 })).relations?.length ?? 0 } : null;
