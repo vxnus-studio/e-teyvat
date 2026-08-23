@@ -1,5 +1,8 @@
 # E-Teyvat
 
+> [!WARNING]
+> **Refactoring in Progress**: E-Teyvat is currently undergoing massive refactoring from a standalone application into an `e`-compatible Teyvat/Genshin knowledge base.
+
 **Website:** [https://eteyvat.vxnus.xyz](https://eteyvat.vxnus.xyz)
 
 E-Teyvat is an open structured knowledge base for **Genshin Impact**, designed for both humans and AI systems.
