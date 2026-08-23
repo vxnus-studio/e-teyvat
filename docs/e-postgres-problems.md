@@ -26,6 +26,8 @@ The native alias table is populated correctly, but the public E alias-query API 
 
 Impact: alias resolution cannot be used in production without an upstream fix or a wrapper query.
 
+E-Teyvat currently isolates this defect with `lib/teyvat/e-postgres/compat.ts`, using an `EXISTS` query. The wrapper has passed the live alias check against the isolated E target; it is temporary until the upstream adapter is fixed and released.
+
 ## 2. `ingestBatch()` is not idempotent
 
 The adapter uses plain `INSERT` statements and primary-key constraints. Repeating an ingestion produces a duplicate-key error (`23505`). It does not provide:

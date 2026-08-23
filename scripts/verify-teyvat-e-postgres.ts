@@ -4,6 +4,7 @@ import pg from "pg";
 import { readArtifact, readArtifactManifest } from "../lib/teyvat/artifact.ts";
 import { ingestTeyvatProjectionInBatches, openTeyvatEPostgres } from "../lib/teyvat/e-postgres/ingest.ts";
 import { ingestTeyvatExtensions, provisionTeyvatExtensions } from "../lib/teyvat/e-postgres/extensions.ts";
+import { resolveTeyvatEPostgresAlias } from "../lib/teyvat/e-postgres/compat.ts";
 
 const { Pool } = pg;
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
@@ -18,7 +19,13 @@ const target = new Pool({ connectionString: targetUrl, max: 1 });
 const baseline = new Pool({ connectionString: baselineUrl, max: 1 });
 
 async function rows(pool: pg.Pool, query: string, values: unknown[] = []) {
-  return (await pool.query(query, values)).rows as Array<Record<string, any>>;
+  return (await pool.query<Record<string, unknown>>(query, values)).rows;
+}
+async function databaseMeta(pool: pg.Pool, endpoint: string) {
+  const result = await pool.query<{ database: string; schema: string; server: string | null; port: number | null }>("SELECT current_database() AS database, current_schema() AS schema, inet_server_addr()::text AS server, inet_server_port() AS port");
+  const row = result.rows[0];
+  if (!row) throw new Error(`Unable to fingerprint ${endpoint}`);
+  return { endpoint, ...row };
 }
 async function countTables(pool: pg.Pool, prefix: string) {
   const names = ["entities", "aliases", "relations", "documents"];
@@ -35,17 +42,16 @@ function assert(condition: unknown, message: string): asserts condition {
 function canonicalEntity(category: string, sourceId: string) {
   return projection.entities.find((entity) => entity.id === `genshin:${category}:${sourceId}`);
 }
-function relationKey(relation: { subjectId: string; predicate: string; objectId: string }) {
-  const value = relation as unknown as Record<string, string>;
+function relationKey(value: Record<string, unknown>) {
   return `${value.subjectId ?? value.subject_id}|${value.predicate}|${value.objectId ?? value.object_id}`;
 }
 function signature(value: unknown): string {
   return JSON.stringify(value, (_key, item) => item instanceof Map ? Object.fromEntries(item) : item);
 }
 
-const targetMeta = (await rows(target, "SELECT current_database() AS database, current_schema() AS schema, inet_server_addr()::text AS server, inet_server_port() AS port"))[0];
-const baselineMeta = (await rows(baseline, "SELECT current_database() AS database, current_schema() AS schema, inet_server_addr()::text AS server, inet_server_port() AS port"))[0];
-assert(targetMeta.database !== baselineMeta.database || targetMeta.schema !== baselineMeta.schema || targetMeta.server !== baselineMeta.server || targetMeta.port !== baselineMeta.port, "Target fingerprint matches baseline; refusing parity experiment.");
+const targetMeta = await databaseMeta(target, new URL(targetUrl).hostname);
+const baselineMeta = await databaseMeta(baseline, new URL(baselineUrl).hostname);
+assert(targetMeta.endpoint !== baselineMeta.endpoint || targetMeta.database !== baselineMeta.database || targetMeta.schema !== baselineMeta.schema || targetMeta.server !== baselineMeta.server || targetMeta.port !== baselineMeta.port, "Target fingerprint matches baseline; refusing parity experiment.");
 
 const provisionStarted = performance.now();
 const provisionMs = performance.now() - provisionStarted;
@@ -96,9 +102,9 @@ const representativeIds = [
   canonicalEntity("avatar", "10000089")?.id,
   canonicalEntity("avatar", "10000052")?.id,
   canonicalEntity("weapon", "11509")?.id,
-  canonicalEntity("material", "101212")?.id,
+  canonicalEntity("material", "100011")?.id,
   canonicalEntity("food", "100001")?.id,
-  canonicalEntity("domain", "2001")?.id,
+  canonicalEntity("domain", "1142")?.id,
 ].filter((id): id is string => Boolean(id));
 const entityParity = [];
 for (const id of representativeIds) {
@@ -112,7 +118,7 @@ const furina = representativeIds.find((id) => id.includes("avatar:10000089")) ??
 assert(furina, "Furina representative entity missing.");
 const eRelations = (await engine.query({ type: "findRelations", subjectId: furina, limit: 1000 })).relations ?? [];
 const bRelations = await rows(baseline, "SELECT subject_id, predicate, object_id FROM teyvat_relations WHERE subject_id=$1 ORDER BY id", [furina]);
-const relationParity = { e: new Set(eRelations.map(relationKey)).size, baseline: new Set(bRelations.map(relationKey)).size, equal: signature(eRelations.map(relationKey).sort()) === signature(bRelations.map(relationKey).sort()) };
+const relationParity = { e: new Set(eRelations.map((relation) => relationKey(relation as unknown as Record<string, unknown>))).size, baseline: new Set(bRelations.map(relationKey)).size, equal: signature(eRelations.map((relation) => relationKey(relation as unknown as Record<string, unknown>)).sort()) === signature(bRelations.map(relationKey).sort()) };
 assert(relationParity.equal, `Relation parity failure: ${signature(relationParity)}`);
 
 const documentEntity = projection.documents[0]?.entityId;
@@ -124,11 +130,11 @@ assert(documentParity.equal, `Document parity failure: ${signature(documentParit
 
 const alias = projection.aliases.find((item) => item.alias.toLowerCase().includes("raiden") || item.alias.toLowerCase().includes("shogun"));
 assert(alias, "Raiden representative alias missing.");
-const aliasResult = await engine.query({ type: "resolve", alias: alias.alias, namespace: "genshin" });
+const aliasEntities = await resolveTeyvatEPostgresAlias(target, alias.alias, "genshin");
 const searchResult = await engine.query({ type: "search", search: { query: "Furina", mode: "lexical", limit: 20 } });
 const traversalResult = await engine.query({ type: "traverse", startId: furina, maxDepth: 2, maxPaths: 100 });
 const capabilities = await engine.query({ type: "getCapabilities" });
-assert(aliasResult.entities?.some((item) => item.id === alias.entityId), "Alias query failed.");
+assert(aliasEntities.some((item) => item.id === alias.entityId), "Alias query failed.");
 assert(searchResult.search?.entities?.some((item) => item.id === furina), "Entity search failed.");
 assert((traversalResult.traversal?.relations?.length ?? 0) > 0, "Relation traversal failed.");
 
@@ -139,7 +145,7 @@ console.log(JSON.stringify({
   integrity,
   repeatIngestion,
   parity: { entityParity, relationParity, documentParity },
-  queries: { capabilities: capabilities.capabilities, aliasEntityId: aliasResult.entities?.map((item) => item.id), searchCount: searchResult.search?.entities?.length, traversal: { entities: traversalResult.traversal?.entities?.length, relations: traversalResult.traversal?.relations?.length, paths: traversalResult.traversal?.paths?.length } },
+  queries: { capabilities: capabilities.capabilities, aliasEntityId: aliasEntities.map((item) => item.id), searchCount: searchResult.search?.entities?.length, traversal: { entities: traversalResult.traversal?.entities?.length, relations: traversalResult.traversal?.relations?.length, paths: traversalResult.traversal?.paths?.length } },
 }, null, 2));
 
 await engine.close();

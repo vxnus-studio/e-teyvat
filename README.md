@@ -17,6 +17,7 @@ Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Dri
 * [Read API Reference](docs/api.md)
 * [Phase 6 E-Postgres Proof of Concept](docs/phase-6-e-postgres-poc.md)
 * [E-Postgres Problems and Limitations](docs/e-postgres-problems.md)
+* [E Migration Plan](docs/e-migration/README.md)
 
 ## Getting Started
 

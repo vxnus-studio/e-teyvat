@@ -4,6 +4,7 @@ import { performance } from "node:perf_hooks";
 import { PostgresEngine } from "@vxnus/e-postgres";
 import { readArtifact } from "../lib/teyvat/artifact.ts";
 import { getTeyvatPersistentFarmingQueries } from "../lib/teyvat/domain/index.ts";
+import { resolveTeyvatEPostgresAlias } from "../lib/teyvat/e-postgres/compat.ts";
 import pg from "pg";
 
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
@@ -13,15 +14,20 @@ const projection = readArtifact();
 const target = new pg.Pool({ connectionString: targetUrl, max: 2 });
 const baseline = new pg.Pool({ connectionString: baselineUrl, max: 1 });
 const engine = new PostgresEngine({ connectionString: targetUrl, max: 2 });
-const rows = async (pool: pg.Pool, sql: string, values: unknown[] = []) => (await pool.query(sql, values)).rows as Array<Record<string, any>>;
+const rows = async (pool: pg.Pool, sql: string, values: unknown[] = []) => (await pool.query<Record<string, unknown>>(sql, values)).rows;
+const databaseMeta = async (pool: pg.Pool, endpoint: string) => {
+  const result = await pool.query<{ database: string; schema: string; server: string | null; port: number | null }>("select current_database() as database, current_schema() as schema, inet_server_addr()::text as server, inet_server_port() as port");
+  const row = result.rows[0];
+  if (!row) throw new Error(`Unable to fingerprint ${endpoint}`);
+  return { endpoint, ...row };
+};
 const timed = async <T>(fn: () => Promise<T>) => { const start = performance.now(); const value = await fn(); return { value, ms: performance.now() - start }; };
 const safeTimed = async <T>(fn: () => Promise<T>) => { const start = performance.now(); try { return { value: await fn(), ms: performance.now() - start }; } catch (error) { return { error: error instanceof Error ? error.message : String(error), code: (error as { code?: string }).code, ms: performance.now() - start }; } };
-const entity = (id: string) => projection.entities.find((item) => item.id === id);
-const relationKey = (item: any) => `${item.subjectId ?? item.subject_id}|${item.predicate}|${item.objectId ?? item.object_id}`;
+const relationKey = (item: { subjectId?: unknown; subject_id?: unknown; predicate?: unknown; objectId?: unknown; object_id?: unknown }) => `${item.subjectId ?? item.subject_id}|${item.predicate}|${item.objectId ?? item.object_id}`;
 
-const targetMeta = (await rows(target, "select current_database() as database, current_schema() as schema, inet_server_addr()::text as server, inet_server_port() as port"))[0];
-const baselineMeta = (await rows(baseline, "select current_database() as database, current_schema() as schema, inet_server_addr()::text as server, inet_server_port() as port"))[0];
-if (JSON.stringify(targetMeta) === JSON.stringify(baselineMeta)) throw new Error("Target matches baseline; refusing final checks.");
+const targetMeta = await databaseMeta(target, new URL(targetUrl).hostname);
+const baselineMeta = await databaseMeta(baseline, new URL(baselineUrl).hostname);
+if (targetMeta.endpoint === baselineMeta.endpoint && JSON.stringify(targetMeta) === JSON.stringify(baselineMeta)) throw new Error("Target matches baseline; refusing final checks.");
 
 const counts: Record<string, number> = {};
 for (const table of ["e_entities", "e_aliases", "e_relations", "e_documents", "e_claims", "e_schema_migrations", "teyvat_e_dataset_revisions", "teyvat_e_document_metadata"]) counts[table] = Number((await rows(target, `select count(*)::int as n from ${table}`))[0].n);
@@ -37,7 +43,7 @@ const integrity = {
   recipeRemapped: Number((await rows(target, "select count(*)::int as n from e_relations where predicate='recipe_ingredient' and object_id in ('genshin:food:100001','genshin:food:100002','genshin:food:101212','genshin:food:101230')"))[0].n),
 };
 
-const cases: Record<string, string> = { character: "genshin:avatar:10000089", weapon: "genshin:weapon:11509", material: "genshin:material:101212", food: "genshin:food:100001", domain: "genshin:domain:2001" };
+const cases: Record<string, string> = { character: "genshin:avatar:10000089", weapon: "genshin:weapon:11509", material: "genshin:material:100011", food: "genshin:food:100001", domain: "genshin:domain:1142" };
 const entityChecks = [];
 for (const [name, id] of Object.entries(cases)) {
   const e = (await timed(() => engine.query({ type: "getEntity", id }))).value.entities?.[0];
@@ -56,7 +62,7 @@ const capabilities = await engine.query({ type: "getCapabilities" });
 const queryTimings = {
   lookup: await timed(() => engine.query({ type: "getEntity", id: cases.character })),
   search: await timed(() => engine.query({ type: "search", search: { query: "Furina", mode: "lexical", limit: 20 } })),
-  alias: await safeTimed(() => engine.query({ type: "resolve", alias: alias?.alias ?? "Raiden Shogun", namespace: "genshin" })),
+  alias: await safeTimed(() => resolveTeyvatEPostgresAlias(target, alias?.alias ?? "Raiden Shogun", "genshin")),
   traversal: await timed(() => engine.query({ type: "traverse", startId: cases.character, maxDepth: 2, maxPaths: 100 })),
   documents: await timed(() => engine.query({ type: "findDocuments", entityId: documentEntity, limit: 20 })),
 };
@@ -68,7 +74,7 @@ for (const query of farmingCases) {
   const direct = (await engine.query({ type: "search", search: { query, mode: "lexical", limit: 20 } })).search?.entities?.[0];
   let aliasMatch;
   if (!direct) {
-    try { aliasMatch = (await engine.query({ type: "resolve", alias: query, namespace: "genshin" })).entities?.[0]; } catch { aliasMatch = undefined; }
+    try { aliasMatch = (await resolveTeyvatEPostgresAlias(target, query, "genshin"))[0]; } catch { aliasMatch = undefined; }
   }
   const targetEntity = direct ?? aliasMatch;
   const ePlan = targetEntity ? { id: targetEntity.id, relations: (await engine.query({ type: "findRelations", subjectId: targetEntity.id, limit: 1000 })).relations?.length ?? 0 } : null;
