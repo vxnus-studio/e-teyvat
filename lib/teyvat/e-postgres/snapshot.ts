@@ -11,6 +11,11 @@ export interface TeyvatSnapshotResult {
   stageSchema: string;
   counts: { entities: number; aliases: number; relations: number; documents: number };
   durationMs: number;
+  metrics: {
+    sqlRequests: number;
+    connectionsCreated: number;
+    peakConnections: number;
+  };
 }
 
 export interface TeyvatSnapshotInstallOptions {
@@ -35,6 +40,63 @@ function schemaForRevision(revision: string): string {
 
 function retiredSchemaForRevision(revision: string): string {
   return `e_retired_${Date.now().toString(36)}_${revisionToken(revision).slice(0, 8)}`;
+}
+
+type SnapshotPoolMetrics = TeyvatSnapshotResult["metrics"];
+
+/**
+ * Count requests made by this install without changing the Pool's behavior.
+ * Pool.query() is wrapped for pooled requests; clients checked out directly
+ * are wrapped separately. The original methods are restored before return.
+ */
+function instrumentPool(pool: Pool, metrics: SnapshotPoolMetrics): () => void {
+  const originalConnectMethod = pool.connect as () => Promise<import("pg").PoolClient>;
+  const originalConnect = pool.connect as unknown as (...args: unknown[]) => unknown;
+  const seenConnections = new Set<import("pg").PoolClient>();
+  const instrumentedClients = new WeakSet<import("pg").PoolClient>();
+  let active = true;
+
+  const sampleConnections = () => {
+    const active = Math.max(0, pool.totalCount - pool.idleCount);
+    metrics.peakConnections = Math.max(metrics.peakConnections, active, pool.totalCount);
+  };
+
+  const instrumentClient = (client: import("pg").PoolClient) => {
+    if (instrumentedClients.has(client)) return;
+    instrumentedClients.add(client);
+    const originalClientQuery = client.query.bind(client);
+    client.query = ((...queryArgs: unknown[]) => {
+      if (active) {
+        metrics.sqlRequests++;
+        sampleConnections();
+      }
+      return originalClientQuery(...(queryArgs as Parameters<typeof client.query>));
+    }) as typeof client.query;
+    if (!seenConnections.has(client)) {
+      seenConnections.add(client);
+      metrics.connectionsCreated = seenConnections.size;
+    }
+    sampleConnections();
+  };
+
+  pool.connect = ((...args: unknown[]) => {
+    if (typeof args[0] === "function") {
+      const callback = args[0] as (error: Error | undefined, client: import("pg").PoolClient | undefined, release: (error?: Error) => void) => void;
+      return originalConnect.call(pool, (error: Error | undefined, client: import("pg").PoolClient | undefined, release: (error?: Error) => void) => {
+        if (client) instrumentClient(client);
+        callback(error, client, release);
+      });
+    }
+    return (originalConnectMethod.call(pool) as Promise<import("pg").PoolClient>).then((client) => {
+      instrumentClient(client);
+      return client;
+    });
+  }) as unknown as Pool["connect"];
+
+  return () => {
+    active = false;
+    pool.connect = originalConnectMethod as Pool["connect"];
+  };
 }
 
 async function bulkInsert(pool: Pool, table: string, columns: string[], rows: unknown[][], chunkSize = 500): Promise<void> {
@@ -186,10 +248,11 @@ async function promote(pool: Pool, revision: string, schema: string, manifest: T
 
 async function installTeyvatSnapshotUnlocked(pool: Pool, projection: TeyvatProjection, manifest: TeyvatArtifactManifest, options: TeyvatSnapshotInstallOptions): Promise<TeyvatSnapshotResult> {
   const started = performance.now();
+  const metrics: SnapshotPoolMetrics = { sqlRequests: 0, connectionsCreated: 0, peakConnections: 0 };
   const schema = schemaForRevision(projection.revision);
   await provisionControl(pool);
   const existing = await pool.query<{ status: SnapshotStatus; stage_schema: string; counts: TeyvatSnapshotResult["counts"] }>("SELECT status, stage_schema, counts FROM teyvat_e_snapshots WHERE revision=$1", [projection.revision]);
-  if (existing.rows[0]?.status === "active") return { revision: projection.revision, status: "active", stageSchema: existing.rows[0].stage_schema, counts: existing.rows[0].counts, durationMs: performance.now() - started };
+  if (existing.rows[0]?.status === "active") return { revision: projection.revision, status: "active", stageSchema: existing.rows[0].stage_schema, counts: existing.rows[0].counts, durationMs: performance.now() - started, metrics };
   if (existing.rows[0]) await pool.query("UPDATE teyvat_e_snapshots SET status='failed', failure='superseded by retry' WHERE revision=$1", [projection.revision]);
   await pool.query("INSERT INTO teyvat_e_snapshots (revision,status,stage_schema,counts,manifest) VALUES ($1,'staged',$2,$3,$4) ON CONFLICT (revision) DO UPDATE SET status='staged', stage_schema=EXCLUDED.stage_schema, counts=EXCLUDED.counts, manifest=EXCLUDED.manifest, failure=NULL", [projection.revision, schema, { entities: 0, aliases: 0, relations: 0, documents: 0 }, manifest]);
   await pool.query(`DROP SCHEMA IF EXISTS ${identifier(schema)} CASCADE`);
@@ -200,7 +263,7 @@ async function installTeyvatSnapshotUnlocked(pool: Pool, projection: TeyvatProje
     await validateStage(pool, schema, projection);
     const counts = { entities: projection.entities.length, aliases: projection.aliases.length, relations: projection.relations.length, documents: projection.documents.length };
     await promote(pool, projection.revision, schema, manifest, counts);
-    return { revision: projection.revision, status: "active", stageSchema: schema, counts, durationMs: performance.now() - started };
+    return { revision: projection.revision, status: "active", stageSchema: schema, counts, durationMs: performance.now() - started, metrics };
   } catch (error) {
     await pool.query("UPDATE teyvat_e_snapshots SET status='failed', failure=$2 WHERE revision=$1", [projection.revision, error instanceof Error ? error.message : String(error)]);
     throw error;
@@ -208,15 +271,20 @@ async function installTeyvatSnapshotUnlocked(pool: Pool, projection: TeyvatProje
 }
 
 export async function installTeyvatSnapshot(pool: Pool, projection: TeyvatProjection, manifest: TeyvatArtifactManifest, options: TeyvatSnapshotInstallOptions = {}): Promise<TeyvatSnapshotResult> {
+  const metrics: SnapshotPoolMetrics = { sqlRequests: 0, connectionsCreated: 0, peakConnections: 0 };
+  const restoreInstrumentation = instrumentPool(pool, metrics);
   const lockClient = await pool.connect();
   try {
     await lockClient.query("SELECT pg_advisory_lock(hashtext('teyvat-e-snapshot-install'))");
-    return await installTeyvatSnapshotUnlocked(pool, projection, manifest, options);
+    const result = await installTeyvatSnapshotUnlocked(pool, projection, manifest, options);
+    result.metrics = metrics;
+    return result;
   } finally {
     try {
       await lockClient.query("SELECT pg_advisory_unlock(hashtext('teyvat-e-snapshot-install'))");
     } finally {
       lockClient.release();
+      restoreInstrumentation();
     }
   }
 }

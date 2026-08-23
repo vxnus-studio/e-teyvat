@@ -1,6 +1,6 @@
 # Phase 4 Handoff — Cutover Readiness
 
-Status: in progress — read-only readiness gate added; current proof target is not snapshot-managed
+Status: in progress — read-only readiness gate and install measurement instrumentation added
 
 Objective: prove that E-Teyvat can be switched to the E snapshot safely, measured under representative load, and rolled back without losing the legacy Drizzle path.
 
@@ -28,6 +28,8 @@ npm run teyvat:benchmark-cutover
 The gate refuses to continue when the E target and Drizzle baseline have the same database fingerprint. It then verifies exactly one active snapshot, matches its recorded counts against public E tables, and checks for orphan aliases, relations, and documents.
 
 The benchmark runs representative entity lookup/search/detail/alias and farming operations after a warmup, reporting p50/p95/max latency and errors for both E and Drizzle. Set `TEYVAT_BENCHMARK_ITERATIONS` to increase the sample count.
+
+`npm run teyvat:install-snapshot` now reports the install duration, exact SQL request count, distinct checked-out connections observed, peak pool connections observed, and database storage before/after the operation. An already-active revision is detected before staging and therefore produces a no-op measurement; it must not be used as evidence for a full installation.
 
 Current evidence: the updated E and Drizzle Neon endpoints are distinct. The E target is now snapshot-managed with revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, full expected counts, and zero orphan records. The previous proof target was not modified.
 
@@ -72,8 +74,8 @@ The five-sample live benchmark against the earlier isolated Neon E target and Dr
 
 The updated target’s current public E table footprint is approximately 37.9 MB including indexes and Teyvat extension tables. This is a point-in-time storage measurement; growth across revisions and production traffic remains unmeasured.
 
-The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata.
+The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata. The measurement instrumentation type-checks and passes focused ESLint; a no-op install measurement was not treated as full-install evidence.
 
-The updated Neon target accepted a full same-data rehearsal revision in approximately 26.5 seconds (control-row creation to activation). During rollback, the E alias read succeeded while the rehearsal revision was active; rollback restored the original revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, with the rehearsal retained for recovery. Public storage was approximately 38.1 MB and the retained retired schema approximately 38.0 MB afterward. The installer does not yet expose per-install SQL request or connection-usage counters, so those measurements remain open.
+The updated Neon target accepted a full same-data rehearsal revision in approximately 26.5 seconds (control-row creation to activation). During rollback, the E alias read succeeded while the rehearsal revision was active; rollback restored the original revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, with the rehearsal retained for recovery. Public storage was approximately 38.1 MB and the retained retired schema approximately 38.0 MB afterward. A subsequent full-install measurement remains intentionally pending because the target already contains the active revision and another revision would add retained storage; the installer now exposes the counters needed to close that gate on an explicitly approved measurement target.
 
 The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.
