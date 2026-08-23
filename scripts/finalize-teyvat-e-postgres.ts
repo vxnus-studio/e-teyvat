@@ -3,7 +3,8 @@ config({ path: ".env.local" });
 import { performance } from "node:perf_hooks";
 import { PostgresEngine } from "@vxnus/e-postgres";
 import { readArtifact } from "../lib/teyvat/artifact.ts";
-import { getTeyvatPersistentFarmingQueries } from "../lib/teyvat/domain/index.ts";
+import { TeyvatEPostgresFarmingQueries } from "../lib/teyvat/persistence/e-postgres-farming.ts";
+import { TeyvatPersistentFarmingQueries } from "../lib/teyvat/persistence/farming.ts";
 import pg from "pg";
 
 const targetUrl = process.env.TEYVAT_E_DATABASE_URL;
@@ -66,7 +67,8 @@ const queryTimings = {
   documents: await timed(() => engine.query({ type: "findDocuments", entityId: documentEntity, limit: 20 })),
 };
 
-const baselineFarming = await getTeyvatPersistentFarmingQueries();
+const eFarming = new TeyvatEPostgresFarmingQueries(targetUrl);
+const baselineFarming = new TeyvatPersistentFarmingQueries();
 const farmingCases = ["Furina", alias?.alias ?? "Raiden Shogun", "Mistsplitter Reforged", "Lakkaberry Madame", "Philosophies of Transience", "Mushroom", "invalid target"];
 const farming = [];
 for (const query of farmingCases) {
@@ -76,12 +78,16 @@ for (const query of farmingCases) {
     try { aliasMatch = (await engine.query({ type: "resolve", alias: query, namespace: "genshin" })).entities?.[0]; } catch { aliasMatch = undefined; }
   }
   const targetEntity = direct ?? aliasMatch;
-  const ePlan = targetEntity ? { id: targetEntity.id, relations: (await engine.query({ type: "findRelations", subjectId: targetEntity.id, limit: 1000 })).relations?.length ?? 0 } : null;
+  const ePlanValue = await eFarming.getFarmingPlan(query);
   const bPlan = await timed(() => baselineFarming.getFarmingPlan(query));
-  farming.push({ query, targetFound: Boolean(targetEntity), e: ePlan, baseline: bPlan.value ? { target: bPlan.value.target.id, materials: bPlan.value.materials.map((item) => item.id).sort() } : null, baselineMs: bPlan.ms });
+  const ePlan = ePlanValue ? { target: ePlanValue.target.id, materials: ePlanValue.materials.map((item) => item.id).sort() } : null;
+  const baseline = bPlan.value ? { target: bPlan.value.target.id, materials: bPlan.value.materials.map((item) => item.id).sort() } : null;
+  farming.push({ query, targetFound: Boolean(targetEntity), e: ePlan, baseline, equal: JSON.stringify(ePlan) === JSON.stringify(baseline), baselineMs: bPlan.ms });
 }
+if (farming.some((item) => !item.equal)) throw new Error(`Farming parity failure: ${JSON.stringify(farming)}`);
 
 console.log(JSON.stringify({ target: { database: targetMeta.database, schema: targetMeta.schema, separateFromBaseline: true }, counts, integrity, entityChecks, relationParity, documentParity, capabilities: capabilities.capabilities, queryTimings: { lookupMs: queryTimings.lookup.ms, searchMs: queryTimings.search.ms, aliasMs: queryTimings.alias.ms, traversalMs: queryTimings.traversal.ms, documentsMs: queryTimings.documents.ms, searchCount: queryTimings.search.value.search?.entities?.length, traversalPaths: queryTimings.traversal.value.traversal?.paths?.length }, farming }, null, 2));
 await engine.close();
+await eFarming.close();
 await target.end();
 await baseline.end();

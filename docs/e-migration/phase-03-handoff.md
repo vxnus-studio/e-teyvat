@@ -71,7 +71,7 @@ Evidence was gathered from the route imports and `lib/teyvat/persistence/*`. No 
 
 The explicit E-backed parity run passes all 10 existing cases against the isolated target, including the Teyvat JavaScript `localeCompare` ordering contract. This ordering normalization is required because PostgreSQL's binary `COLLATE "C"` ordering differs for non-ASCII names.
 
-Not yet cut over: farming still uses the Drizzle persistence implementation, and knowledge/banner routes remain application-specific Drizzle surfaces.
+The E-backed farming reader is also implemented behind the same flag. Its full material-ID parity cases pass against the Drizzle reader in the finalizer. Not yet cut over by default: knowledge/banner routes remain application-specific Drizzle surfaces.
 
 ## Critical stop conditions
 
