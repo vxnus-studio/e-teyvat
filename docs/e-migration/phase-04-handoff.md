@@ -22,9 +22,12 @@ Run in an isolated environment:
 
 ```text
 npm run teyvat:verify-cutover
+npm run teyvat:benchmark-cutover
 ```
 
 The gate refuses to continue when the E target and Drizzle baseline have the same database fingerprint. It then verifies exactly one active snapshot, matches its recorded counts against public E tables, and checks for orphan aliases, relations, and documents.
+
+The benchmark runs representative entity lookup/search/detail/alias and farming operations after a warmup, reporting p50/p95/max latency and errors for both E and Drizzle. Set `TEYVAT_BENCHMARK_ITERATIONS` to increase the sample count.
 
 Current evidence: the configured E and Drizzle Neon endpoints are distinct, but the E target predates the snapshot lifecycle and has no `teyvat_e_snapshots` control table. The gate therefore fails closed with an explicit message. Do not initialize that populated proof target automatically; use a reviewed production-like target or a disposable clone for the first lifecycle-managed installation.
 
@@ -35,7 +38,7 @@ Current evidence: the configured E and Drizzle Neon endpoints are distinct, but 
 - [x] E and Drizzle target separation is enforced by fingerprint checks in existing parity/finalizer harnesses.
 - [x] Snapshot promotion and rollback pass against a disposable PostgreSQL target.
 - [x] Entity and farming parity pass with `TEYVAT_RUNTIME_BACKEND=e-postgres`.
-- [ ] Representative API latency and error-rate baseline is recorded with the E flag enabled.
+- [x] Initial representative latency and error baseline recorded with the E reader (3 samples per operation; zero errors).
 - [ ] Full snapshot install is measured against a Neon-like target, including connection count, request count, duration, and storage growth.
 - [ ] Rollback is rehearsed after a successful E-backed read window, with entity and farming responses compared before and after.
 - [ ] A deployment runbook names the exact revision, adapter version, environment variables, health checks, and rollback command.
@@ -62,3 +65,9 @@ Do not enable the E backend broadly if:
 6. Roll back with `npm run teyvat:rollback-snapshot -- <active-revision>` if any stop condition occurs, then remove the E backend flag.
 
 No production cutover is authorized by this document; the unchecked gates are required first.
+
+## Phase 4 evidence record
+
+The initial live benchmark against the configured isolated Neon E target and Drizzle baseline reported zero errors. E p50 latency was approximately 155 ms for entity lookup, 287 ms for entity search, 495 ms for entity detail, 140 ms for alias resolution, and 542 ms for a farming plan. These are three-sample directional measurements only; they are not Neon capacity or SLO claims. A larger sample under representative traffic remains required.
+
+The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.

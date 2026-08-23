@@ -22,6 +22,7 @@
     "teyvat:verify-snapshot": "node --experimental-strip-types scripts/verify-teyvat-snapshot.ts",
     "teyvat:cleanup-staging": "node --experimental-strip-types scripts/cleanup-teyvat-staging.ts",
     "teyvat:verify-cutover": "node --experimental-strip-types scripts/verify-teyvat-cutover.ts",
+    "teyvat:benchmark-cutover": "node --experimental-strip-types scripts/benchmark-teyvat-cutover.ts",
     "teyvat:verify-db": "node --experimental-strip-types scripts/verify-teyvat-db.ts",
     "teyvat:verify-parity": "node --experimental-strip-types scripts/verify-teyvat-parity.ts",
     "teyvat:finalize-e-postgres": "node --experimental-strip-types scripts/finalize-teyvat-e-postgres.ts",
