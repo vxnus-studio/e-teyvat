@@ -68,6 +68,6 @@ No production cutover is authorized by this document; the unchecked gates are re
 
 ## Phase 4 evidence record
 
-The initial live benchmark against the configured isolated Neon E target and Drizzle baseline reported zero errors. E p50 latency was approximately 155 ms for entity lookup, 287 ms for entity search, 495 ms for entity detail, 140 ms for alias resolution, and 542 ms for a farming plan. These are three-sample directional measurements only; they are not Neon capacity or SLO claims. A larger sample under representative traffic remains required.
+The five-sample live benchmark against the configured isolated Neon E target and Drizzle baseline reported zero errors. E p50 latency was approximately 151 ms for entity lookup, 258 ms for entity search, 362 ms for entity detail, 156 ms for alias resolution, and 497 ms for a farming plan. These are directional measurements against the current proof target, not Neon capacity or SLO claims. Representative traffic and a snapshot-managed target remain required.
 
 The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.
