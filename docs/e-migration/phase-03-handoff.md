@@ -65,6 +65,14 @@ The current application is not yet reading the E snapshot in production routes:
 
 Evidence was gathered from the route imports and `lib/teyvat/persistence/*`. No runtime cutover has been made. The first implementation candidate is the entity API pair, followed by farming; knowledge and banner data require explicit ownership decisions because they use application-specific fields and full-text behavior not represented by the generic E contract.
 
+### Entity API implementation slice
+
+`TeyvatEPostgresEntityQueries` now implements the entity query interface against the active E snapshot. Set `TEYVAT_RUNTIME_BACKEND=e-postgres` to exercise it through the existing persistent entity query entry point; the default remains Drizzle until cutover is approved. The implementation covers category mapping, slug/name/alias resolution, alias-aware search, pagination, entity views, and relation-backed detail responses.
+
+The explicit E-backed parity run passes all 10 existing cases against the isolated target, including the Teyvat JavaScript `localeCompare` ordering contract. This ordering normalization is required because PostgreSQL's binary `COLLATE "C"` ordering differs for non-ASCII names.
+
+Not yet cut over: farming still uses the Drizzle persistence implementation, and knowledge/banner routes remain application-specific Drizzle surfaces.
+
 ## Critical stop conditions
 
 Stop before runtime cutover if:

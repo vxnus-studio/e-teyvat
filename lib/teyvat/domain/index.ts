@@ -3,9 +3,10 @@ import { TeyvatEntityQueries } from "./entities.ts";
 import { TeyvatFarmingQueries } from "./farming.ts";
 import { TeyvatPersistentEntityQueries } from "../persistence/entities.ts";
 import { TeyvatPersistentFarmingQueries } from "../persistence/farming.ts";
+import { TeyvatEPostgresEntityQueries } from "../persistence/e-postgres-entities.ts";
 
 let cached: Promise<TeyvatEntityQueries> | undefined;
-let persistentCached: Promise<TeyvatPersistentEntityQueries> | undefined;
+let persistentCached: Promise<TeyvatPersistentEntityQueries | TeyvatEPostgresEntityQueries> | undefined;
 let farmingCached: Promise<TeyvatFarmingQueries> | undefined;
 let persistentFarmingCached: Promise<TeyvatPersistentFarmingQueries> | undefined;
 
@@ -18,8 +19,8 @@ export function resetTeyvatEntityQueriesForTests(): void {
   cached = undefined;
 }
 
-export function getTeyvatPersistentEntityQueries(): Promise<TeyvatPersistentEntityQueries> {
-  persistentCached ??= Promise.resolve(new TeyvatPersistentEntityQueries());
+export function getTeyvatPersistentEntityQueries(): Promise<TeyvatPersistentEntityQueries | TeyvatEPostgresEntityQueries> {
+  persistentCached ??= Promise.resolve(process.env.TEYVAT_RUNTIME_BACKEND === "e-postgres" ? new TeyvatEPostgresEntityQueries() : new TeyvatPersistentEntityQueries());
   return persistentCached;
 }
 
@@ -48,6 +49,6 @@ export function resetTeyvatPersistentFarmingQueriesForTests(): void {
 export { TeyvatEntityQueries } from "./entities.ts";
 export { TeyvatFarmingQueries } from "./farming.ts";
 export { TeyvatPersistentEntityQueries } from "../persistence/entities.ts";
+export { TeyvatEPostgresEntityQueries } from "../persistence/e-postgres-entities.ts";
 export { TeyvatPersistentFarmingQueries } from "../persistence/farming.ts";
 export type * from "./types.ts";
-
