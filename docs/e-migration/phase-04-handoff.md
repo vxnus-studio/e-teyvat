@@ -94,6 +94,8 @@ An isolated local PostgreSQL measurement target loaded the complete revision in 
 
 The updated target passed `npm run teyvat:verify-cutover`, `TEYVAT_RUNTIME_BACKEND=e-postgres npm run teyvat:verify-parity`, and the E-backed finalizer after the snapshot installer was corrected to carry `e_schema_migrations` metadata. The measurement instrumentation type-checks and passes focused ESLint; a no-op install measurement was not treated as full-install evidence.
 
+A local Next.js runtime smoke test with `TEYVAT_RUNTIME_BACKEND=e-postgres` returned HTTP 200 for both `/api/entities` and `/api/farming` against the updated target, with the active revision included in each response. The process was stopped after the read-only checks; this was not a deployed canary.
+
 The updated Neon target accepted a full same-data rehearsal revision in approximately 26.5 seconds (control-row creation to activation). During rollback, the E alias read succeeded while the rehearsal revision was active; rollback restored the original revision `5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959`, with the rehearsal retained for recovery. Public storage was approximately 38.1 MB and the retained retired schema approximately 38.0 MB afterward. A subsequent full-install measurement remains intentionally pending because the target already contains the active revision and another revision would add retained storage; the installer now exposes the counters needed to close that gate on an explicitly approved measurement target.
 
 The rollback harness also passed on a disposable PostgreSQL target after snapshot promotion, restoring `phase2-fixture-a` from `phase2-fixture-b` while preserving failure isolation and idempotent repeat behavior.
