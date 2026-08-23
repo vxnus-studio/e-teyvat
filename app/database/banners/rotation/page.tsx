@@ -1,7 +1,5 @@
-import { getDatabase } from "@/db/client";
-import { bannerPhases, bannerPhaseCharacters, entities } from "@/db/schema";
 import { resolveImageUrl } from "@/app/api/utils";
-import { desc, eq } from "drizzle-orm";
+import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
 import { ArrowLeft, ArrowRight, CalendarDays, Orbit } from "lucide-react";
 import Link from "next/link";
 import { CharacterPortrait } from "../banner-visuals";
@@ -14,10 +12,11 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function BannerRotationPage() {
-  const db = getDatabase();
-  const phases = await db.select().from(bannerPhases).orderBy(desc(bannerPhases.sequenceIndex)).limit(20);
+  const queries = await getTeyvatEPostgresBannerQueries();
+  const { phases: allPhases, appearances } = await queries.overview();
+  const phases = [...allPhases].reverse().slice(0, 20);
   const phaseIds = new Set(phases.map((phase) => phase.id));
-  const charactersByPhase = new Map<number, Array<{
+  const charactersByPhase = new Map<string, Array<{
     slug: string;
     name: string;
     rarity: number;
@@ -25,23 +24,14 @@ export default async function BannerRotationPage() {
   }>>();
 
   if (phaseIds.size) {
-    const allCharacters = await db.select({
-      phaseId: bannerPhaseCharacters.phaseId,
-      slug: entities.slug,
-      name: entities.name,
-      rarity: bannerPhaseCharacters.rarity,
-      customImageUrl: entities.customImageUrl,
-      canonicalData: entities.canonicalData,
-    }).from(bannerPhaseCharacters).innerJoin(entities, eq(bannerPhaseCharacters.characterId, entities.id));
-
-    for (const character of allCharacters) {
+    for (const character of appearances) {
       if (!phaseIds.has(character.phaseId)) continue;
       const phaseCharacters = charactersByPhase.get(character.phaseId) ?? [];
       phaseCharacters.push({
         slug: character.slug,
         name: character.name,
         rarity: character.rarity,
-        imageUrl: resolveImageUrl(character.customImageUrl, character.canonicalData),
+        imageUrl: resolveImageUrl(null, character.canonicalData),
       });
       charactersByPhase.set(character.phaseId, phaseCharacters);
     }

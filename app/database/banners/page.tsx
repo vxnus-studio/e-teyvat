@@ -1,7 +1,5 @@
-import { getDatabase } from "@/db/client";
-import { bannerPhases, bannerPhaseCharacters, entities, bannerCharacterStatistics } from "@/db/schema";
 import { resolveImageUrl } from "@/app/api/utils";
-import { eq, isNotNull, or } from "drizzle-orm";
+import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
 import { Activity, ArrowRight, CalendarRange, ChartNoAxesCombined, Clock3, Orbit, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { CharacterPortrait } from "./banner-visuals";
@@ -15,36 +13,16 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function BannersPage() {
-  const db = getDatabase();
-  const [currentPhase, stats] = await Promise.all([
-    db.query.bannerPhases.findFirst({
-      orderBy: (phases, { desc: orderDesc }) => [orderDesc(phases.sequenceIndex)],
-    }),
-    db.select({ currentWait: bannerCharacterStatistics.currentWait })
-      .from(bannerCharacterStatistics)
-      .innerJoin(entities, eq(bannerCharacterStatistics.characterId, entities.id))
-      .where(isNotNull(bannerCharacterStatistics.pressureScore)),
-  ]);
-
-  const featuredChars = currentPhase
-    ? await db.select({
-        slug: entities.slug,
-        name: entities.name,
-        rarity: bannerPhaseCharacters.rarity,
-        customImageUrl: entities.customImageUrl,
-        canonicalData: entities.canonicalData,
-      })
-      .from(bannerPhaseCharacters)
-      .innerJoin(entities, eq(bannerPhaseCharacters.characterId, entities.id))
-      .where(eq(bannerPhaseCharacters.phaseId, currentPhase.id))
-    : [];
+  const queries = await getTeyvatEPostgresBannerQueries();
+  const { currentPhase, appearances, statistics } = await queries.overview();
+  const featuredChars = currentPhase ? appearances.filter((character) => character.phaseId === currentPhase.id) : [];
 
   const waitCounts = new Map<number, number>();
-  for (const stat of stats) waitCounts.set(stat.currentWait, (waitCounts.get(stat.currentWait) ?? 0) + 1);
+  for (const stat of statistics.filter((stat) => stat.pressureScore !== null)) waitCounts.set(stat.currentWait, (waitCounts.get(stat.currentWait) ?? 0) + 1);
   const distributionData = Array.from(waitCounts, ([wait, count]) => ({ wait, count })).sort((a, b) => a.wait - b.wait);
   const fiveStars = featuredChars.filter((character) => character.rarity === 5);
   const fourStars = featuredChars.filter((character) => character.rarity === 4);
-  const maxWait = stats.length ? Math.max(...stats.map((stat) => stat.currentWait)) : 0;
+  const maxWait = statistics.length ? Math.max(...statistics.map((stat) => stat.currentWait)) : 0;
 
   return (
     <div className="banner-observatory">
@@ -63,7 +41,7 @@ export default async function BannersPage() {
           <span className="orbit-ring ring-two" />
           <span className="orbit-core"><Sparkles size={28} /></span>
           <span className="orbit-label orbit-label-one">PHASE {currentPhase?.sequenceIndex ?? "—"}</span>
-          <span className="orbit-label orbit-label-two">{stats.length} SIGNALS</span>
+          <span className="orbit-label orbit-label-two">{statistics.length} SIGNALS</span>
           <span className="orbit-label orbit-label-three">SYNCED</span>
         </div>
         <div className="banner-telemetry">
@@ -74,7 +52,7 @@ export default async function BannersPage() {
 
       <section className="banner-metric-grid" aria-label="Banner metrics">
         <article><CalendarRange size={18} /><div><span>Current sequence</span><strong>{currentPhase?.sequenceIndex ?? "—"}</strong></div><small>Global phase index</small></article>
-        <article><Activity size={18} /><div><span>Tracked signals</span><strong>{stats.length}</strong></div><small>Pressure-ready units</small></article>
+        <article><Activity size={18} /><div><span>Tracked signals</span><strong>{statistics.length}</strong></div><small>Pressure-ready units</small></article>
         <article><Clock3 size={18} /><div><span>Longest wait</span><strong>{maxWait}</strong></div><small>Completed phases</small></article>
       </section>
 
@@ -94,7 +72,7 @@ export default async function BannersPage() {
                     <CharacterPortrait
                       slug={character.slug}
                       name={character.name}
-                      imageUrl={resolveImageUrl(character.customImageUrl, character.canonicalData)}
+                      imageUrl={resolveImageUrl(null, character.canonicalData)}
                       sizes="(max-width: 760px) 45vw, 260px"
                     />
                     <span><small>Event wish</small><strong>{character.name}</strong></span>

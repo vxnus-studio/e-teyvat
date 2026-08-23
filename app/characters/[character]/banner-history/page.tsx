@@ -1,8 +1,6 @@
 import { resolveImageUrl } from "@/app/api/utils";
 import { CharacterPortrait, SignalGlyph } from "@/app/database/banners/banner-visuals";
-import { getDatabase } from "@/db/client";
-import { bannerCharacterStatistics, bannerPhaseCharacters, bannerPhases, entities } from "@/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
 import { Activity, ArrowLeft, CalendarDays, Clock3, Info, Orbit, RadioTower } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,35 +10,13 @@ export default async function CharacterBannerHistoryPage({
 }: {
   params: Promise<{ character: string }>;
 }) {
-  const db = getDatabase();
   const { character: characterSlug } = await params;
-  const character = await db.query.entities.findFirst({
-    where: eq(entities.slug, characterSlug),
-  });
+  const queries = await getTeyvatEPostgresBannerQueries();
+  const { character, appearances, statistics: stats } = await queries.character(characterSlug);
 
   if (!character) notFound();
 
-  const [appearances, stats] = await Promise.all([
-    db.select({
-      phaseKey: bannerPhases.phaseKey,
-      version: bannerPhases.version,
-      phaseNumber: bannerPhases.phaseNumber,
-      sequenceIndex: bannerPhases.sequenceIndex,
-      startDate: bannerPhases.startDate,
-      endDate: bannerPhases.endDate,
-      status: bannerPhases.status,
-      rarity: bannerPhaseCharacters.rarity,
-    })
-      .from(bannerPhaseCharacters)
-      .innerJoin(bannerPhases, eq(bannerPhaseCharacters.phaseId, bannerPhases.id))
-      .where(eq(bannerPhaseCharacters.characterId, character.id))
-      .orderBy(asc(bannerPhases.sequenceIndex)),
-    db.query.bannerCharacterStatistics.findFirst({
-      where: eq(bannerCharacterStatistics.characterId, character.id),
-    }),
-  ]);
-
-  const imageUrl = resolveImageUrl(character.customImageUrl, character.canonicalData);
+  const imageUrl = resolveImageUrl(null, character.canonicalData);
   const latestAppearance = appearances.at(-1);
   const pressureScore = stats?.pressureScore ?? 0;
   const intervals = stats?.intervals ?? [];

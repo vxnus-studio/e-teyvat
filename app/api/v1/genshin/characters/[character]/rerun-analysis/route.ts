@@ -1,30 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { getDatabase } from "@/db/client";
-import {
-  entities,
-  bannerCharacterStatistics
-} from "@/db/schema";
+import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ character: string }> }
 ) {
-  const db = getDatabase();
   const { character: slug } = await params;
-
-  const charEntity = await db.query.entities.findFirst({
-    where: eq(entities.slug, slug),
-  });
-
+  const queries = await getTeyvatEPostgresBannerQueries();
+  const { character: charEntity, statistics: stats } = await queries.character(slug);
   if (!charEntity) {
     return NextResponse.json({ error: "Character not found" }, { status: 404 });
   }
-
-  const stats = await db.query.bannerCharacterStatistics.findFirst({
-    where: eq(bannerCharacterStatistics.characterId, charEntity.id),
-  });
-
   if (!stats) {
     return NextResponse.json({ error: "No statistics available for this character." }, { status: 404 });
   }
@@ -54,7 +40,7 @@ export async function GET(
       summary: stats.pressureScore && stats.pressureScore > 70 
         ? `${charEntity.name} has entered their typical historical rerun window.` 
         : `${charEntity.name} is likely not due for a rerun immediately based on historical patterns.`,
-      reasons: stats.reasons?.map((r: any) => r.message) ?? [],
+      reasons: stats.reasons?.map((reason) => reason.message) ?? [],
     },
     disclaimer: "This is a statistical estimate based on historical banner rotations. It is not official information or a leak.",
     modelVersion: stats.modelVersion,

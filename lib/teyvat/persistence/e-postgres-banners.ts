@@ -1,0 +1,189 @@
+import { Pool } from "pg";
+import { calculateCharacterStatistics, type CharacterIntervalData } from "../../banners/statistics.ts";
+import { calculatePressureAndConfidence, type PressureResult } from "../../banners/pressure-model.ts";
+
+type JsonObject = Record<string, unknown>;
+
+export type EBannerPhase = {
+  id: string;
+  phaseKey: string;
+  version: string;
+  phaseNumber: number;
+  sequenceIndex: number;
+  startDate: Date | null;
+  endDate: Date | null;
+  status: "completed" | "active" | "upcoming";
+};
+
+export type EBannerCharacter = {
+  id: string;
+  slug: string;
+  name: string;
+  rarity: number;
+  canonicalData: JsonObject;
+};
+
+export type EBannerAppearance = EBannerCharacter & { phaseId: string; phaseKey: string; version: string; phaseNumber: number; sequenceIndex: number; startDate: Date | null; endDate: Date | null; status: EBannerPhase["status"] };
+export type EBannerStatistics = Omit<CharacterIntervalData, "characterId"> & {
+  characterId: string;
+  pressureScore: number | null;
+  pressureLevel: string | null;
+  confidenceScore: number | null;
+  confidenceLevel: string | null;
+  reasons: PressureResult["reasons"];
+  modelVersion: string;
+};
+
+type AppearanceRow = {
+  subject_id: string;
+  subject_slug: string;
+  subject_name: string;
+  subject_data: JsonObject;
+  phase_id: string;
+  phase_data: JsonObject;
+  metadata: JsonObject;
+};
+
+function numberValue(value: unknown, fallback = 0): number {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function stringValue(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function dateValue(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? null : date;
+}
+
+function phaseFromRow(row: { id: string; data: JsonObject }): EBannerPhase {
+  const data = row.data;
+  const startDate = dateValue(data.start_date);
+  const endDate = dateValue(data.end_date);
+  const now = Date.now();
+  const status = startDate && startDate.valueOf() > now
+    ? "upcoming"
+    : endDate && endDate.valueOf() > now
+      ? "active"
+      : "completed";
+  return {
+    id: row.id,
+    phaseKey: stringValue(data.phase_key),
+    version: stringValue(data.version),
+    phaseNumber: numberValue(data.phase_number),
+    sequenceIndex: numberValue(data.sequence_index),
+    startDate,
+    endDate,
+    status,
+  };
+}
+
+function characterFromRow(row: AppearanceRow): EBannerCharacter {
+  const canonical = row.metadata.canonical && typeof row.metadata.canonical === "object"
+    ? row.metadata.canonical as JsonObject
+    : {};
+  return {
+    id: row.subject_id,
+    slug: row.subject_slug,
+    name: row.subject_name,
+    rarity: numberValue(canonical.rarity ?? row.subject_data.rarity, 4),
+    canonicalData: row.subject_data,
+  };
+}
+
+export class TeyvatEPostgresBannerQueries {
+  private readonly pool: Pool;
+
+  constructor(connectionString = process.env.DATABASE_URL) {
+    if (!connectionString) throw new Error("DATABASE_URL is not configured.");
+    this.pool = new Pool({ connectionString, max: 4 });
+  }
+
+  async close(): Promise<void> {
+    await this.pool.end();
+  }
+
+  private async phases(): Promise<EBannerPhase[]> {
+    const result = await this.pool.query<{ id: string; data: JsonObject }>(
+      "SELECT id, data FROM e_entities WHERE kind = $1 ORDER BY (data->>'sequence_index')::int ASC, id COLLATE \"C\" ASC",
+      ["banner_phase"],
+    );
+    return result.rows.map(phaseFromRow);
+  }
+
+  private async appearanceRows(): Promise<AppearanceRow[]> {
+    const result = await this.pool.query<AppearanceRow>(
+      "SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM e_relations r JOIN e_entities subject ON subject.id = r.subject_id JOIN e_entities phase ON phase.id = r.object_id WHERE r.predicate = $1 AND subject.kind = $2 AND phase.kind = $3 ORDER BY (phase.data->>'sequence_index')::int ASC, subject.name COLLATE \"C\" ASC",
+      ["appeared_in", "avatar", "banner_phase"],
+    );
+    return result.rows;
+  }
+
+  private async dataset() {
+    const [phases, rows] = await Promise.all([this.phases(), this.appearanceRows()]);
+    const phaseMap = new Map(phases.map((phase) => [phase.id, phase]));
+    const appearances = rows.flatMap((row) => {
+      const phase = phaseMap.get(row.phase_id) ?? phaseFromRow({ id: row.phase_id, data: row.phase_data });
+      const character = characterFromRow(row);
+      return [{ ...character, phaseId: phase.id, phaseKey: phase.phaseKey, version: phase.version, phaseNumber: phase.phaseNumber, sequenceIndex: phase.sequenceIndex, startDate: phase.startDate, endDate: phase.endDate, status: phase.status }];
+    });
+    return { phases, appearances };
+  }
+
+  private statistics(appearances: EBannerAppearance[], latestSequenceIndex: number): EBannerStatistics[] {
+    const ids = [...new Set(appearances.map((appearance) => appearance.id))].sort();
+    const numericIds = new Map(ids.map((id, index) => [id, index + 1]));
+    const byCharacter = new Map<string, number[]>();
+    for (const appearance of appearances) byCharacter.set(appearance.id, [...(byCharacter.get(appearance.id) ?? []), appearance.sequenceIndex]);
+    const intervalData = ids.map((id) => calculateCharacterStatistics(numericIds.get(id)!, byCharacter.get(id) ?? [], latestSequenceIndex));
+    const pressure = calculatePressureAndConfidence(intervalData.filter((data) => {
+      const id = ids[data.characterId - 1];
+      return appearances.find((appearance) => appearance.id === id)?.rarity === 4;
+    }));
+    const pressureByNumber = new Map(pressure.map((item) => [item.characterId, item]));
+    return intervalData.map((data) => {
+      const id = ids[data.characterId - 1];
+      const result = pressureByNumber.get(data.characterId);
+      return { ...data, pressureScore: result?.pressureScore ?? null, pressureLevel: result?.pressureLevel ?? null, confidenceScore: result?.confidenceScore ?? null, confidenceLevel: result?.confidenceLevel ?? null, reasons: result?.reasons ?? [], characterId: id, modelVersion: "rerun-pressure-v1" };
+    });
+  }
+
+  async overview() {
+    const { phases, appearances } = await this.dataset();
+    const latestSequenceIndex = phases.at(-1)?.sequenceIndex ?? 0;
+    const statistics = this.statistics(appearances, latestSequenceIndex);
+    const statsById = new Map(statistics.map((stat) => [stat.characterId, stat]));
+    return { phases, appearances, statistics, statsById, currentPhase: phases.at(-1) ?? null };
+  }
+
+  async pressure() {
+    const data = await this.overview();
+    const characters = [...data.statsById.values()]
+      .filter((stat) => stat.pressureScore !== null)
+      .map((stat) => ({ ...stat, character: data.appearances.find((appearance) => appearance.id === stat.characterId)! }))
+      .sort((a, b) => (b.pressureScore ?? 0) - (a.pressureScore ?? 0));
+    return { ...data, characters };
+  }
+
+  async character(slug: string) {
+    const data = await this.overview();
+    const appearances = data.appearances.filter((appearance) => appearance.slug === slug).sort((a, b) => a.sequenceIndex - b.sequenceIndex);
+    const character = appearances[0] ?? null;
+    const statistics = character ? data.statsById.get(character.id) ?? null : null;
+    return { ...data, character, appearances, statistics };
+  }
+}
+
+let cached: Promise<TeyvatEPostgresBannerQueries> | undefined;
+
+export function getTeyvatEPostgresBannerQueries(): Promise<TeyvatEPostgresBannerQueries> {
+  cached ??= Promise.resolve(new TeyvatEPostgresBannerQueries());
+  return cached;
+}
+
+export function resetTeyvatEPostgresBannerQueriesForTests(): void {
+  cached = undefined;
+}

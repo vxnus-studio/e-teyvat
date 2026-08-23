@@ -1,7 +1,5 @@
-import { getDatabase } from "@/db/client";
-import { bannerCharacterStatistics, entities, bannerPhases } from "@/db/schema";
 import { resolveImageUrl } from "@/app/api/utils";
-import { desc, eq, isNotNull } from "drizzle-orm";
+import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
 import { Activity, ArrowLeft, ArrowUpRight, Info, RadioTower } from "lucide-react";
 import Link from "next/link";
 import { CharacterPortrait, SignalGlyph } from "../banner-visuals";
@@ -12,6 +10,8 @@ export const metadata = {
   description: "Statistical banner pressure estimates based on historical rotations.",
 };
 
+export const dynamic = "force-dynamic";
+
 function pressureBand(score: number | null) {
   if ((score ?? 0) >= 75) return "critical";
   if ((score ?? 0) >= 50) return "elevated";
@@ -19,30 +19,9 @@ function pressureBand(score: number | null) {
 }
 
 export default async function RerunPressurePage() {
-  const db = getDatabase();
-  const currentPhase = await db.query.bannerPhases.findFirst({
-    where: eq(bannerPhases.status, "active"),
-    orderBy: (phases, { desc: orderDesc }) => [orderDesc(phases.sequenceIndex)],
-  }) ?? await db.query.bannerPhases.findFirst({
-    where: eq(bannerPhases.status, "completed"),
-    orderBy: (phases, { desc: orderDesc }) => [orderDesc(phases.sequenceIndex)],
-  });
-
-  const characters = await db.select({
-    slug: entities.slug,
-    name: entities.name,
-    customImageUrl: entities.customImageUrl,
-    canonicalData: entities.canonicalData,
-    currentWait: bannerCharacterStatistics.currentWait,
-    medianInterval: bannerCharacterStatistics.medianInterval,
-    pressureScore: bannerCharacterStatistics.pressureScore,
-    pressureLevel: bannerCharacterStatistics.pressureLevel,
-    confidenceScore: bannerCharacterStatistics.confidenceScore,
-    confidenceLevel: bannerCharacterStatistics.confidenceLevel,
-  }).from(bannerCharacterStatistics)
-    .innerJoin(entities, eq(bannerCharacterStatistics.characterId, entities.id))
-    .where(isNotNull(bannerCharacterStatistics.pressureScore))
-    .orderBy(desc(bannerCharacterStatistics.pressureScore));
+  const queries = await getTeyvatEPostgresBannerQueries();
+  const { currentPhase, characters: rankedCharacters } = await queries.pressure();
+  const characters = rankedCharacters.map(({ character, ...stat }) => ({ ...character, ...stat }));
 
   const average = characters.length ? Math.round(characters.reduce((sum, character) => sum + (character.pressureScore ?? 0), 0) / characters.length) : 0;
   const highPressure = characters.filter((character) => (character.pressureScore ?? 0) >= 75).length;
@@ -80,7 +59,7 @@ export default async function RerunPressurePage() {
                 <CharacterPortrait
                   slug={character.slug}
                   name={character.name}
-                  imageUrl={resolveImageUrl(character.customImageUrl, character.canonicalData)}
+                  imageUrl={resolveImageUrl(null, character.canonicalData)}
                   sizes="70px"
                 />
                 <span className="pressure-identity"><small>{character.pressureLevel?.replaceAll("_", " ") ?? band}</small><strong>{character.name}</strong></span>
