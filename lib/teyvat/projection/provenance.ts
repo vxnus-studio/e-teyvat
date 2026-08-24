@@ -1,4 +1,4 @@
-import type { Provenance, TemporalSemantics } from "@vxnus/e";
+import type { Provenance, TemporalSemantics } from "./types.ts";
 import type { CanonicalSource, CanonicalRecord, CanonicalDocument } from "./types.ts";
 
 function sourceOf(record: CanonicalRecord | CanonicalDocument): CanonicalSource | undefined {

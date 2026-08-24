@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
+import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const offset = parseInt(searchParams.get("offset") ?? "0");
   const pressureLevelParam = searchParams.get("pressureLevel");
   
-  const queries = await getTeyvatEPostgresBannerQueries();
+  const queries = await getTeyvatBannerQueries();
   const { currentPhase, characters } = await queries.pressure();
   const results = characters
     .filter(({ pressureLevel }) => !pressureLevelParam || pressureLevel === pressureLevelParam)

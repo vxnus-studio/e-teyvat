@@ -1,6 +1,6 @@
 import { resolveImageUrl } from "@/app/api/utils";
 import { CharacterPortrait, SignalGlyph } from "@/app/database/banners/banner-visuals";
-import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
+import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { Activity, ArrowLeft, CalendarDays, Clock3, Info, Orbit, RadioTower } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,7 +11,7 @@ export default async function CharacterBannerHistoryPage({
   params: Promise<{ character: string }>;
 }) {
   const { character: characterSlug } = await params;
-  const queries = await getTeyvatEPostgresBannerQueries();
+  const queries = await getTeyvatBannerQueries();
   const { character, appearances, statistics: stats } = await queries.character(characterSlug);
 
   if (!character) notFound();

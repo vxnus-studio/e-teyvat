@@ -1,6 +1,4 @@
-import { validateBatchDataset } from "@vxnus/e";
-import type { BatchDataset } from "@vxnus/e";
-import type { TeyvatProjection } from "./types.ts";
+import type { BatchDataset, TeyvatProjection } from "./types.ts";
 
 export interface ProjectionValidationResult {
   entities: number;
@@ -29,6 +27,8 @@ export function validateProjection(projection: TeyvatProjection): ProjectionVali
   if (duplicateIds) throw new Error(`Projection has ${duplicateIds} duplicate IDs`);
   if (unresolvedEndpoints) throw new Error(`Projection has ${unresolvedEndpoints} unresolved relation endpoints`);
   const dataset: BatchDataset = { entities: projection.entities, aliases: projection.aliases, relations: projection.relations, documents: projection.documents };
-  validateBatchDataset(dataset);
+  for (const entity of dataset.entities) {
+    if (!entity.id || !entity.namespace || !entity.kind || !entity.slug || !entity.name) throw new Error(`Invalid entity ${entity.id}`);
+  }
   return { entities: entityIds.size, aliases: aliasIds.size, relations: relationIds.size, documents: documentIds.size, unresolvedEndpoints, duplicateIds };
 }

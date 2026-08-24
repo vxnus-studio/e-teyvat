@@ -1,4 +1,4 @@
-import type { Document, Entity } from "@vxnus/e";
+import type { Document, Entity } from "./types.ts";
 import { projectProvenance } from "./provenance.ts";
 import type { CanonicalDocument, TeyvatDocumentMetadata } from "./types.ts";
 

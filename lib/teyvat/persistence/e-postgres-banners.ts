@@ -1,4 +1,5 @@
-import { Pool } from "pg";
+import { sql } from "drizzle-orm";
+import { getDatabase, type Database } from "../../../db/client.ts";
 import { calculateCharacterStatistics, type CharacterIntervalData } from "../../banners/statistics.ts";
 import { calculatePressureAndConfidence, type PressureResult } from "../../banners/pressure-model.ts";
 
@@ -94,32 +95,23 @@ function characterFromRow(row: AppearanceRow): EBannerCharacter {
   };
 }
 
-export class TeyvatEPostgresBannerQueries {
-  private readonly pool: Pool;
+export class TeyvatBannerQueries {
+  private readonly db: Database;
 
   constructor(connectionString = process.env.DATABASE_URL) {
-    if (!connectionString) throw new Error("DATABASE_URL is not configured.");
-    this.pool = new Pool({ connectionString, max: 4 });
+    this.db = getDatabase(connectionString);
   }
 
-  async close(): Promise<void> {
-    await this.pool.end();
-  }
+  async close(): Promise<void> {}
 
   private async phases(): Promise<EBannerPhase[]> {
-    const result = await this.pool.query<{ id: string; data: JsonObject }>(
-      "SELECT id, data FROM e_entities WHERE kind = $1 ORDER BY (data->>'sequence_index')::int ASC, id COLLATE \"C\" ASC",
-      ["banner_phase"],
-    );
-    return result.rows.map(phaseFromRow);
+    const result = await this.db.execute(sql`SELECT id, data FROM teyvat_entities WHERE kind = 'banner_phase' ORDER BY (data->>'sequence_index')::int ASC, id ASC`);
+    return (result as unknown as { id: string; data: JsonObject }[]).map(phaseFromRow);
   }
 
   private async appearanceRows(): Promise<AppearanceRow[]> {
-    const result = await this.pool.query<AppearanceRow>(
-      "SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM e_relations r JOIN e_entities subject ON subject.id = r.subject_id JOIN e_entities phase ON phase.id = r.object_id WHERE r.predicate = $1 AND subject.kind = $2 AND phase.kind = $3 ORDER BY (phase.data->>'sequence_index')::int ASC, subject.name COLLATE \"C\" ASC",
-      ["appeared_in", "avatar", "banner_phase"],
-    );
-    return result.rows;
+    const result = await this.db.execute(sql`SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM teyvat_relations r JOIN teyvat_entities subject ON subject.id = r.subject_id JOIN teyvat_entities phase ON phase.id = r.object_id WHERE r.predicate = 'appeared_in' AND subject.kind = 'avatar' AND phase.kind = 'banner_phase' ORDER BY (phase.data->>'sequence_index')::int ASC, subject.name ASC`);
+    return result as unknown as AppearanceRow[];
   }
 
   private async dataset() {
@@ -177,13 +169,13 @@ export class TeyvatEPostgresBannerQueries {
   }
 }
 
-let cached: Promise<TeyvatEPostgresBannerQueries> | undefined;
+let cached: Promise<TeyvatBannerQueries> | undefined;
 
-export function getTeyvatEPostgresBannerQueries(): Promise<TeyvatEPostgresBannerQueries> {
-  cached ??= Promise.resolve(new TeyvatEPostgresBannerQueries());
+export function getTeyvatBannerQueries(): Promise<TeyvatBannerQueries> {
+  cached ??= Promise.resolve(new TeyvatBannerQueries());
   return cached;
 }
 
-export function resetTeyvatEPostgresBannerQueriesForTests(): void {
+export function resetTeyvatBannerQueriesForTests(): void {
   cached = undefined;
 }

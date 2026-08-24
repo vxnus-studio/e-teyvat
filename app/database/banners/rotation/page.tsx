@@ -1,5 +1,5 @@
 import { resolveImageUrl } from "@/app/api/utils";
-import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
+import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { ArrowLeft, ArrowRight, CalendarDays, Orbit } from "lucide-react";
 import Link from "next/link";
 import { CharacterPortrait } from "../banner-visuals";
@@ -12,7 +12,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function BannerRotationPage() {
-  const queries = await getTeyvatEPostgresBannerQueries();
+  const queries = await getTeyvatBannerQueries();
   const { phases: allPhases, appearances } = await queries.overview();
   const phases = [...allPhases].reverse().slice(0, 20);
   const phaseIds = new Set(phases.map((phase) => phase.id));

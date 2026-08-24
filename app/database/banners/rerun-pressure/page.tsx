@@ -1,5 +1,5 @@
 import { resolveImageUrl } from "@/app/api/utils";
-import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
+import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { Activity, ArrowLeft, ArrowUpRight, Info, RadioTower } from "lucide-react";
 import Link from "next/link";
 import { CharacterPortrait, SignalGlyph } from "../banner-visuals";
@@ -19,7 +19,7 @@ function pressureBand(score: number | null) {
 }
 
 export default async function RerunPressurePage() {
-  const queries = await getTeyvatEPostgresBannerQueries();
+  const queries = await getTeyvatBannerQueries();
   const { currentPhase, characters: rankedCharacters } = await queries.pressure();
   const characters = rankedCharacters.map(({ character, ...stat }) => ({ ...character, ...stat }));
 

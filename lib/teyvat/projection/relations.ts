@@ -1,4 +1,4 @@
-import type { Entity, Relation } from "@vxnus/e";
+import type { Entity, Relation } from "./types.ts";
 import { hashId, stableStringify } from "./identity.ts";
 import type { CanonicalRecord, CanonicalRelation, JsonObject } from "./types.ts";
 

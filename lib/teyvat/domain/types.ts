@@ -1,4 +1,4 @@
-import type { Provenance, Relation } from "@vxnus/e";
+import type { Provenance, Relation } from "../projection/types.ts";
 
 export interface EntityQueryOptions {
   kind?: string;
@@ -81,4 +81,3 @@ export interface FarmingPlanResult {
 }
 
 export type EngineRelation = Relation;
-

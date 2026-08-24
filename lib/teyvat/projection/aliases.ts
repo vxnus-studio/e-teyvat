@@ -1,4 +1,4 @@
-import type { Alias, Entity } from "@vxnus/e";
+import type { Alias, Entity } from "./types.ts";
 import { hashId } from "./identity.ts";
 import { structuredAliases } from "./names.ts";
 import type { CanonicalRecord } from "./types.ts";

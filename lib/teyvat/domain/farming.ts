@@ -1,4 +1,4 @@
-import type { Entity, Relation } from "@vxnus/e";
+import type { Entity, Relation } from "../projection/types.ts";
 import type { TeyvatProjection } from "../projection/types.ts";
 import { normalize } from "./entities.ts";
 import type { FarmingMaterialViewModel, FarmingPlanResult, FarmingSourceViewModel, FarmingTargetViewModel } from "./types.ts";

@@ -1,4 +1,11 @@
-import type { Alias, Document, Entity, Relation, TemporalSemantics, Provenance, BatchDataset } from "@vxnus/e";
+export interface Provenance { provider?: string; source?: string; sourceId?: string; sourceRevision?: string; locator?: string; contentHash?: string; observedAt?: string; extractedVia?: string; confidence?: string; [key: string]: unknown; }
+export interface TemporalSemantics { validFrom?: string; validUntil?: string; [key: string]: unknown; }
+export interface Entity { id: string; namespace: string; kind: string; slug: string; name: string; data: Record<string, unknown>; provenance?: Provenance; temporal?: TemporalSemantics; }
+export interface Alias { id: string; entityId: string; alias: string; }
+export interface Relation { id: string; subjectId: string; predicate: string; objectId: string; metadata?: Record<string, unknown>; provenance?: Provenance; temporal?: TemporalSemantics; }
+export interface Document { id: string; entityId: string; content: string; provenance?: Provenance; }
+export interface BatchDataset { entities: Entity[]; aliases: Alias[]; relations: Relation[]; documents: Document[]; }
+export interface BatchIngestResult { entitiesInserted: number; aliasesInserted: number; relationsInserted: number; documentsInserted: number; }
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = { [key: string]: JsonValue };

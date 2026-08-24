@@ -1,13 +1,10 @@
-# E-Teyvat
-
-> [!WARNING]
-> **Refactoring in Progress**: E-Teyvat is currently undergoing massive refactoring from a standalone application into an `e`-compatible Teyvat/Genshin knowledge base.
+# Teyvat Knowledge Base
 
 **Website:** [https://eteyvat.vxnus.xyz](https://eteyvat.vxnus.xyz)
 
-E-Teyvat is an open structured knowledge base for **Genshin Impact**, designed for both humans and AI systems.
+Teyvat is an open structured knowledge base for **Genshin Impact**, designed for both humans and AI systems.
 
-Rather than acting as another wiki, E-Teyvat exposes canonical entities, relationships, and searchable knowledge through public APIs. It can be used for AI retrieval, applications, websites, bots, and research that require consistent Genshin data.
+Rather than acting as another wiki, Teyvat exposes canonical entities, relationships, and searchable knowledge through public APIs. It can be used for AI retrieval, applications, websites, bots, and research that require consistent Genshin data.
 
 Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Drizzle ORM, the project focuses on reliable data synchronization, graph relationships, and long-term machine-readable knowledge.
 
@@ -15,9 +12,6 @@ Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Dri
 
 * [Architecture and AI Retrieval](docs/architecture.md)
 * [Read API Reference](docs/api.md)
-* [Phase 6 E-Postgres Proof of Concept](docs/phase-6-e-postgres-poc.md)
-* [E-Postgres Problems and Limitations](docs/e-postgres-problems.md)
-* [E Migration Plan](docs/e-migration/README.md)
 
 ## Getting Started
 
@@ -89,4 +83,4 @@ Vector storage is prepared for future embedding providers, while full-text searc
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-Game data, artwork, names, and other intellectual property belong to **COGNOSPHERE PTE. LTD. (HoYoverse)**. E-Teyvat is an independent fan project and is not affiliated with or endorsed by HoYoverse.
+Game data, artwork, names, and other intellectual property belong to **COGNOSPHERE PTE. LTD. (HoYoverse)**. Teyvat is an independent fan project and is not affiliated with or endorsed by HoYoverse.

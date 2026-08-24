@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { BatchDataset } from "@vxnus/e";
+import type { BatchDataset } from "./projection/types.ts";
 import { stableStringify } from "./projection/identity.ts";
 import { projectionRevision } from "./projection/index.ts";
 import type { TeyvatProjection } from "./projection/types.ts";

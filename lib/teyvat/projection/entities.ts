@@ -1,4 +1,4 @@
-import type { Entity } from "@vxnus/e";
+import type { Entity } from "./types.ts";
 import type { CanonicalRecord } from "./types.ts";
 import { toEEntityId, toSlug } from "./identity.ts";
 import { projectProvenance, projectTemporal } from "./provenance.ts";

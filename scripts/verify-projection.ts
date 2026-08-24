@@ -49,7 +49,7 @@ assert(avatar?.temporal?.validFrom === "1.0", "Entity temporal projection missin
 assert(statSync(process.cwd()).isDirectory(), "Working directory is unavailable");
 
 console.log(JSON.stringify({
-  eVersion: "@vxnus/e@0.2.0",
+  backend: "local projection validator",
   input: { entities: input.entities.length, relations: input.relations.length, documents: input.documents.length },
   projected: { entities: first.entities.length, aliases: first.aliases.length, relations: first.relations.length, documents: first.documents.length },
   special: { syntheticReliquaryEntities: first.stats.syntheticReliquaryEntities, recipeRemaps: first.stats.recipeRemaps, nameFallbacks: first.stats.nameFallbacks },

@@ -1,4 +1,4 @@
-import type { Entity } from "@vxnus/e";
+import type { Entity } from "../projection/types.ts";
 import type { TeyvatProjection } from "../projection/types.ts";
 import type { EntityDetailResult, EntityQueryOptions, EntitySearchResult, TeyvatEntityViewModel, TeyvatRelationViewModel } from "./types.ts";
 

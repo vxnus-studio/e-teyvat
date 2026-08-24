@@ -1,8 +1,8 @@
-# E-Teyvat architecture
+# Teyvat architecture
 
 ## Purpose
 
-E-Teyvat turns the public genshin-db dataset into three complementary forms:
+Teyvat turns the public genshin-db dataset into three complementary forms:
 
 1. Canonical records for pages and exact lookups.
 2. Explicit graph relations for questions that require multiple entities.
@@ -110,7 +110,7 @@ An audit row for every import attempt. It records status, content digest,
 counts, timestamps, unresolved relations, missing folders, and errors.
 
 The upstream API does not expose a dependable global dataset version, so
-E-Teyvat derives `source_revision` from a stable digest of imported records.
+Teyvat derives `source_revision` from a stable digest of imported records.
 
 ## Answering a farming question
 

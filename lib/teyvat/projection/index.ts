@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Entity } from "@vxnus/e";
+import type { Entity } from "./types.ts";
 import { projectAliases } from "./aliases.ts";
 import { projectDocuments } from "./documents.ts";
 import { projectEntities } from "./entities.ts";

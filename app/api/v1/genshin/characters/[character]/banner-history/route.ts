@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTeyvatEPostgresBannerQueries } from "@/lib/teyvat/persistence/e-postgres-banners";
+import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ character: string }> }
 ) {
   const { character: slug } = await params;
-  const queries = await getTeyvatEPostgresBannerQueries();
+  const queries = await getTeyvatBannerQueries();
   const { character: charEntity, appearances, statistics: stats } = await queries.character(slug);
 
   if (!charEntity) {

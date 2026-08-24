@@ -1,6 +1,6 @@
-# Banner Rotation Analysis in e-Teyvat
+# Banner Rotation Analysis in Teyvat
 
-This document outlines the methodology, architecture, and limitations of the Banner Rotation Analysis system in e-Teyvat.
+This document outlines the methodology, architecture, and limitations of the Banner Rotation Analysis system in Teyvat.
 
 ## Methodology
 
@@ -8,7 +8,7 @@ The banner rotation engine tracks Genshin Impact event wish banners to calculate
 
 ### Phase Tracking
 Banners are tracked by **Phases**. A phase represents one time period within a game version (typically half a version). 
-- Multiple simultaneous banners (e.g., Character Event Wish-1 and Character Event Wish-2) are merged into a single "Phase".
+- Multiple simultaneous banners (for example, Character Event Wish-1 and Character Event Wish-2) are merged into a single "Phase".
 - Phases are sequentially numbered across the entire game's history to create a stable timeline index. For example, if Version 1.0 Phase 1 is index `1`, Version 1.0 Phase 2 is index `2`, and so on.
 
 ### Rerun Pressure Model
@@ -47,7 +47,7 @@ Returns a ranked list of characters based on their Rerun Pressure Score.
 ## Architecture
 
 Data is sourced from the [Samsara](https://github.com/benlei/samsara-web) dataset. 
-The ingestion pipeline (`bun run sync:banners`) fetches the upstream `banners.yaml`, parses version strings (including Chronicles like "Luna V.1"), resolves character aliases to canonical e-Teyvat entities, and upserts phase data.
+The ingestion pipeline (`bun run sync:banners`) fetches the upstream `banners.yaml`, parses version strings (including Chronicles like "Luna V.1"), resolves character aliases to canonical Teyvat entities, and upserts phase data.
 Statistics are deterministically calculated during sync and stored in the database (`banner_character_statistics`) rather than calculated on the fly.
 
 ## Limitations & Disclaimer
