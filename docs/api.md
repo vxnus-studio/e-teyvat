@@ -106,7 +106,16 @@ Parameters:
 | `q` | Yes | Full-text query |
 | `limit` | No | Result limit from 1 to 50; default 8 |
 
-Semantic vector search is not exposed yet because embeddings are not generated.
+Semantic and hybrid retrieval are exposed only when the server has an embedding
+provider configured and every chunk in the active revision has a matching
+embedding. Until then the manifest reports `semanticSearch: false`, lexical
+retrieval remains available, and semantic requests return
+`semantic_search_unavailable`.
+
+Embedding configuration is server-side only: `TEYVAT_EMBEDDING_ENDPOINT`,
+`TEYVAT_EMBEDDING_MODEL`, `TEYVAT_EMBEDDING_PROVIDER`, and
+`TEYVAT_EMBEDDING_API_KEY`. Generate revision-scoped vectors with
+`npm run teyvat:embed`.
 
 ## Error shape
 
