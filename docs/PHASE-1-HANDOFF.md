@@ -1,7 +1,7 @@
 # Phase 1 handoff — Teyvat E provider
 
 **Phase:** 1 — E-compatible remote provider
-**Status:** planned
+**Status:** implementation complete; Neon deployment verification pending
 **Input:** the existing normalized `gi-data` projection. Do not reacquire or
 normalize source data in this phase.
 

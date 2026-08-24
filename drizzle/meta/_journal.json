@@ -36,6 +36,13 @@
       "when": 1787466858257,
       "tag": "0004_allow_duplicate_teyvat_slugs",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787560129503,
+      "tag": "0005_worried_justin_hammer",
+      "breakpoints": true
     }
   ]
 }

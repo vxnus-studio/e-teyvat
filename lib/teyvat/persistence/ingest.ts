@@ -1,11 +1,13 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { artifactSha256, ARTIFACT_PATH, MANIFEST_PATH, readArtifact, readArtifactManifest } from "../artifact.ts";
 import { normalize } from "../domain/entities.ts";
 import { createTransactionalDatabase } from "./db.ts";
-import { teyvatAliases, teyvatDatasetRevisions, teyvatDocuments, teyvatEntities, teyvatRelations, type NewTeyvatEntity, type NewTeyvatRelation, type NewTeyvatDocument } from "../../../db/schema.ts";
+import { teyvatAliases, teyvatChunks, teyvatDatasetRevisions, teyvatDocuments, teyvatEntities, teyvatRelations, teyvatSources, type NewTeyvatEntity, type NewTeyvatRelation, type NewTeyvatDocument, type NewTeyvatChunk } from "../../../db/schema.ts";
 import type { TeyvatProjection } from "../projection/types.ts";
 
 const CHUNK_SIZE = 250;
+const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 
 function chunks<T>(items: T[], size = CHUNK_SIZE): T[][] {
   const result: T[][] = [];
@@ -35,9 +37,13 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
     await db.transaction(async (tx) => {
       await tx.delete(teyvatRelations);
       await tx.delete(teyvatAliases);
+      await tx.delete(teyvatChunks);
       await tx.delete(teyvatDocuments);
       await tx.delete(teyvatEntities);
+      await tx.delete(teyvatSources);
       await tx.delete(teyvatDatasetRevisions);
+
+      await tx.insert(teyvatSources).values({ id: "gi-data", title: "gi-data", license: "see source metadata", uri: "https://github.com/vxnuslabs/gi-data" });
 
       await insertChunks(projection.entities, (chunk) => tx.insert(teyvatEntities).values(chunk.map((entity) => ({
         id: entity.id,
@@ -55,8 +61,9 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
       await insertChunks(projection.documents, (chunk) => tx.insert(teyvatDocuments).values(chunk.map((document) => {
         const item = metadata.get(document.id.replace("genshin:document:", ""));
         if (!item) throw new Error(`Missing document metadata for ${document.id}`);
-        return { id: document.id, entityId: document.entityId, content: document.content, provenance: document.provenance ? document.provenance as unknown as Record<string, unknown> : null, category: item.category, title: item.title, parentSourceId: item.parentSourceId, } as NewTeyvatDocument;
+        return { id: document.id, entityId: document.entityId, content: document.content, sourceId: "gi-data", revision: projection.revision, contentHash: hash(document.content), provenance: document.provenance ? document.provenance as unknown as Record<string, unknown> : null, category: item.category, title: item.title, parentSourceId: item.parentSourceId, } as NewTeyvatDocument;
       })));
+      await insertChunks(projection.documents, (chunk) => tx.insert(teyvatChunks).values(chunk.map((document) => ({ id: `${document.id}:0`, documentId: document.id, revision: projection.revision, ordinal: 0, content: document.content, contentHash: hash(document.content), metadata: { category: metadata.get(document.id.replace("genshin:document:", ""))?.category ?? "" } }) as NewTeyvatChunk)));
       await tx.insert(teyvatDatasetRevisions).values({
         revision: projection.revision,
         projectionVersion: manifest.projectionVersion,

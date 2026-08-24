@@ -305,12 +305,37 @@ export const teyvatDocuments = pgTable(
       .notNull()
       .references(() => teyvatEntities.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
+    sourceId: text("source_id").notNull().default("gi-data"),
+    revision: text("revision").notNull().default(""),
+    contentHash: varchar("content_hash", { length: 64 }).notNull().default(""),
     provenance: jsonb("provenance").$type<Record<string, unknown>>(),
     category: text("category").notNull(),
     title: text("title").notNull().default(""),
     parentSourceId: text("parent_source_id").notNull(),
   },
   (table) => [index("teyvat_documents_entity_idx").on(table.entityId)],
+);
+
+export const teyvatSources = pgTable("teyvat_sources", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  license: text("license").notNull(),
+  uri: text("uri"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+});
+
+export const teyvatChunks = pgTable(
+  "teyvat_chunks",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id").notNull().references(() => teyvatDocuments.id, { onDelete: "cascade" }),
+    revision: text("revision").notNull(),
+    ordinal: integer("ordinal").notNull(),
+    content: text("content").notNull(),
+    contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+  },
+  (table) => [index("teyvat_chunks_document_ordinal_idx").on(table.documentId, table.ordinal), index("teyvat_chunks_revision_idx").on(table.revision)],
 );
 
 export const teyvatDatasetRevisions = pgTable("teyvat_dataset_revisions", {
@@ -331,3 +356,4 @@ export type TeyvatRelation = typeof teyvatRelations.$inferSelect;
 export type NewTeyvatRelation = typeof teyvatRelations.$inferInsert;
 export type TeyvatDocument = typeof teyvatDocuments.$inferSelect;
 export type NewTeyvatDocument = typeof teyvatDocuments.$inferInsert;
+export type NewTeyvatChunk = typeof teyvatChunks.$inferInsert;
