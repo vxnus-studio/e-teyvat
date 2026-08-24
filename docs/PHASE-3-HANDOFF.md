@@ -1,7 +1,7 @@
 # Phase 3 handoff — Teyvat semantic retrieval
 
 **Phase:** 3 — optional vector/hybrid retrieval
-**Status:** planned
+**Status:** foundation complete; semantic activation pending
 **Prerequisite:** Phase 2 hosted provider is live and operationally verified.
 
 ## Outcome
@@ -19,6 +19,15 @@ changing `gi-data`, source provenance, or the lexical E contract.
 - Expose `semanticSearch`/`hybrid` only after the index is ready.
 - Measure retrieval quality on lore, entity, farming, and paraphrase fixtures.
 
+## Delivered foundation
+
+- Added `teyvat_embeddings`, keyed by chunk, dataset revision, and model, with
+  content hashes and provider metadata.
+- Applied migration `0006_revision_scoped_embeddings` to the configured Neon
+  database.
+- Kept the manifest semantic capability disabled because no embedding model or
+  provider has been selected and no vectors have been generated.
+
 ## Completion gate
 
 - no raw or normalized source data is modified;
@@ -26,3 +35,6 @@ changing `gi-data`, source provenance, or the lexical E contract.
 - lexical retrieval remains available during embedding outages;
 - capability flags match actual readiness;
 - vector and hybrid retrieval pass E conformance tests.
+
+The remaining model selection, generation, indexing, and quality work is
+handed off to Phase 4.

@@ -338,6 +338,27 @@ export const teyvatChunks = pgTable(
   (table) => [index("teyvat_chunks_document_ordinal_idx").on(table.documentId, table.ordinal), index("teyvat_chunks_revision_idx").on(table.revision)],
 );
 
+// Embeddings are deliberately separate from the clean projection: one chunk can
+// have multiple model revisions, and lexical retrieval remains independent.
+export const teyvatEmbeddings = pgTable(
+  "teyvat_embeddings",
+  {
+    id: text("id").primaryKey(),
+    chunkId: text("chunk_id").notNull().references(() => teyvatChunks.id, { onDelete: "cascade" }),
+    revision: text("revision").notNull(),
+    model: text("model").notNull(),
+    provider: text("provider").notNull(),
+    dimensions: integer("dimensions").notNull().default(768),
+    contentHash: varchar("content_hash", { length: 64 }).notNull(),
+    embedding: vector("embedding", { dimensions: 768 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("teyvat_embeddings_chunk_revision_model_uidx").on(table.chunkId, table.revision, table.model),
+    index("teyvat_embeddings_revision_model_idx").on(table.revision, table.model),
+  ],
+);
+
 export const teyvatDatasetRevisions = pgTable("teyvat_dataset_revisions", {
   revision: text("revision").primaryKey(),
   projectionVersion: text("projection_version").notNull(),
