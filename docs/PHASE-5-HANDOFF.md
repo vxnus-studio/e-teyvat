@@ -1,7 +1,7 @@
 # Phase 5 handoff — deploy Teyvat provider
 
 **Phase:** 5 — production deployment and cross-boundary verification
-**Status:** blocked on external deployment configuration
+**Status:** complete
 **Prerequisite:** hosting project access and the fresh Neon `DATABASE_URL` set
 as a server-side deployment secret.
 
@@ -14,5 +14,5 @@ as a server-side deployment secret.
 - Keep semantic capability false until embedding configuration and complete
   indexing are present.
 
-The provider is not complete in production while the hosted endpoint returns
-503, even though local Neon verification passes.
+Production verification passed: the hosted manifest and lexical retrieval are
+available with the ingested revision and citations.
