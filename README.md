@@ -12,6 +12,7 @@ Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Dri
 
 * [Architecture and AI Retrieval](docs/architecture.md)
 * [Read API Reference](docs/api.md)
+* [Hosted provider handoff](docs/PHASE-5-HANDOFF.md)
 
 ## Getting Started
 
@@ -68,6 +69,15 @@ The database is organized into several core tables:
 The importer hashes every source record, skips unchanged content, preserves existing embeddings, and rebuilds graph relationships after each successful synchronization.
 
 Vector storage is prepared for future embedding providers, while full-text search and graph traversal work without embeddings.
+
+The E-compatible provider endpoints are:
+
+* `GET /api/knowledge/manifest`
+* `POST /api/knowledge/retrieve`
+
+The manifest advertises semantic retrieval only after the active revision has
+complete revision-scoped embeddings. Keep embedding configuration server-side;
+Siduri receives only the public HTTPS provider URL.
 
 ## Read API
 
