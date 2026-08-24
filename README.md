@@ -79,6 +79,10 @@ The manifest advertises semantic retrieval only after the active revision has
 complete revision-scoped embeddings. Keep embedding configuration server-side;
 Siduri receives only the public HTTPS provider URL.
 
+E Hub publisher ownership and authentication are intentionally outside this
+repository. The Hub is pivoting to Supabase for Auth and control-plane
+metadata; this provider remains independently operated on Neon.
+
 ## Read API
 
 | Endpoint                        | Description                |
