@@ -72,8 +72,8 @@ Vector storage is prepared for future embedding providers, while full-text searc
 
 The E-compatible provider endpoints are:
 
-* `GET /api/knowledge/manifest`
-* `POST /api/knowledge/retrieve`
+* `GET /api/e/manifest`
+* `POST /api/e/retrieve`
 
 The manifest advertises semantic retrieval only after the active revision has
 complete revision-scoped embeddings. Keep embedding configuration server-side;

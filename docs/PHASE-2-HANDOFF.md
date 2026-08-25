@@ -24,8 +24,8 @@ database and serves the E provider contract over HTTPS.
 
 - migration succeeds from zero;
 - database counts and revision hash match `data/teyvat/manifest.json`;
-- `/api/knowledge/manifest` validates with `@vxnus/e`;
-- `/api/knowledge/retrieve` returns deterministic cited chunks;
+- `/api/e/manifest` validates with `@vxnus/e`;
+- `/api/e/retrieve` returns deterministic cited chunks;
 - unknown revisions return `404`, unsupported modes return `400`, and database
   failures return `503`;
 - no raw source or database credentials are exposed.

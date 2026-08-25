@@ -28,8 +28,8 @@ citations.
 ## Required response shape
 
 ```text
-GET  /api/knowledge/manifest
-POST /api/knowledge/retrieve
+GET  /api/e/manifest
+POST /api/e/retrieve
 ```
 
 The response must conform to `@vxnus/e` and include `revision`, result content,

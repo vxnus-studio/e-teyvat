@@ -9,8 +9,8 @@ as a server-side deployment secret.
 
 - Deploy commit `a71ac3b` or newer (the current branch also contains the
   registry-side promotion documentation and embedding activation path).
-- Confirm `/api/knowledge/manifest` returns 200 with the ingested revision.
-- Confirm `/api/knowledge/retrieve` returns cited lexical results.
+- Confirm `/api/e/manifest` returns 200 with the ingested revision.
+- Confirm `/api/e/retrieve` returns cited lexical results.
 - Keep semantic capability false until embedding configuration and complete
   indexing are present.
 

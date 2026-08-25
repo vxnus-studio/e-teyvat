@@ -18,7 +18,7 @@ Production consumers should always inspect:
 ## Hub provider verification
 
 ```http
-POST /api/knowledge/verify
+POST /api/e/verify
 Authorization: Bearer <E_PUBLISHER_API_KEY>
 ```
 

@@ -15,7 +15,7 @@ export async function createTeyvatProvider() {
   const [chunkState] = (await database.execute<{ count: number }>(sql`select count(*)::int as count from teyvat_chunks where revision = ${revision.revision}`)).rows;
   const semanticReady = Boolean(embedding && Number(embeddingState?.count) === Number(chunkState?.count) && Number(chunkState?.count) > 0);
   const manifest = {
-    id: "@vxnus/e-teyvat", name: "e-teyvat", publisher: "vxnus", version: "1.0.0", schemaVersion: "1.0",
+    id: "@vxnus/e-teyvat", name: "e-teyvat", publisher: "vxnus", version: "1.0.1", schemaVersion: "1.0",
     description: "Structured Genshin Impact knowledge.",
     license: {
       license: "CC-BY-4.0",
