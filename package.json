@@ -19,12 +19,14 @@
     "teyvat:ingest": "node --experimental-strip-types scripts/ingest-teyvat.ts",
     "teyvat:verify-db": "node --experimental-strip-types scripts/verify-teyvat-db.ts",
     "teyvat:verify-parity": "node --experimental-strip-types scripts/verify-teyvat-parity.ts",
-    "teyvat:verify-farming": "node --experimental-strip-types scripts/verify-teyvat-farming.ts"
-    ,"teyvat:embed": "node --experimental-strip-types scripts/embed-teyvat.ts"
+    "teyvat:verify-farming": "node --experimental-strip-types scripts/verify-teyvat-farming.ts",
+    "teyvat:embed": "node --experimental-strip-types scripts/embed-teyvat.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1095.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@vxnus/e": "^0.1.3",
+    "@vxnus/e-provider": "^0.1.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.27.0",

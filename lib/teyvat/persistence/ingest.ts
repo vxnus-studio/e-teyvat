@@ -43,7 +43,7 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
       await tx.delete(teyvatSources);
       await tx.delete(teyvatDatasetRevisions);
 
-      await tx.insert(teyvatSources).values({ id: "gi-data", title: "gi-data", license: "see source metadata", uri: "https://github.com/vxnuslabs/gi-data" });
+      await tx.insert(teyvatSources).values({ id: "e-teyvat", title: "E-Teyvat", license: "CC-BY-4.0", uri: "https://github.com/vxnuslabs/e-teyvat", metadata: { licenseDescription: "Creative Commons Attribution 4.0 International", licenseUrl: "https://creativecommons.org/licenses/by/4.0/" } });
 
       await insertChunks(projection.entities, (chunk) => tx.insert(teyvatEntities).values(chunk.map((entity) => ({
         id: entity.id,
@@ -61,7 +61,7 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
       await insertChunks(projection.documents, (chunk) => tx.insert(teyvatDocuments).values(chunk.map((document) => {
         const item = metadata.get(document.id.replace("genshin:document:", ""));
         if (!item) throw new Error(`Missing document metadata for ${document.id}`);
-        return { id: document.id, entityId: document.entityId, content: document.content, sourceId: "gi-data", revision: projection.revision, contentHash: hash(document.content), provenance: document.provenance ? document.provenance as unknown as Record<string, unknown> : null, category: item.category, title: item.title, parentSourceId: item.parentSourceId, } as NewTeyvatDocument;
+        return { id: document.id, entityId: document.entityId, content: document.content, sourceId: "e-teyvat", revision: projection.revision, contentHash: hash(document.content), provenance: document.provenance ? document.provenance as unknown as Record<string, unknown> : null, category: item.category, title: item.title, parentSourceId: item.parentSourceId, } as NewTeyvatDocument;
       })));
       await insertChunks(projection.documents, (chunk) => tx.insert(teyvatChunks).values(chunk.map((document) => ({ id: `${document.id}:0`, documentId: document.id, revision: projection.revision, ordinal: 0, content: document.content, contentHash: hash(document.content), metadata: { category: metadata.get(document.id.replace("genshin:document:", ""))?.category ?? "" } }) as NewTeyvatChunk)));
       await tx.insert(teyvatDatasetRevisions).values({

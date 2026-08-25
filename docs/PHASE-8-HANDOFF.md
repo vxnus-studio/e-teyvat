@@ -3,7 +3,7 @@
 **Phase:** 8 — user-owned publisher workspace
 **Status:** boundary defined; no provider migration required
 
-E-Teyvat remains the public provider for the first-party `vxnuslabs` Teyvat
+E-Teyvat remains the public provider for the first-party `vxnus` Teyvat
 project. Its Neon database owns the normalized projection, retrieval chunks,
 revisions, and optional embeddings. Supabase is an E Hub control-plane concern,
 not a reason to move provider data.
