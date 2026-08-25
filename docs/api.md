@@ -15,6 +15,21 @@ Production consumers should always inspect:
 - `preview`
 - knowledge `revision`, when returned
 
+## Hub provider verification
+
+```http
+POST /api/knowledge/verify
+Authorization: Bearer <E_PUBLISHER_API_KEY>
+```
+
+The endpoint is intended for the E Hub publisher flow. It returns `401` for a
+missing or invalid key and, on success, returns the canonical provider identity
+without exposing the configured key:
+
+```json
+{ "id": "@vxnus/teyvat", "publisher": "vxnuslabs" }
+```
+
 ## Health
 
 ```http
