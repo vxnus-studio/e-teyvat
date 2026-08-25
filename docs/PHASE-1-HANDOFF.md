@@ -23,7 +23,7 @@ citations.
 - Return stable ordering for equal-ranked results and explicit `503` failures.
 - Keep existing entity, farming, and banner routes working during migration.
 - Provide the production base URL and manifest metadata needed for the E Hub to
-  register `@vxnus/teyvat` as a `provider` distribution.
+  register `@vxnus/e-teyvat` as a `provider` distribution.
 
 ## Required response shape
 

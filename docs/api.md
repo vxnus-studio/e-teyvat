@@ -27,7 +27,7 @@ missing or invalid key and, on success, returns the canonical provider identity
 without exposing the configured key:
 
 ```json
-{ "id": "@vxnus/teyvat", "publisher": "vxnus" }
+{ "id": "@vxnus/e-teyvat", "publisher": "vxnus" }
 ```
 
 ## Health
