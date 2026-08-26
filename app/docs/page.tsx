@@ -391,7 +391,7 @@ export default function ApiDocsPage() {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[var(--green)] shadow-[0_0_8px_var(--green)]" />
               <span className="text-xs font-mono font-bold tracking-wider text-[var(--green)] uppercase">
-                REST / JSON Protocol
+                REST / OpenAPI 3.1 Protocol
               </span>
             </div>
             <h2 className="text-lg md:text-xl font-bold text-[var(--text)] m-0">
@@ -401,17 +401,37 @@ export default function ApiDocsPage() {
               All endpoints return standard JSON and support CDN edge caching. Designed for high-throughput AI retrieval, Discord bots, and interactive web tools.
             </p>
           </div>
-          <div className="flex flex-col gap-2 shrink-0">
-            <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">Base URL</span>
-            <code className="bg-[#0c1512] border border-[var(--line-strong)] text-[var(--green-2)] px-3.5 py-2 rounded-lg text-xs font-mono select-all">
-              https://eteyvat.vxnus.xyz/api
-            </code>
+          <div className="flex flex-col gap-3 shrink-0">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">Base URL</span>
+              <code className="bg-[#0c1512] border border-[var(--line-strong)] text-[var(--green-2)] px-3.5 py-2 rounded-lg text-xs font-mono select-all">
+                https://eteyvat.vxnus.xyz/api
+              </code>
+            </div>
+            <a
+              href="/api/openapi.json"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[rgba(98,213,163,0.12)] hover:bg-[rgba(98,213,163,0.2)] text-[var(--green-2)] border border-[rgba(98,213,163,0.3)] text-xs font-mono font-bold px-3.5 py-2 rounded-lg transition-all"
+            >
+              <Icon name="code" size={15} />
+              <span>View OpenAPI 3.1 Spec (/api/openapi.json)</span>
+            </a>
           </div>
         </section>
 
         {/* Quick Jump Index */}
         <nav className="flex flex-wrap gap-2 items-center" aria-label="API categories quick navigation">
           <span className="text-xs font-mono text-[var(--text-3)] mr-2 uppercase tracking-wider">Jump to:</span>
+          <a
+            href="/api/openapi.json"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-mono font-bold text-[var(--gold)] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-md transition-colors inline-flex items-center gap-1.5"
+          >
+            <span>OpenAPI 3.1 Spec</span>
+            <Icon name="chevron" size={11} />
+          </a>
           {categories.map((cat) => (
             <a
               key={cat}
