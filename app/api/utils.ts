@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
-import { aliases, entities, syncRuns } from "../../db/schema";
+import { and, asc, desc, eq, ilike, or } from "drizzle-orm";
+import { teyvatAliases, teyvatDatasetRevisions, teyvatEntities } from "../../db/schema";
 import { getDatabase } from "../../db/client";
 
 export type CanonicalData = Record<string, unknown>;
@@ -87,6 +87,13 @@ export function normalize(value: string) {
 }
 
 export function imageFromData(data: CanonicalData) {
+  const custom = typeof data.custom_image_url === "string" ? data.custom_image_url : (typeof data.customImageUrl === "string" ? data.customImageUrl : null);
+  if (custom) {
+    if (custom.startsWith("http")) return custom;
+    const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.eteyvat.vxnus.xyz";
+    return `${cdnUrl}/${custom}`;
+  }
+
   const images =
     data.images && typeof data.images === "object"
       ? (data.images as CanonicalData)
@@ -137,9 +144,8 @@ export function resolveImageUrl(customImageUrl: string | null, canonicalData: Ca
 export async function activeRevision(database: ReturnType<typeof getDatabase>) {
   const [run] = await database
     .select()
-    .from(syncRuns)
-    .where(eq(syncRuns.status, "ready"))
-    .orderBy(desc(syncRuns.completedAt))
+    .from(teyvatDatasetRevisions)
+    .orderBy(desc(teyvatDatasetRevisions.installedAt))
     .limit(1);
   return run ?? null;
 }
@@ -151,30 +157,23 @@ export async function resolveEntity(
   const normalized = normalize(query);
   const [direct] = await database
     .select()
-    .from(entities)
+    .from(teyvatEntities)
     .where(
-      and(
-        eq(entities.isActive, true),
-        or(
-          eq(entities.slug, query.toLowerCase()),
-          ilike(entities.name, query),
-          ilike(entities.name, `%${query}%`),
-        ),
+      or(
+        eq(teyvatEntities.slug, query.toLowerCase()),
+        ilike(teyvatEntities.name, query),
+        ilike(teyvatEntities.name, `%${query}%`),
       ),
     )
+    .orderBy(asc(teyvatEntities.name))
     .limit(1);
   if (direct) return direct;
 
   const [alias] = await database
-    .select({ entity: entities })
-    .from(aliases)
-    .innerJoin(entities, eq(aliases.entityId, entities.id))
-    .where(
-      and(
-        eq(aliases.normalizedAlias, normalized),
-        eq(entities.isActive, true),
-      ),
-    )
+    .select({ entity: teyvatEntities })
+    .from(teyvatAliases)
+    .innerJoin(teyvatEntities, eq(teyvatAliases.entityId, teyvatEntities.id))
+    .where(eq(teyvatAliases.normalizedAlias, normalized))
     .limit(1);
   return alias?.entity ?? null;
 }

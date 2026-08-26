@@ -1,9 +1,9 @@
 import { desc, sql } from "drizzle-orm";
 import type { RetrievalRequest, RetrievalResponse } from "@vxnus/e";
 import { createKnowledgeProvider } from "@vxnus/e-provider";
-import { getDatabase } from "../../db/client";
-import { teyvatChunks, teyvatDatasetRevisions, teyvatDocuments, teyvatEmbeddings, teyvatEntities } from "../../db/schema";
-import { EMBEDDING_DIMENSIONS, embedTexts, embeddingConfig, vectorLiteral } from "./embeddings";
+import { getDatabase } from "../../db/client.ts";
+import { teyvatChunks, teyvatDatasetRevisions, teyvatDocuments, teyvatEmbeddings, teyvatEntities } from "../../db/schema.ts";
+import { EMBEDDING_DIMENSIONS, embedTexts, embeddingConfig, vectorLiteral } from "./embeddings.ts";
 
 export async function createTeyvatProvider() {
   if (!process.env.DATABASE_URL) throw new Error("knowledge_provider_unavailable");

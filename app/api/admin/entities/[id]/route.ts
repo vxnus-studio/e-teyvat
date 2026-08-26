@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDatabase } from "../../../../../db/client";
-import { entities } from "../../../../../db/schema";
+import { teyvatEntities } from "../../../../../db/schema";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,9 +13,9 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const entityId = parseInt(id, 10);
+  const entityId = decodeURIComponent(id || "").trim();
   
-  if (isNaN(entityId)) {
+  if (!entityId) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
 
@@ -23,10 +23,26 @@ export async function PATCH(
     const { customImageUrl } = await request.json();
     const database = getDatabase();
 
+    const [existing] = await database
+      .select()
+      .from(teyvatEntities)
+      .where(eq(teyvatEntities.id, entityId))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: "Entity not found" }, { status: 404 });
+    }
+
+    const updatedData = {
+      ...(existing.data as Record<string, unknown>),
+      custom_image_url: customImageUrl,
+      customImageUrl,
+    };
+
     await database
-      .update(entities)
-      .set({ customImageUrl, updatedAt: new Date() })
-      .where(eq(entities.id, entityId));
+      .update(teyvatEntities)
+      .set({ data: updatedData })
+      .where(eq(teyvatEntities.id, entityId));
 
     return NextResponse.json({ success: true, customImageUrl });
   } catch (err) {

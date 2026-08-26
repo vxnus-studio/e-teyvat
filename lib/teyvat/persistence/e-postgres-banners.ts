@@ -1,5 +1,6 @@
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDatabase, type Database } from "../../../db/client.ts";
+import { teyvatEntities } from "../../../db/schema.ts";
 import { calculateCharacterStatistics, type CharacterIntervalData } from "../../banners/statistics.ts";
 import { calculatePressureAndConfidence, type PressureResult } from "../../banners/pressure-model.ts";
 
@@ -44,6 +45,15 @@ type AppearanceRow = {
   phase_data: JsonObject;
   metadata: JsonObject;
 };
+
+function extractRows<T>(result: unknown): T[] {
+  if (!result) return [];
+  if (Array.isArray(result)) return result as T[];
+  if (typeof result === "object" && "rows" in result && Array.isArray((result as { rows: unknown }).rows)) {
+    return (result as { rows: T[] }).rows;
+  }
+  return [];
+}
 
 function numberValue(value: unknown, fallback = 0): number {
   const number = typeof value === "number" ? value : Number(value);
@@ -106,12 +116,13 @@ export class TeyvatBannerQueries {
 
   private async phases(): Promise<EBannerPhase[]> {
     const result = await this.db.execute(sql`SELECT id, data FROM teyvat_entities WHERE kind = 'banner_phase' ORDER BY (data->>'sequence_index')::int ASC, id ASC`);
-    return (result as unknown as { id: string; data: JsonObject }[]).map(phaseFromRow);
+    const rows = extractRows<{ id: string; data: JsonObject }>(result);
+    return rows.map(phaseFromRow);
   }
 
   private async appearanceRows(): Promise<AppearanceRow[]> {
     const result = await this.db.execute(sql`SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM teyvat_relations r JOIN teyvat_entities subject ON subject.id = r.subject_id JOIN teyvat_entities phase ON phase.id = r.object_id WHERE r.predicate = 'appeared_in' AND subject.kind = 'avatar' AND phase.kind = 'banner_phase' ORDER BY (phase.data->>'sequence_index')::int ASC, subject.name ASC`);
-    return result as unknown as AppearanceRow[];
+    return extractRows<AppearanceRow>(result);
   }
 
   private async dataset() {
@@ -163,7 +174,19 @@ export class TeyvatBannerQueries {
   async character(slug: string) {
     const data = await this.overview();
     const appearances = data.appearances.filter((appearance) => appearance.slug === slug).sort((a, b) => a.sequenceIndex - b.sequenceIndex);
-    const character = appearances[0] ?? null;
+    let character: EBannerCharacter | EBannerAppearance | null = appearances[0] ?? null;
+    if (!character) {
+      const [charRow] = await this.db.select().from(teyvatEntities).where(and(eq(teyvatEntities.kind, "avatar"), eq(teyvatEntities.slug, slug))).limit(1);
+      if (charRow) {
+        character = {
+          id: charRow.id,
+          slug: charRow.slug,
+          name: charRow.name,
+          rarity: numberValue(charRow.data?.rarity, 4),
+          canonicalData: charRow.data as JsonObject,
+        };
+      }
+    }
     const statistics = character ? data.statsById.get(character.id) ?? null : null;
     return { ...data, character, appearances, statistics };
   }

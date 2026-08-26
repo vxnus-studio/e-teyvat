@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { sql, eq } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 import { getDatabase } from "../../../db/client";
-import { entities } from "../../../db/schema";
-import { activeRevision } from "../utils";
+import { teyvatDatasetRevisions, teyvatEntities } from "../../../db/schema";
 
 export async function GET() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -25,22 +24,29 @@ export async function GET() {
 
   try {
     const database = getDatabase();
-    const [revision, countResult] = await Promise.all([
-      activeRevision(database),
+    const [revisionRows, countResult] = await Promise.all([
       database
-        .select({ count: sql<number>`count(*)::int` })
-        .from(entities)
-        .where(eq(entities.isActive, true)),
+        .select()
+        .from(teyvatDatasetRevisions)
+        .orderBy(desc(teyvatDatasetRevisions.installedAt))
+        .limit(1),
+      database
+        .select({ count: count() })
+        .from(teyvatEntities),
     ]);
+
+    const revision = revisionRows[0];
+    const entityCount = countResult[0]?.count ? Number(countResult[0].count) : (revision?.entityCount ?? 0);
+
     return NextResponse.json(
       {
         status: revision ? "ready" : "awaiting_first_sync",
         connected: true,
-        revision: revision?.sourceRevision ?? null,
-        lastSyncedAt: revision?.completedAt ?? null,
-        entityCount: countResult[0]?.count ?? 0,
+        revision: revision?.revision ?? null,
+        lastSyncedAt: revision?.installedAt ?? null,
+        entityCount,
         relationCount: revision?.relationCount ?? 0,
-        unresolvedRelationCount: revision?.unresolvedRelationCount ?? 0,
+        unresolvedRelationCount: 0,
       },
       {
         headers: {

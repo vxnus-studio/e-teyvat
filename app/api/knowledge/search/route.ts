@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { getDatabase } from "../../../../db/client";
-import { entities, knowledgeDocuments } from "../../../../db/schema";
+import { teyvatChunks, teyvatDatasetRevisions, teyvatDocuments, teyvatEntities } from "../../../../db/schema";
 import { boundedLimit, DEMO_ENTITIES, errorResponse } from "../../utils";
 
 export async function GET(request: NextRequest) {
@@ -26,36 +26,45 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const database = getDatabase();
-  const result = await database.execute<{
-    entity_id: number;
-    kind: string;
-    slug: string;
-    name: string;
-    section: string;
-    content: string;
-    rank: number;
-  }>(sql`
-    select
-      e.id as entity_id,
-      e.kind,
-      e.slug,
-      e.name,
-      d.section,
-      d.content,
-      ts_rank(
-        to_tsvector('english', d.content),
-        websearch_to_tsquery('english', ${query})
-      ) as rank
-    from ${knowledgeDocuments} d
-    join ${entities} e on e.id = d.entity_id
-    where
-      e.is_active = true
-      and to_tsvector('english', d.content)
-        @@ websearch_to_tsquery('english', ${query})
-    order by rank desc
-    limit ${limit}
-  `);
+  try {
+    const database = getDatabase();
+    const [rev] = await database.select().from(teyvatDatasetRevisions).orderBy(desc(teyvatDatasetRevisions.installedAt)).limit(1);
+    const activeRevision = rev?.revision;
 
-  return NextResponse.json({ items: result.rows, preview: false }, { headers });
+    const result = await database.execute<{
+      entity_id: string;
+      kind: string;
+      slug: string;
+      name: string;
+      section: string;
+      content: string;
+      rank: number;
+    }>(sql`
+      select
+        e.id as entity_id,
+        e.kind,
+        e.slug,
+        e.name,
+        d.title as section,
+        c.content,
+        ts_rank(
+          to_tsvector('english', c.content),
+          websearch_to_tsquery('english', ${query})
+        ) as rank
+      from ${teyvatChunks} c
+      join ${teyvatDocuments} d on d.id = c.document_id
+      join ${teyvatEntities} e on e.id = d.entity_id
+      where
+        ${activeRevision ? sql`c.revision = ${activeRevision} and` : sql``}
+        to_tsvector('english', c.content) @@ websearch_to_tsquery('english', ${query})
+      order by rank desc, d.id asc
+      limit ${limit}
+    `);
+
+    const rows = (result as unknown as { rows: unknown[] }).rows ?? (result as unknown as unknown[]);
+    return NextResponse.json({ items: rows, preview: false }, { headers });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Search failed";
+    return errorResponse(message, 500);
+  }
 }

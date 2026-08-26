@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 type Entity = {
-  id: number;
+  id: string;
   kind: string;
   slug: string;
   name: string;
@@ -14,12 +14,12 @@ export default function AdminDashboard() {
   const [entities, setEntities] = useState<Entity[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [missingFilter, setMissingFilter] = useState(false);
   
   // A mapping of entity IDs that failed to load their images
-  const [brokenImages, setBrokenImages] = useState<Record<number, boolean>>({});
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   const searchEntities = async (q: string) => {
     setLoading(true);
@@ -41,11 +41,11 @@ export default function AdminDashboard() {
     return () => clearTimeout(delayDebounceFn);
   }, [query]);
 
-  const handleImageError = (id: number) => {
+  const handleImageError = (id: string) => {
     setBrokenImages(prev => ({ ...prev, [id]: true }));
   };
 
-  const handleUploadClick = (id: number) => {
+  const handleUploadClick = (id: string) => {
     setUploadingId(id);
     fileInputRef.current?.click();
   };
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.error);
 
       // 2. Update Entity in DB
-      const updateRes = await fetch(`/api/admin/entities/${uploadingId}`, {
+      const updateRes = await fetch(`/api/admin/entities/${encodeURIComponent(uploadingId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customImageUrl: data.url }),
