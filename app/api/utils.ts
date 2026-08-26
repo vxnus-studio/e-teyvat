@@ -94,39 +94,52 @@ export function imageFromData(data: CanonicalData) {
     return `${cdnUrl}/${custom}`;
   }
 
+  const icon = typeof data.icon === "string" ? data.icon : null;
+  if (icon) {
+    if (icon.startsWith("http")) return icon;
+    if (icon.startsWith("UI_MonsterIcon")) {
+      return `https://res.cloudinary.com/genshin/image/upload/sprites/${icon}.png`;
+    }
+    return `https://enka.network/ui/${icon}.png`;
+  }
+
   const images =
-    data.images && typeof data.images === "object"
+    data.images && typeof data.images === "object" && !Array.isArray(data.images)
       ? (data.images as CanonicalData)
       : null;
-  if (!images) return null;
-  // Artifacts
-  if (typeof images["filename_flower"] === "string") {
-    return `https://enka.network/ui/${images["filename_flower"]}.png`;
-  }
-  if (typeof images["filename_circlet"] === "string") {
-    return `https://enka.network/ui/${images["filename_circlet"]}.png`;
-  }
+  if (images) {
+    // Artifacts
+    if (typeof images["filename_flower"] === "string") {
+      return `https://enka.network/ui/${images["filename_flower"]}.png`;
+    }
+    if (typeof images["filename_circlet"] === "string") {
+      return `https://enka.network/ui/${images["filename_circlet"]}.png`;
+    }
 
-  // Geographies (Regions)
-  if (typeof images["filename_image"] === "string") {
-    return `https://res.cloudinary.com/genshin/image/upload/sprites/${images["filename_image"]}.png`;
-  }
+    // Geographies (Regions)
+    if (typeof images["filename_image"] === "string") {
+      return `https://res.cloudinary.com/genshin/image/upload/sprites/${images["filename_image"]}.png`;
+    }
 
-  // Monsters
-  if (
-    typeof images["filename_icon"] === "string" &&
-    (images["filename_icon"] as string).startsWith("UI_MonsterIcon")
-  ) {
-    return `https://res.cloudinary.com/genshin/image/upload/sprites/${images["filename_icon"]}.png`;
-  }
+    // Monsters
+    if (
+      typeof images["filename_icon"] === "string" &&
+      (images["filename_icon"] as string).startsWith("UI_MonsterIcon")
+    ) {
+      return `https://res.cloudinary.com/genshin/image/upload/sprites/${images["filename_icon"]}.png`;
+    }
 
-  // Characters / Weapons / Items
-  if (typeof images["filename_icon"] === "string") {
-    return `https://enka.network/ui/${images["filename_icon"]}.png`;
-  }
+    // Characters / Weapons / Items
+    if (typeof images["filename_icon"] === "string") {
+      return `https://enka.network/ui/${images["filename_icon"]}.png`;
+    }
 
-  for (const key of ["hoyowiki_icon", "mihoyo_icon", "nameicon", "namepic", "image", "icon"]) {
-    if (typeof images[key] === "string" && (images[key] as string).startsWith("http")) return images[key] as string;
+    for (const key of ["hoyowiki_icon", "mihoyo_icon", "nameicon", "namepic", "image", "icon"]) {
+      if (typeof images[key] === "string" && (images[key] as string).startsWith("http")) return images[key] as string;
+    }
+
+    const filename = Object.values(images).find((value) => typeof value === "string" && value.length > 0);
+    if (typeof filename === "string") return `https://enka.network/ui/${filename}.png`;
   }
   
   return null;

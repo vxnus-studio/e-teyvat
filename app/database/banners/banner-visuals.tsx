@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 
 const localCharacterImages: Record<string, string> = {
@@ -21,12 +24,19 @@ export function CharacterPortrait({
   className?: string;
   sizes?: string;
 }) {
+  const [error, setError] = useState(false);
   const src = imageUrl || localCharacterImages[slug];
 
   return (
     <span className={`banner-character-art ${className}`}>
-      {src ? (
-        <Image src={src} alt={`${name} character artwork`} fill sizes={sizes} />
+      {src && !error ? (
+        <Image
+          src={src}
+          alt={`${name} character artwork`}
+          fill
+          sizes={sizes}
+          onError={() => setError(true)}
+        />
       ) : (
         <span className="banner-character-fallback" aria-hidden="true">
           {name.slice(0, 2).toUpperCase()}
