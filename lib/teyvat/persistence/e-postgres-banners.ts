@@ -115,13 +115,17 @@ export class TeyvatBannerQueries {
   async close(): Promise<void> {}
 
   private async phases(): Promise<EBannerPhase[]> {
-    const result = await this.db.execute(sql`SELECT id, data FROM teyvat_entities WHERE kind = 'banner_phase' ORDER BY (data->>'sequence_index')::int ASC, id ASC`);
+    const result = await this.db.execute(sql`SELECT id, data FROM teyvat_entities WHERE kind = 'banner_phase' ORDER BY (data->>'start_date') ASC, (data->>'sequence_index')::int ASC, id ASC`);
     const rows = extractRows<{ id: string; data: JsonObject }>(result);
-    return rows.map(phaseFromRow);
+    const parsed = rows.map(phaseFromRow);
+    return parsed.sort((a, b) => {
+      if (a.startDate && b.startDate) return a.startDate.getTime() - b.startDate.getTime();
+      return a.sequenceIndex - b.sequenceIndex;
+    });
   }
 
   private async appearanceRows(): Promise<AppearanceRow[]> {
-    const result = await this.db.execute(sql`SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM teyvat_relations r JOIN teyvat_entities subject ON subject.id = r.subject_id JOIN teyvat_entities phase ON phase.id = r.object_id WHERE r.predicate = 'appeared_in' AND subject.kind = 'avatar' AND phase.kind = 'banner_phase' ORDER BY (phase.data->>'sequence_index')::int ASC, subject.name ASC`);
+    const result = await this.db.execute(sql`SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM teyvat_relations r JOIN teyvat_entities subject ON subject.id = r.subject_id JOIN teyvat_entities phase ON phase.id = r.object_id WHERE r.predicate = 'appeared_in' AND subject.kind = 'avatar' AND phase.kind = 'banner_phase' ORDER BY (phase.data->>'start_date') ASC, (phase.data->>'sequence_index')::int ASC, subject.name ASC`);
     return extractRows<AppearanceRow>(result);
   }
 
@@ -156,10 +160,14 @@ export class TeyvatBannerQueries {
 
   async overview() {
     const { phases, appearances } = await this.dataset();
-    const latestSequenceIndex = phases.at(-1)?.sequenceIndex ?? 0;
+    const currentPhase = phases.find((phase) => phase.status === "active")
+      ?? phases.find((phase) => phase.status === "upcoming")
+      ?? phases.at(-1)
+      ?? null;
+    const latestSequenceIndex = currentPhase?.sequenceIndex ?? phases.at(-1)?.sequenceIndex ?? 0;
     const statistics = this.statistics(appearances, latestSequenceIndex);
     const statsById = new Map(statistics.map((stat) => [stat.characterId, stat]));
-    return { phases, appearances, statistics, statsById, currentPhase: phases.at(-1) ?? null };
+    return { phases, appearances, statistics, statsById, currentPhase };
   }
 
   async pressure() {
