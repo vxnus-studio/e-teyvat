@@ -1,105 +1,51 @@
 import { resolveImageUrl } from "@/app/api/utils";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
-import { ArrowLeft, ArrowRight, CalendarDays, Orbit } from "lucide-react";
-import Link from "next/link";
-import { CharacterPortrait } from "../banner-visuals";
+import { RotationClient, TimelinePhase } from "./rotation-client";
 
 export const metadata = {
   title: "Rotation Timeline | E-Teyvat",
-  description: "Chronological timeline of Genshin Impact banner phases.",
+  description: "Chronological timeline of Genshin Impact banner phases from Version 1.0 to 7.0.",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function BannerRotationPage() {
   const queries = await getTeyvatBannerQueries();
   const { phases: allPhases, appearances } = await queries.overview();
-  const phases = [...allPhases].reverse().slice(0, 20);
-  const phaseIds = new Set(phases.map((phase) => phase.id));
-  const charactersByPhase = new Map<string, Array<{
-    slug: string;
-    name: string;
-    rarity: number;
-    imageUrl: string | null;
-  }>>();
 
-  if (phaseIds.size) {
-    for (const character of appearances) {
-      if (!phaseIds.has(character.phaseId)) continue;
-      const phaseCharacters = charactersByPhase.get(character.phaseId) ?? [];
-      phaseCharacters.push({
-        slug: character.slug,
-        name: character.name,
-        rarity: character.rarity,
-        imageUrl: resolveImageUrl(null, character.canonicalData),
-      });
-      charactersByPhase.set(character.phaseId, phaseCharacters);
-    }
+  const charactersByPhase = new Map<
+    string,
+    Array<{
+      slug: string;
+      name: string;
+      rarity: number;
+      imageUrl: string | null;
+    }>
+  >();
+
+  for (const character of appearances) {
+    const phaseCharacters = charactersByPhase.get(character.phaseId) ?? [];
+    phaseCharacters.push({
+      slug: character.slug,
+      name: character.name,
+      rarity: character.rarity,
+      imageUrl: resolveImageUrl(null, character.canonicalData),
+    });
+    charactersByPhase.set(character.phaseId, phaseCharacters);
   }
 
-  return (
-    <div className="banner-subpage">
-      <header className="banner-subpage-hero">
-        <Link className="banner-back-link" href="/database/banners"><ArrowLeft size={13} /> Observatory</Link>
-        <span className="banner-kicker"><Orbit size={13} /> Archive traversal / 20 latest phases</span>
-        <h1>Rotation <em>timeline</em></h1>
-        <p>A chronological scan of featured character transmissions, indexed across every recorded version.</p>
-        <div className="timeline-legend"><span><i className="active-dot" /> Active</span><span><i className="five-dot" /> 5-star</span><span><i className="four-dot" /> 4-star</span></div>
-      </header>
+  // Sort descending chronologically (newest 7.0 down to 1.0)
+  const phasesChronologicalDesc: TimelinePhase[] = [...allPhases].reverse().map((phase) => ({
+    id: phase.id,
+    phaseKey: phase.phaseKey,
+    version: phase.version,
+    phaseNumber: phase.phaseNumber,
+    sequenceIndex: phase.sequenceIndex,
+    startDate: phase.startDate ? phase.startDate.toISOString() : null,
+    endDate: phase.endDate ? phase.endDate.toISOString() : null,
+    status: phase.status,
+    characters: charactersByPhase.get(phase.id) ?? [],
+  }));
 
-      <section className="phase-timeline">
-        {phases.map((phase, index) => {
-          const featured = charactersByPhase.get(phase.id) ?? [];
-          const fiveStars = featured.filter((character) => character.rarity === 5);
-          const fourStars = featured.filter((character) => character.rarity === 4);
-          return (
-            <article className={`phase-record ${phase.status === "active" ? "is-active" : ""}`} key={phase.id}>
-              <div className="timeline-node"><span>{String(index + 1).padStart(2, "0")}</span></div>
-              <div className="phase-card">
-                <header>
-                  <div className="phase-version">
-                    <span>SEQ / {String(phase.sequenceIndex).padStart(3, "0")}</span>
-                    <h2>Version {phase.version} <em>Phase {phase.phaseNumber}</em></h2>
-                  </div>
-                  <div className="phase-date">
-                    <CalendarDays size={14} />
-                    <span>{phase.startDate?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) ?? "Unknown"}<i>→</i>{phase.endDate?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) ?? "Open"}</span>
-                  </div>
-                  <span className={`phase-status status-${phase.status}`}>{phase.status}</span>
-                </header>
-                <div className="phase-lineup">
-                  <div className="phase-five-stars">
-                    {fiveStars.map((character) => (
-                      <Link href={`/characters/${character.slug}/banner-history`} key={character.slug}>
-                        <CharacterPortrait slug={character.slug} name={character.name} imageUrl={character.imageUrl} sizes="130px" />
-                        <span><small>✦ 5-star feature</small><strong>{character.name}</strong></span>
-                      </Link>
-                    ))}
-                    {!fiveStars.length && <span className="phase-no-data">No five-star record</span>}
-                  </div>
-                  <div className="phase-four-stars">
-                    <span className="roster-label">4-star constellation</span>
-                    <div>
-                      {fourStars.map((character) => (
-                        <Link href={`/characters/${character.slug}/banner-history`} key={character.slug}>
-                          <CharacterPortrait
-                            slug={character.slug}
-                            name={character.name}
-                            imageUrl={character.imageUrl}
-                            sizes="38px"
-                          />
-                          <span>{character.name}</span>
-                          <ArrowRight size={10} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-    </div>
-  );
+  return <RotationClient allPhases={phasesChronologicalDesc} />;
 }
