@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { count, desc } from "drizzle-orm";
 import { getDatabase } from "../../../db/client";
 import { teyvatDatasetRevisions, teyvatEntities } from "../../../db/schema";
+import { getTeyvatBannerQueries } from "../../../lib/teyvat/persistence/banners";
 
 export async function GET() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -24,7 +25,7 @@ export async function GET() {
 
   try {
     const database = getDatabase();
-    const [revisionRows, countResult] = await Promise.all([
+    const [revisionRows, countResult, bannerOverview] = await Promise.all([
       database
         .select()
         .from(teyvatDatasetRevisions)
@@ -33,16 +34,27 @@ export async function GET() {
       database
         .select({ count: count() })
         .from(teyvatEntities),
+      getTeyvatBannerQueries()
+        .then((q) => q.overview())
+        .catch(() => null),
     ]);
 
     const revision = revisionRows[0];
     const entityCount = countResult[0]?.count ? Number(countResult[0].count) : (revision?.entityCount ?? 0);
+    const currentPhase = bannerOverview?.currentPhase;
+    const versionLabel = currentPhase ? `v${currentPhase.phaseKey}` : "v7.0.1";
+    const phaseLabel = currentPhase ? `Version ${currentPhase.version} P${currentPhase.phaseNumber}` : null;
+    const rev = revision?.revision ?? null;
+    const shortRevision = rev ? rev.slice(0, 7) : null;
 
     return NextResponse.json(
       {
         status: revision ? "ready" : "awaiting_first_sync",
         connected: true,
-        revision: revision?.revision ?? null,
+        revision: rev,
+        shortRevision,
+        gameVersion: versionLabel,
+        phaseLabel,
         lastSyncedAt: revision?.installedAt ?? null,
         entityCount,
         relationCount: revision?.relationCount ?? 0,

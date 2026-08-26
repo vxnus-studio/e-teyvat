@@ -6,6 +6,9 @@ type Health = {
   status: string;
   connected: boolean;
   revision?: string | null;
+  shortRevision?: string | null;
+  gameVersion?: string | null;
+  phaseLabel?: string | null;
   entityCount?: number;
 };
 
@@ -28,14 +31,25 @@ export function KnowledgeStatus() {
   }, []);
 
   const ready = health?.status === "ready";
+  const shortRev = health?.shortRevision ?? (health?.revision ? health.revision.slice(0, 7) : null);
+  const version = health?.gameVersion ?? "v7.0.1";
+
   return (
     <div className="topbar-status" aria-live="polite">
       <span className={`data-live ${ready ? "" : "pending"}`}>
         <i />
-        {ready ? `${health.entityCount ?? 0} entities` : "Neon setup pending"}
+        {ready ? `${health.entityCount?.toLocaleString() ?? 0} entities` : "Neon setup pending"}
       </span>
-      <span className="version-badge">
-        {health?.revision ? `rev ${health.revision}` : "Preview graph"}
+
+      {ready && (
+        <span className="version-pill" title={health.phaseLabel ?? "Current Version"}>
+          <span className="version-pill-dot" />
+          {version}
+        </span>
+      )}
+
+      <span className="version-badge" title={health?.revision ? `Full Revision: ${health.revision}` : "Preview graph"}>
+        {shortRev ? `rev ${shortRev}` : "Preview graph"}
       </span>
     </div>
   );
