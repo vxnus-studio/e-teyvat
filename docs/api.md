@@ -15,22 +15,7 @@ Production consumers should always inspect:
 - `preview`
 - knowledge `revision`, when returned
 
-## Hub provider verification
-
-```http
-POST /api/e/verify
-Authorization: Bearer <E_PUBLISHER_API_KEY>
-```
-
-The endpoint is intended for the E Hub publisher flow. It returns `401` for a
-missing or invalid key and, on success, returns the canonical provider identity
-without exposing the configured key:
-
-```json
-{ "id": "@vxnus/e-teyvat", "publisher": "vxnus" }
-```
-
-## Health
+## Health & System Status
 
 ```http
 GET /api/health
@@ -43,40 +28,43 @@ Ready example:
   "status": "ready",
   "connected": true,
   "revision": "81c86d97c771",
+  "shortRevision": "81c86d9",
+  "gameVersion": "v7.0.1",
+  "phaseLabel": "Version 7.0 P1",
   "lastSyncedAt": "2026-07-26T03:17:00.000Z",
   "entityCount": 4200,
   "relationCount": 8900,
-  "unresolvedRelationCount": 120
+  "unresolvedRelationCount": 0
 }
 ```
 
 ## List and search entities
 
 ```http
-GET /api/entities?kind=weapons&q=splendor&limit=24
+GET /api/v1/entities?kind=weapons&q=splendor&limit=24
 ```
 
 Parameters:
 
 | Parameter | Required | Description |
 | --- | --- | --- |
-| `kind` | No | Exact entity folder |
+| `kind` | No | Exact entity folder (characters, weapons, artifacts, etc.) |
 | `q` | No | Case-insensitive name substring |
 | `limit` | No | Result limit from 1 to 50; default 24 |
+| `page` | No | Pagination page number; default 1 |
 
-The current `total` is the number of returned rows, not a separate database-wide
-count.
+The current `total` is the number of returned rows.
 
 ## Entity detail
 
 ```http
-GET /api/entities/{kind}/{slug}
+GET /api/v1/entities/{kind}/{slug}
 ```
 
 Example:
 
 ```http
-GET /api/entities/weapons/splendor-of-tranquil-waters
+GET /api/v1/entities/weapons/splendor-of-tranquil-waters
 ```
 
 Returns the canonical entity and up to 100 outgoing relations.
@@ -84,13 +72,13 @@ Returns the canonical entity and up to 100 outgoing relations.
 ## Farming retrieval
 
 ```http
-GET /api/farming?target={name-or-slug}
+GET /api/v1/farming?target={name-or-slug}
 ```
 
 Example:
 
 ```http
-GET /api/farming?target=Splendor%20of%20Tranquil%20Waters
+GET /api/v1/farming?target=Splendor%20of%20Tranquil%20Waters
 ```
 
 The endpoint:
@@ -108,7 +96,7 @@ the graph traversal in a prompt.
 ## Full-text knowledge search
 
 ```http
-GET /api/knowledge/search?q={query}&limit=8
+GET /api/v1/knowledge/search?q={query}&limit=8
 ```
 
 The query uses PostgreSQL English web-search syntax and ranks matches with
@@ -121,16 +109,11 @@ Parameters:
 | `q` | Yes | Full-text query |
 | `limit` | No | Result limit from 1 to 50; default 8 |
 
-Semantic and hybrid retrieval are exposed only when the server has an embedding
-provider configured and every chunk in the active revision has a matching
-embedding. Until then the manifest reports `semanticSearch: false`, lexical
-retrieval remains available, and semantic requests return
-`semantic_search_unavailable`.
+## Banner Intelligence
 
-Embedding configuration is server-side only: `TEYVAT_EMBEDDING_ENDPOINT`,
-`TEYVAT_EMBEDDING_MODEL`, `TEYVAT_EMBEDDING_PROVIDER`, and
-`TEYVAT_EMBEDDING_API_KEY`. Generate revision-scoped vectors with
-`npm run teyvat:embed`.
+- `GET /api/v1/banners/rerun-pressure` (or legacy `/api/v1/genshin/banners/rerun-pressure`)
+- `GET /api/v1/characters/{character}/banner-history` (or legacy `/api/v1/genshin/characters/{character}/banner-history`)
+- `GET /api/v1/characters/{character}/rerun-analysis` (or legacy `/api/v1/genshin/characters/{character}/rerun-analysis`)
 
 ## Error shape
 
@@ -152,10 +135,7 @@ Common statuses:
 
 Start with three tools:
 
-1. `find_entity(kind?, query, limit?)` → `/api/entities`
-2. `get_farming_sources(target)` → `/api/farming`
-3. `search_knowledge(query, limit?)` → `/api/knowledge/search`
+1. `find_entity(kind?, query, limit?)` → `/api/v1/entities`
+2. `get_farming_sources(target)` → `/api/v1/farming`
+3. `search_knowledge(query, limit?)` → `/api/v1/knowledge/search`
 
-The model should quote entity names and source availability from returned JSON,
-include the revision in debugging traces, and say when the response is preview
-data.

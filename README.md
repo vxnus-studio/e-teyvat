@@ -84,14 +84,18 @@ repository. The Hub is pivoting to Supabase for Auth and control-plane
 metadata; this provider remains independently operated on Neon.
 
 ## Read API
-
-| Endpoint                        | Description                |
-| ------------------------------- | -------------------------- |
-| `GET /api/health`               | Health check               |
-| `GET /api/entities`             | Search entities            |
-| `GET /api/entities/:kind/:slug` | Retrieve a single entity   |
-| `GET /api/farming`              | Farming recommendations    |
-| `GET /api/knowledge/search`     | Search knowledge documents |
+ 
+| Endpoint                           | Description                |
+| ---------------------------------- | -------------------------- |
+| `GET /api/health`                  | Health check & telemetry   |
+| `GET /api/v1/entities`             | Search entities            |
+| `GET /api/v1/entities/:kind/:slug` | Retrieve a single entity   |
+| `GET /api/v1/farming`              | Farming recommendations    |
+| `GET /api/v1/knowledge/search`     | Search knowledge documents |
+| `GET /api/v1/banners/rerun-pressure` | Banner rerun rankings    |
+| `GET /api/v1/characters/:char/banner-history` | Character banner history |
+| `GET /api/v1/characters/:char/rerun-analysis` | Character rerun analysis |
+| `GET /api/openapi.json`            | OpenAPI 3.1 Specification  |
 
 ## License
 

@@ -32,7 +32,7 @@ export async function GET() {
       { name: "Entities", description: "Canonical entity catalog and graph relationship traversal" },
       { name: "Farming", description: "Ascension costs, material schedules, and drop locations" },
       { name: "Banners", description: "Banner intelligence, rotation history, and statistical rerun pressure" },
-      { name: "Knowledge & AI", description: "Full-text rank search and E-Knowledge provider verification" },
+      { name: "Knowledge & AI", description: "Full-text rank search and knowledge retrieval" },
     ],
     paths: {
       "/api/health": {
@@ -76,7 +76,7 @@ export async function GET() {
           },
         },
       },
-      "/api/entities": {
+      "/api/v1/entities": {
         get: {
           tags: ["Entities"],
           summary: "List and search entities",
@@ -137,7 +137,7 @@ export async function GET() {
           },
         },
       },
-      "/api/entities/{kind}/{slug}": {
+      "/api/v1/entities/{kind}/{slug}": {
         get: {
           tags: ["Entities"],
           summary: "Get entity detail & relations",
@@ -190,7 +190,7 @@ export async function GET() {
           },
         },
       },
-      "/api/farming": {
+      "/api/v1/farming": {
         get: {
           tags: ["Farming"],
           summary: "Retrieve farming plan and material sources",
@@ -280,7 +280,7 @@ export async function GET() {
           },
         },
       },
-      "/api/v1/genshin/banners/rerun-pressure": {
+      "/api/v1/banners/rerun-pressure": {
         get: {
           tags: ["Banners"],
           summary: "List banner rerun pressure rankings",
@@ -349,7 +349,7 @@ export async function GET() {
           },
         },
       },
-      "/api/v1/genshin/characters/{character}/banner-history": {
+      "/api/v1/characters/{character}/banner-history": {
         get: {
           tags: ["Banners"],
           summary: "Get character banner history",
@@ -426,7 +426,7 @@ export async function GET() {
           },
         },
       },
-      "/api/v1/genshin/characters/{character}/rerun-analysis": {
+      "/api/v1/characters/{character}/rerun-analysis": {
         get: {
           tags: ["Banners"],
           summary: "Get character rerun statistical telemetry & analysis",
@@ -502,7 +502,7 @@ export async function GET() {
           },
         },
       },
-      "/api/knowledge/search": {
+      "/api/v1/knowledge/search": {
         get: {
           tags: ["Knowledge & AI"],
           summary: "Full-text knowledge rank search",

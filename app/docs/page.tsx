@@ -57,7 +57,7 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "search-entities",
     method: "GET",
-    path: "/api/entities",
+    path: "/api/v1/entities",
     title: "List & Search Entities",
     description: "Search canonical entities across all categories (characters, weapons, artifacts, enemies, materials, domains) with pagination and full-text keyword matching.",
     category: "Entities & Relations",
@@ -67,7 +67,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "limit", type: "number", required: false, description: "Maximum records to return (1 to 50, default 24)." },
       { name: "page", type: "number", required: false, description: "Pagination page number (default 1)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/entities?kind=characters&q=nahida&limit=10\"",
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/entities?kind=characters&q=nahida&limit=10\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -92,7 +92,7 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "entity-detail",
     method: "GET",
-    path: "/api/entities/{kind}/{slug}",
+    path: "/api/v1/entities/{kind}/{slug}",
     title: "Entity Detail & Graph Relations",
     description: "Retrieve a single canonical entity along with its typed relations (requirements, drops, domain sources, builds, elements).",
     category: "Entities & Relations",
@@ -100,7 +100,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "kind", type: "string", required: true, description: "Entity kind folder (e.g. characters, weapons, artifacts)." },
       { name: "slug", type: "string", required: true, description: "Entity identifier slug (e.g. furina, splendor-of-tranquil-waters)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/entities/weapons/splendor-of-tranquil-waters",
+    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/entities/weapons/splendor-of-tranquil-waters",
     exampleResponse: JSON.stringify(
       {
         entity: {
@@ -130,7 +130,7 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "farming-plan",
     method: "GET",
-    path: "/api/farming",
+    path: "/api/v1/farming",
     title: "Farming & Material Retrieval",
     description: "Retrieves complete ascension farming pathways, material costs, domain schedules, and enemy drop locations for any character or weapon.",
     category: "Farming & Domains",
@@ -138,7 +138,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "target", type: "string", required: true, description: "Target entity name, slug, or alias (e.g. Furina, Splendor of Tranquil Waters)." },
       { name: "kind", type: "string", required: false, description: "Optional entity kind disambiguation (characters or weapons)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/farming?target=Furina\"",
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/farming?target=Furina\"",
     exampleResponse: JSON.stringify(
       {
         target: {
@@ -180,7 +180,7 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "banner-rerun-pressure",
     method: "GET",
-    path: "/api/v1/genshin/banners/rerun-pressure",
+    path: "/api/v1/banners/rerun-pressure",
     title: "Banner Rerun Pressure Ranking",
     description: "Returns statistical banner pressure scores and urgency rankings for all characters based on historical rerun intervals and current absence duration.",
     category: "Banner Intelligence",
@@ -189,7 +189,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "offset", type: "number", required: false, description: "Offset for pagination (default 0)." },
       { name: "pressureLevel", type: "string", required: false, description: "Filter by level: critical, elevated, normal, or recent." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/genshin/banners/rerun-pressure?limit=5\"",
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/banners/rerun-pressure?limit=5\"",
     exampleResponse: JSON.stringify(
       {
         currentPhase: {
@@ -224,14 +224,14 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "character-banner-history",
     method: "GET",
-    path: "/api/v1/genshin/characters/{character}/banner-history",
+    path: "/api/v1/characters/{character}/banner-history",
     title: "Character Banner History",
     description: "Returns complete historical banner appearances, versions, start/end dates, and appearance interval history for a specific character.",
     category: "Banner Intelligence",
     parameters: [
       { name: "character", type: "string", required: true, description: "Character slug (e.g. nahida, zhongli, raiden-shogun)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/genshin/characters/nahida/banner-history",
+    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/characters/nahida/banner-history",
     exampleResponse: JSON.stringify(
       {
         character: {
@@ -272,14 +272,14 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "character-rerun-analysis",
     method: "GET",
-    path: "/api/v1/genshin/characters/{character}/rerun-analysis",
+    path: "/api/v1/characters/{character}/rerun-analysis",
     title: "Character Rerun Telemetry & Analysis",
     description: "Provides granular statistical distribution metrics, mean/median intervals, percentile benchmarks, and automated forecast analysis notes.",
     category: "Banner Intelligence",
     parameters: [
       { name: "character", type: "string", required: true, description: "Character slug (e.g. furina, arlecchino)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/genshin/characters/furina/rerun-analysis",
+    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/characters/furina/rerun-analysis",
     exampleResponse: JSON.stringify(
       {
         character: {
@@ -318,7 +318,7 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     id: "knowledge-search",
     method: "GET",
-    path: "/api/knowledge/search",
+    path: "/api/v1/knowledge/search",
     title: "Full-Text Knowledge Search",
     description: "Execute PostgreSQL full-text rank queries over chunked lore, build guides, and structured entity documents with ts_rank scoring.",
     category: "AI & Knowledge Retrieval",
@@ -326,7 +326,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "q", type: "string", required: true, description: "Search query text supporting English web-search syntax." },
       { name: "limit", type: "number", required: false, description: "Max results to return (1 to 50, default 8)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/knowledge/search?q=archon+quest+fontaine&limit=4\"",
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/knowledge/search?q=archon+quest+fontaine&limit=4\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -627,15 +627,15 @@ export default function ApiDocsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">find_entity(query, kind)</code>
-              <span className="text-xs text-[var(--text-3)]">Resolves names & pulls canonical stats from <code>/api/entities</code>.</span>
+              <span className="text-xs text-[var(--text-3)]">Resolves names & pulls canonical stats from <code>/api/v1/entities</code>.</span>
             </div>
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">get_farming_sources(target)</code>
-              <span className="text-xs text-[var(--text-3)]">Extracts exact domain days & boss drops via <code>/api/farming</code>.</span>
+              <span className="text-xs text-[var(--text-3)]">Extracts exact domain days & boss drops via <code>/api/v1/farming</code>.</span>
             </div>
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">search_knowledge(query)</code>
-              <span className="text-xs text-[var(--text-3)]">Deep lexical search over story text via <code>/api/knowledge/search</code>.</span>
+              <span className="text-xs text-[var(--text-3)]">Deep lexical search over story text via <code>/api/v1/knowledge/search</code>.</span>
             </div>
           </div>
         </section>
