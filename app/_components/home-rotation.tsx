@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { Icon, type IconName } from "./navigation";
-import { CalendarDays, ChevronDown, ChevronUp, Clock, Globe, Sparkles, Sword, Users, Shield } from "lucide-react";
+import { Icon } from "./navigation";
+import { Globe, Search, Sparkles, Sword, Users } from "lucide-react";
+import { CharacterPortrait } from "../database/banners/banner-visuals";
 
 type ServerRegion = "asia" | "america" | "europe";
 
@@ -25,248 +26,271 @@ function detectUserServer(): ServerRegion {
   }
 }
 
-interface NationDrop {
+export interface FarmableCharacter {
+  name: string;
+  slug: string;
+  element: "Pyro" | "Hydro" | "Anemo" | "Electro" | "Dendro" | "Cryo" | "Geo";
+  rarity: 4 | 5;
+  talentBook: string;
   nation: string;
-  domainTalent: string;
-  talentSeries: string;
-  talentCharacters: string[];
-  domainWeapon: string;
-  weaponSeries: string;
-  weaponItems: string[];
 }
 
-interface DaySchedule {
-  dayName: string;
-  weaponTitle: string;
-  talentTitle: string;
-  nations: NationDrop[];
+export interface FarmableWeapon {
+  name: string;
+  slug: string;
+  type: "Sword" | "Claymore" | "Polearm" | "Bow" | "Catalyst";
+  rarity: 4 | 5;
+  material: string;
+  nation: string;
 }
 
-const NATIONS_MON_THU: NationDrop[] = [
-  {
-    nation: "Mondstadt",
-    domainTalent: "Forsaken Rift",
-    talentSeries: "Freedom",
-    talentCharacters: ["Klee", "Tartaglia", "Diona", "Sucrose", "Barbara", "Aloy"],
-    domainWeapon: "Cecilia Garden",
-    weaponSeries: "Decarabian",
-    weaponItems: ["Aquila Favonia", "The Stringless", "Favonius Codex", "Cinnabar Spindle"],
-  },
-  {
-    nation: "Liyue",
-    domainTalent: "Taishan Mansion",
-    talentSeries: "Prosperity",
-    talentCharacters: ["Keqing", "Xiao", "Ningguang", "Qiqi", "Shenhe", "Yelan"],
-    domainWeapon: "Hidden Palace of Lianshan",
-    weaponSeries: "Guyun",
-    weaponItems: ["Primordial Jade Cutter", "Rust", "Whiteblind", "Blackcliff Pole"],
-  },
-  {
-    nation: "Inazuma",
-    domainTalent: "Violet Court",
-    talentSeries: "Transience",
-    talentCharacters: ["Yoimiya", "Kokomi", "Thoma", "Shikanoin Heizou", "Kirara"],
-    domainWeapon: "Court of Flowing Sand",
-    weaponSeries: "Distant Sea",
-    weaponItems: ["Mistsplitter Reforged", "Hakushin Ring", "Akuoumaru", "Oathsworn Eye"],
-  },
-  {
-    nation: "Sumeru",
-    domainTalent: "Steeple of Ignorance",
-    talentSeries: "Admonition",
-    talentCharacters: ["Tighnari", "Cyno", "Candace", "Faruzan"],
-    domainWeapon: "Tower of Abject Pride",
-    weaponSeries: "Forest Dew",
-    weaponItems: ["Hunter's Path", "A Thousand Floating Dreams", "Sapwood Blade", "Moonpiercer"],
-  },
-  {
-    nation: "Fontaine",
-    domainTalent: "Pale Forgotten Glory",
-    talentSeries: "Equity",
-    talentCharacters: ["Lyney", "Neuvillette", "Navia", "Chevreuse"],
-    domainWeapon: "Echoes of the Deep Tides",
-    weaponSeries: "Sacred Dewdrop",
-    weaponItems: ["The First Great Magic", "Splendor of Tranquil Waters", "Finale of the Deep"],
-  },
-  {
-    nation: "Natlan",
-    domainTalent: "Blazing Ruins",
-    talentSeries: "Contention",
-    talentCharacters: ["Kinich", "Kachina", "Iansan"],
-    domainWeapon: "Ancient Lookout",
-    weaponSeries: "Blazing Heart",
-    weaponItems: ["Fang of the Mountain King", "Earth Shaker", "Footprint of the Rainbow"],
-  },
+// 1. Monday & Thursday Data
+const CHARS_MON_THU: FarmableCharacter[] = [
+  { name: "Klee", slug: "klee", element: "Pyro", rarity: 5, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Tartaglia", slug: "tartaglia", element: "Hydro", rarity: 5, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Diona", slug: "diona", element: "Cryo", rarity: 4, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Sucrose", slug: "sucrose", element: "Anemo", rarity: 4, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Barbara", slug: "barbara", element: "Hydro", rarity: 4, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Amber", slug: "amber", element: "Pyro", rarity: 4, talentBook: "Freedom", nation: "Mondstadt" },
+  { name: "Aloy", slug: "aloy", element: "Cryo", rarity: 5, talentBook: "Freedom", nation: "Mondstadt" },
+
+  { name: "Keqing", slug: "keqing", element: "Electro", rarity: 5, talentBook: "Prosperity", nation: "Liyue" },
+  { name: "Xiao", slug: "xiao", element: "Anemo", rarity: 5, talentBook: "Prosperity", nation: "Liyue" },
+  { name: "Ningguang", slug: "ningguang", element: "Geo", rarity: 4, talentBook: "Prosperity", nation: "Liyue" },
+  { name: "Qiqi", slug: "qiqi", element: "Cryo", rarity: 5, talentBook: "Prosperity", nation: "Liyue" },
+  { name: "Shenhe", slug: "shenhe", element: "Cryo", rarity: 5, talentBook: "Prosperity", nation: "Liyue" },
+  { name: "Yelan", slug: "yelan", element: "Hydro", rarity: 5, talentBook: "Prosperity", nation: "Liyue" },
+
+  { name: "Yoimiya", slug: "yoimiya", element: "Pyro", rarity: 5, talentBook: "Transience", nation: "Inazuma" },
+  { name: "Sangonomiya Kokomi", slug: "sangonomiya-kokomi", element: "Hydro", rarity: 5, talentBook: "Transience", nation: "Inazuma" },
+  { name: "Thoma", slug: "thoma", element: "Pyro", rarity: 4, talentBook: "Transience", nation: "Inazuma" },
+  { name: "Shikanoin Heizou", slug: "shikanoin-heizou", element: "Anemo", rarity: 4, talentBook: "Transience", nation: "Inazuma" },
+  { name: "Kirara", slug: "kirara", element: "Dendro", rarity: 4, talentBook: "Transience", nation: "Inazuma" },
+
+  { name: "Tighnari", slug: "tighnari", element: "Dendro", rarity: 5, talentBook: "Admonition", nation: "Sumeru" },
+  { name: "Cyno", slug: "cyno", element: "Electro", rarity: 5, talentBook: "Admonition", nation: "Sumeru" },
+  { name: "Candace", slug: "candace", element: "Hydro", rarity: 4, talentBook: "Admonition", nation: "Sumeru" },
+  { name: "Faruzan", slug: "faruzan", element: "Anemo", rarity: 4, talentBook: "Admonition", nation: "Sumeru" },
+
+  { name: "Lyney", slug: "lyney", element: "Pyro", rarity: 5, talentBook: "Equity", nation: "Fontaine" },
+  { name: "Neuvillette", slug: "neuvillette", element: "Hydro", rarity: 5, talentBook: "Equity", nation: "Fontaine" },
+  { name: "Navia", slug: "navia", element: "Geo", rarity: 5, talentBook: "Equity", nation: "Fontaine" },
+  { name: "Chevreuse", slug: "chevreuse", element: "Pyro", rarity: 4, talentBook: "Equity", nation: "Fontaine" },
+
+  { name: "Kinich", slug: "kinich", element: "Dendro", rarity: 5, talentBook: "Contention", nation: "Natlan" },
+  { name: "Kachina", slug: "kachina", element: "Geo", rarity: 4, talentBook: "Contention", nation: "Natlan" },
+  { name: "Iansan", slug: "iansan", element: "Electro", rarity: 4, talentBook: "Contention", nation: "Natlan" },
 ];
 
-const NATIONS_TUE_FRI: NationDrop[] = [
-  {
-    nation: "Mondstadt",
-    domainTalent: "Forsaken Rift",
-    talentSeries: "Resistance",
-    talentCharacters: ["Jean", "Diluc", "Mona", "Bennett", "Noelle", "Razor", "Eula"],
-    domainWeapon: "Cecilia Garden",
-    weaponSeries: "Boreal Wolf",
-    weaponItems: ["Skyward Harp", "The Flute", "The Widsith", "Dragonspine Spear"],
-  },
-  {
-    nation: "Liyue",
-    domainTalent: "Taishan Mansion",
-    talentSeries: "Diligence",
-    talentCharacters: ["Ganyu", "Hu Tao", "Kazuha", "Chongyun", "Xiangling", "Yun Jin"],
-    domainWeapon: "Hidden Palace of Lianshan",
-    weaponSeries: "Mist Veiled",
-    weaponItems: ["Primordial Jade Winged-Spear", "The Black Sword", "Prototype Crescent", "Rainslasher"],
-  },
-  {
-    nation: "Inazuma",
-    domainTalent: "Violet Court",
-    talentSeries: "Elegance",
-    talentCharacters: ["Ayaka", "Ayato", "Sara", "Itto", "Kuki Shinobu"],
-    domainWeapon: "Court of Flowing Sand",
-    weaponSeries: "Narukami",
-    weaponItems: ["Thundering Pulse", "Redhorn Stonethresher", "Wavebreaker's Fin", "Predator"],
-  },
-  {
-    nation: "Sumeru",
-    domainTalent: "Steeple of Ignorance",
-    talentSeries: "Ingenuity",
-    talentCharacters: ["Nahida", "Dori", "Layla", "Alhaitham", "Kaveh"],
-    domainWeapon: "Tower of Abject Pride",
-    weaponSeries: "Oasis Garden",
-    weaponItems: ["Key of Khaj-Nisut", "Xiphos' Moonlight", "Wandering Evenstar", "Fruit of Fulfillment"],
-  },
-  {
-    nation: "Fontaine",
-    domainTalent: "Pale Forgotten Glory",
-    talentSeries: "Justice",
-    talentCharacters: ["Furina", "Charlotte", "Clorinde"],
-    domainWeapon: "Echoes of the Deep Tides",
-    weaponSeries: "Ancient Chord",
-    weaponItems: ["Absolution", "Tome of the Eternal Flow", "Flowing Purity"],
-  },
-  {
-    nation: "Natlan",
-    domainTalent: "Blazing Ruins",
-    talentSeries: "Kindling",
-    talentCharacters: ["Ororon", "Citlali", "Xbalanque"],
-    domainWeapon: "Ancient Lookout",
-    weaponSeries: "Delirious Decadence",
-    weaponItems: ["Astral Vulture's Crimson Plumage", "Starcaller's Watch", "Mountain-Bracing Bolt"],
-  },
+const WEAPONS_MON_THU: FarmableWeapon[] = [
+  { name: "Aquila Favonia", slug: "aquila-favonia", type: "Sword", rarity: 5, material: "Decarabian", nation: "Mondstadt" },
+  { name: "The Stringless", slug: "the-stringless", type: "Bow", rarity: 4, material: "Decarabian", nation: "Mondstadt" },
+  { name: "Favonius Codex", slug: "favonius-codex", type: "Catalyst", rarity: 4, material: "Decarabian", nation: "Mondstadt" },
+  { name: "Cinnabar Spindle", slug: "cinnabar-spindle", type: "Sword", rarity: 4, material: "Decarabian", nation: "Mondstadt" },
+
+  { name: "Primordial Jade Cutter", slug: "primordial-jade-cutter", type: "Sword", rarity: 5, material: "Guyun", nation: "Liyue" },
+  { name: "Rust", slug: "rust", type: "Bow", rarity: 4, material: "Guyun", nation: "Liyue" },
+  { name: "Whiteblind", slug: "whiteblind", type: "Claymore", rarity: 4, material: "Guyun", nation: "Liyue" },
+  { name: "Blackcliff Pole", slug: "blackcliff-pole", type: "Polearm", rarity: 4, material: "Guyun", nation: "Liyue" },
+
+  { name: "Mistsplitter Reforged", slug: "mistsplitter-reforged", type: "Sword", rarity: 5, material: "Distant Sea", nation: "Inazuma" },
+  { name: "Hakushin Ring", slug: "hakushin-ring", type: "Catalyst", rarity: 4, material: "Distant Sea", nation: "Inazuma" },
+  { name: "Akuoumaru", slug: "akuoumaru", type: "Claymore", rarity: 4, material: "Distant Sea", nation: "Inazuma" },
+  { name: "Amenoma Kageuchi", slug: "amenoma-kageuchi", type: "Sword", rarity: 4, material: "Distant Sea", nation: "Inazuma" },
+
+  { name: "Hunter's Path", slug: "hunters-path", type: "Bow", rarity: 5, material: "Forest Dew", nation: "Sumeru" },
+  { name: "A Thousand Floating Dreams", slug: "a-thousand-floating-dreams", type: "Catalyst", rarity: 5, material: "Forest Dew", nation: "Sumeru" },
+  { name: "Sapwood Blade", slug: "sapwood-blade", type: "Sword", rarity: 4, material: "Forest Dew", nation: "Sumeru" },
+  { name: "Moonpiercer", slug: "moonpiercer", type: "Polearm", rarity: 4, material: "Forest Dew", nation: "Sumeru" },
+
+  { name: "The First Great Magic", slug: "the-first-great-magic", type: "Bow", rarity: 5, material: "Sacred Dewdrop", nation: "Fontaine" },
+  { name: "Splendor of Tranquil Waters", slug: "splendor-of-tranquil-waters", type: "Sword", rarity: 5, material: "Sacred Dewdrop", nation: "Fontaine" },
+  { name: "Finale of the Deep", slug: "finale-of-the-deep", type: "Sword", rarity: 4, material: "Sacred Dewdrop", nation: "Fontaine" },
+  { name: "Tidal Shadow", slug: "tidal-shadow", type: "Claymore", rarity: 4, material: "Sacred Dewdrop", nation: "Fontaine" },
+
+  { name: "Fang of the Mountain King", slug: "fang-of-the-mountain-king", type: "Claymore", rarity: 5, material: "Blazing Heart", nation: "Natlan" },
+  { name: "Earth Shaker", slug: "earth-shaker", type: "Claymore", rarity: 4, material: "Blazing Heart", nation: "Natlan" },
+  { name: "Footprint of the Rainbow", slug: "footprint-of-the-rainbow", type: "Polearm", rarity: 4, material: "Blazing Heart", nation: "Natlan" },
+  { name: "Ring of Yaxche", slug: "ring-of-yaxche", type: "Catalyst", rarity: 4, material: "Blazing Heart", nation: "Natlan" },
 ];
 
-const NATIONS_WED_SAT: NationDrop[] = [
-  {
-    nation: "Mondstadt",
-    domainTalent: "Forsaken Rift",
-    talentSeries: "Ballad",
-    talentCharacters: ["Venti", "Kaeya", "Albedo", "Rosaria", "Lisa", "Mika", "Fischl"],
-    domainWeapon: "Cecilia Garden",
-    weaponSeries: "Dandelion Gladiator",
-    weaponItems: ["Amos' Bow", "Favonius Sword", "Wolf's Gravestone", "Sacrificial Bow"],
-  },
-  {
-    nation: "Liyue",
-    domainTalent: "Taishan Mansion",
-    talentSeries: "Gold",
-    talentCharacters: ["Zhongli", "Xingqiu", "Beidou", "Yanfei", "Baizhu", "Gaming"],
-    domainWeapon: "Hidden Palace of Lianshan",
-    weaponSeries: "Aerosiderite",
-    weaponItems: ["Memory of Dust", "Vortex Vanquisher", "Prototype Archaic", "Iron Sting"],
-  },
-  {
-    nation: "Inazuma",
-    domainTalent: "Violet Court",
-    talentSeries: "Light",
-    talentCharacters: ["Raiden Shogun", "Yae Miko", "Gorou", "Sayu"],
-    domainWeapon: "Court of Flowing Sand",
-    weaponSeries: "Mask of the Wicked Lieutenant",
-    weaponItems: ["Engulfing Lightning", "Haran Geppaku Futsu", "Hakushin Ring", "Kagura's Verity"],
-  },
-  {
-    nation: "Sumeru",
-    domainTalent: "Steeple of Ignorance",
-    talentSeries: "Praxis",
-    talentCharacters: ["Nilou", "Wanderer", "Dehya", "Collei", "Sethos"],
-    domainWeapon: "Tower of Abject Pride",
-    weaponSeries: "Scorching Might",
-    weaponItems: ["Light of Foliar Incision", "Tulaytullah's Remembrance", "Toukabou Shigure", "Forest Sanctuary"],
-  },
-  {
-    nation: "Fontaine",
-    domainTalent: "Pale Forgotten Glory",
-    talentSeries: "Order",
-    talentCharacters: ["Wriothesley", "Lynette", "Emilie", "Arlecchino"],
-    domainWeapon: "Echoes of the Deep Tides",
-    weaponSeries: "Pure Drop / Sublimated",
-    weaponItems: ["Cashflow Supervision", "Crimson Moon's Semblance", "Rightful Reward"],
-  },
-  {
-    nation: "Natlan",
-    domainTalent: "Blazing Ruins",
-    talentSeries: "Conflict",
-    talentCharacters: ["Mualani", "Xilonen", "Chasca", "Odette"],
-    domainWeapon: "Ancient Lookout",
-    weaponSeries: "Night-Wind's Mystic Essence",
-    weaponItems: ["Surf's Up", "Peak Patrol Song", "Flute of Ezpitzal"],
-  },
+// 2. Tuesday & Friday Data
+const CHARS_TUE_FRI: FarmableCharacter[] = [
+  { name: "Jean", slug: "jean", element: "Anemo", rarity: 5, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Diluc", slug: "diluc", element: "Pyro", rarity: 5, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Mona", slug: "mona", element: "Hydro", rarity: 5, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Bennett", slug: "bennett", element: "Pyro", rarity: 4, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Noelle", slug: "noelle", element: "Geo", rarity: 4, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Razor", slug: "razor", element: "Electro", rarity: 4, talentBook: "Resistance", nation: "Mondstadt" },
+  { name: "Eula", slug: "eula", element: "Cryo", rarity: 5, talentBook: "Resistance", nation: "Mondstadt" },
+
+  { name: "Ganyu", slug: "ganyu", element: "Cryo", rarity: 5, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Hu Tao", slug: "hu-tao", element: "Pyro", rarity: 5, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Kaedehara Kazuha", slug: "kaedehara-kazuha", element: "Anemo", rarity: 5, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Xiangling", slug: "xiangling", element: "Pyro", rarity: 4, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Chongyun", slug: "chongyun", element: "Cryo", rarity: 4, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Yun Jin", slug: "yun-jin", element: "Geo", rarity: 4, talentBook: "Diligence", nation: "Liyue" },
+  { name: "Yaoyao", slug: "yaoyao", element: "Dendro", rarity: 4, talentBook: "Diligence", nation: "Liyue" },
+
+  { name: "Kamisato Ayaka", slug: "kamisato-ayaka", element: "Cryo", rarity: 5, talentBook: "Elegance", nation: "Inazuma" },
+  { name: "Kamisato Ayato", slug: "kamisato-ayato", element: "Hydro", rarity: 5, talentBook: "Elegance", nation: "Inazuma" },
+  { name: "Arataki Itto", slug: "arataki-itto", element: "Geo", rarity: 5, talentBook: "Elegance", nation: "Inazuma" },
+  { name: "Kujou Sara", slug: "kujou-sara", element: "Electro", rarity: 4, talentBook: "Elegance", nation: "Inazuma" },
+  { name: "Kuki Shinobu", slug: "kuki-shinobu", element: "Electro", rarity: 4, talentBook: "Elegance", nation: "Inazuma" },
+
+  { name: "Nahida", slug: "nahida", element: "Dendro", rarity: 5, talentBook: "Ingenuity", nation: "Sumeru" },
+  { name: "Alhaitham", slug: "alhaitham", element: "Dendro", rarity: 5, talentBook: "Ingenuity", nation: "Sumeru" },
+  { name: "Layla", slug: "layla", element: "Cryo", rarity: 4, talentBook: "Ingenuity", nation: "Sumeru" },
+  { name: "Dori", slug: "dori", element: "Electro", rarity: 4, talentBook: "Ingenuity", nation: "Sumeru" },
+  { name: "Kaveh", slug: "kaveh", element: "Dendro", rarity: 4, talentBook: "Ingenuity", nation: "Sumeru" },
+
+  { name: "Furina", slug: "furina", element: "Hydro", rarity: 5, talentBook: "Justice", nation: "Fontaine" },
+  { name: "Clorinde", slug: "clorinde", element: "Electro", rarity: 5, talentBook: "Justice", nation: "Fontaine" },
+  { name: "Sigewinne", slug: "sigewinne", element: "Hydro", rarity: 5, talentBook: "Justice", nation: "Fontaine" },
+  { name: "Charlotte", slug: "charlotte", element: "Cryo", rarity: 4, talentBook: "Justice", nation: "Fontaine" },
+
+  { name: "Ororon", slug: "ororon", element: "Electro", rarity: 4, talentBook: "Kindling", nation: "Natlan" },
+  { name: "Citlali", slug: "citlali", element: "Cryo", rarity: 5, talentBook: "Kindling", nation: "Natlan" },
+  { name: "Mavuika", slug: "mavuika", element: "Pyro", rarity: 5, talentBook: "Kindling", nation: "Natlan" },
+  { name: "Xbalanque", slug: "xbalanque", element: "Pyro", rarity: 5, talentBook: "Kindling", nation: "Natlan" },
 ];
 
-const SCHEDULES: Record<number, DaySchedule> = {
-  0: {
-    dayName: "Sunday",
-    weaponTitle: "All Weapon Materials Available",
-    talentTitle: "All Talent Teachings Available",
-    nations: NATIONS_MON_THU.concat(NATIONS_TUE_FRI, NATIONS_WED_SAT),
-  },
-  1: {
-    dayName: "Monday",
-    weaponTitle: "Decarabian · Guyun · Distant Sea · Forest Dew · Sacred Dewdrop · Blazing Heart",
-    talentTitle: "Freedom · Prosperity · Transience · Admonition · Equity · Contention",
-    nations: NATIONS_MON_THU,
-  },
-  2: {
-    dayName: "Tuesday",
-    weaponTitle: "Boreal Wolf · Mist Veiled · Narukami · Oasis Garden · Ancient Chord · Delirious Decadence",
-    talentTitle: "Resistance · Diligence · Elegance · Ingenuity · Justice · Kindling",
-    nations: NATIONS_TUE_FRI,
-  },
-  3: {
-    dayName: "Wednesday",
-    weaponTitle: "Dandelion Gladiator · Aerosiderite · Mask · Scorching Might · Pure Drop · Night-Wind",
-    talentTitle: "Ballad · Gold · Light · Praxis · Order · Conflict",
-    nations: NATIONS_WED_SAT,
-  },
-  4: {
-    dayName: "Thursday",
-    weaponTitle: "Decarabian · Guyun · Distant Sea · Forest Dew · Sacred Dewdrop · Blazing Heart",
-    talentTitle: "Freedom · Prosperity · Transience · Admonition · Equity · Contention",
-    nations: NATIONS_MON_THU,
-  },
-  5: {
-    dayName: "Friday",
-    weaponTitle: "Boreal Wolf · Mist Veiled · Narukami · Oasis Garden · Ancient Chord · Delirious Decadence",
-    talentTitle: "Resistance · Diligence · Elegance · Ingenuity · Justice · Kindling",
-    nations: NATIONS_TUE_FRI,
-  },
-  6: {
-    dayName: "Saturday",
-    weaponTitle: "Dandelion Gladiator · Aerosiderite · Mask · Scorching Might · Pure Drop · Night-Wind",
-    talentTitle: "Ballad · Gold · Light · Praxis · Order · Conflict",
-    nations: NATIONS_WED_SAT,
-  },
+const WEAPONS_TUE_FRI: FarmableWeapon[] = [
+  { name: "Skyward Harp", slug: "skyward-harp", type: "Bow", rarity: 5, material: "Boreal Wolf", nation: "Mondstadt" },
+  { name: "The Flute", slug: "the-flute", type: "Sword", rarity: 4, material: "Boreal Wolf", nation: "Mondstadt" },
+  { name: "The Widsith", slug: "the-widsith", type: "Catalyst", rarity: 4, material: "Boreal Wolf", nation: "Mondstadt" },
+  { name: "Dragonspine Spear", slug: "dragonspine-spear", type: "Polearm", rarity: 4, material: "Boreal Wolf", nation: "Mondstadt" },
+
+  { name: "Primordial Jade Winged-Spear", slug: "primordial-jade-winged-spear", type: "Polearm", rarity: 5, material: "Mist Veiled", nation: "Liyue" },
+  { name: "The Black Sword", slug: "the-black-sword", type: "Sword", rarity: 4, material: "Mist Veiled", nation: "Liyue" },
+  { name: "Prototype Crescent", slug: "prototype-crescent", type: "Bow", rarity: 4, material: "Mist Veiled", nation: "Liyue" },
+  { name: "Dragon's Bane", slug: "dragons-bane", type: "Polearm", rarity: 4, material: "Mist Veiled", nation: "Liyue" },
+
+  { name: "Thundering Pulse", slug: "thundering-pulse", type: "Bow", rarity: 5, material: "Narukami", nation: "Inazuma" },
+  { name: "Redhorn Stonethresher", slug: "redhorn-stonethresher", type: "Claymore", rarity: 5, material: "Narukami", nation: "Inazuma" },
+  { name: "Wavebreaker's Fin", slug: "wavebreakers-fin", type: "Polearm", rarity: 4, material: "Narukami", nation: "Inazuma" },
+  { name: "Katsuragikiri Nagamasa", slug: "katsuragikiri-nagamasa", type: "Claymore", rarity: 4, material: "Narukami", nation: "Inazuma" },
+
+  { name: "Key of Khaj-Nisut", slug: "key-of-khaj-nisut", type: "Sword", rarity: 5, material: "Oasis Garden", nation: "Sumeru" },
+  { name: "Xiphos' Moonlight", slug: "xiphos-moonlight", type: "Sword", rarity: 4, material: "Oasis Garden", nation: "Sumeru" },
+  { name: "Wandering Evenstar", slug: "wandering-evenstar", type: "Catalyst", rarity: 4, material: "Oasis Garden", nation: "Sumeru" },
+  { name: "Fruit of Fulfillment", slug: "fruit-of-fulfillment", type: "Catalyst", rarity: 4, material: "Oasis Garden", nation: "Sumeru" },
+
+  { name: "Absolution", slug: "absolution", type: "Sword", rarity: 5, material: "Ancient Chord", nation: "Fontaine" },
+  { name: "Tome of the Eternal Flow", slug: "tome-of-the-eternal-flow", type: "Catalyst", rarity: 5, material: "Ancient Chord", nation: "Fontaine" },
+  { name: "Flowing Purity", slug: "flowing-purity", type: "Catalyst", rarity: 4, material: "Ancient Chord", nation: "Fontaine" },
+  { name: "Dialogues of the Desert Sages", slug: "dialogues-of-the-desert-sages", type: "Polearm", rarity: 4, material: "Ancient Chord", nation: "Fontaine" },
+
+  { name: "Astral Vulture's Crimson Plumage", slug: "astral-vultures-crimson-plumage", type: "Bow", rarity: 5, material: "Delirious Decadence", nation: "Natlan" },
+  { name: "Starcaller's Watch", slug: "starcallers-watch", type: "Catalyst", rarity: 5, material: "Delirious Decadence", nation: "Natlan" },
+  { name: "Mountain-Bracing Bolt", slug: "mountain-bracing-bolt", type: "Polearm", rarity: 4, material: "Delirious Decadence", nation: "Natlan" },
+  { name: "Chain Breaker", slug: "chain-breaker", type: "Bow", rarity: 4, material: "Delirious Decadence", nation: "Natlan" },
+];
+
+// 3. Wednesday & Saturday Data
+const CHARS_WED_SAT: FarmableCharacter[] = [
+  { name: "Venti", slug: "venti", element: "Anemo", rarity: 5, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Albedo", slug: "albedo", element: "Geo", rarity: 5, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Fischl", slug: "fischl", element: "Electro", rarity: 4, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Rosaria", slug: "rosaria", element: "Cryo", rarity: 4, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Kaeya", slug: "kaeya", element: "Cryo", rarity: 4, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Lisa", slug: "lisa", element: "Electro", rarity: 4, talentBook: "Ballad", nation: "Mondstadt" },
+  { name: "Mika", slug: "mika", element: "Cryo", rarity: 4, talentBook: "Ballad", nation: "Mondstadt" },
+
+  { name: "Zhongli", slug: "zhongli", element: "Geo", rarity: 5, talentBook: "Gold", nation: "Liyue" },
+  { name: "Baizhu", slug: "baizhu", element: "Dendro", rarity: 5, talentBook: "Gold", nation: "Liyue" },
+  { name: "Xingqiu", slug: "xingqiu", element: "Hydro", rarity: 4, talentBook: "Gold", nation: "Liyue" },
+  { name: "Beidou", slug: "beidou", element: "Electro", rarity: 4, talentBook: "Gold", nation: "Liyue" },
+  { name: "Yanfei", slug: "yanfei", element: "Pyro", rarity: 4, talentBook: "Gold", nation: "Liyue" },
+  { name: "Gaming", slug: "gaming", element: "Pyro", rarity: 4, talentBook: "Gold", nation: "Liyue" },
+
+  { name: "Raiden Shogun", slug: "raiden-shogun", element: "Electro", rarity: 5, talentBook: "Light", nation: "Inazuma" },
+  { name: "Yae Miko", slug: "yae-miko", element: "Electro", rarity: 5, talentBook: "Light", nation: "Inazuma" },
+  { name: "Gorou", slug: "gorou", element: "Geo", rarity: 4, talentBook: "Light", nation: "Inazuma" },
+  { name: "Sayu", slug: "sayu", element: "Anemo", rarity: 4, talentBook: "Light", nation: "Inazuma" },
+
+  { name: "Nilou", slug: "nilou", element: "Hydro", rarity: 5, talentBook: "Praxis", nation: "Sumeru" },
+  { name: "Wanderer", slug: "wanderer", element: "Anemo", rarity: 5, talentBook: "Praxis", nation: "Sumeru" },
+  { name: "Dehya", slug: "dehya", element: "Pyro", rarity: 5, talentBook: "Praxis", nation: "Sumeru" },
+  { name: "Collei", slug: "collei", element: "Dendro", rarity: 4, talentBook: "Praxis", nation: "Sumeru" },
+  { name: "Sethos", slug: "sethos", element: "Electro", rarity: 4, talentBook: "Praxis", nation: "Sumeru" },
+
+  { name: "Wriothesley", slug: "wriothesley", element: "Cryo", rarity: 5, talentBook: "Order", nation: "Fontaine" },
+  { name: "Emilie", slug: "emilie", element: "Dendro", rarity: 5, talentBook: "Order", nation: "Fontaine" },
+  { name: "Arlecchino", slug: "arlecchino", element: "Pyro", rarity: 5, talentBook: "Order", nation: "Fontaine" },
+  { name: "Lynette", slug: "lynette", element: "Anemo", rarity: 4, talentBook: "Order", nation: "Fontaine" },
+  { name: "Chiori", slug: "chiori", element: "Geo", rarity: 5, talentBook: "Order", nation: "Fontaine" },
+
+  { name: "Mualani", slug: "mualani", element: "Hydro", rarity: 5, talentBook: "Conflict", nation: "Natlan" },
+  { name: "Xilonen", slug: "xilonen", element: "Geo", rarity: 5, talentBook: "Conflict", nation: "Natlan" },
+  { name: "Chasca", slug: "chasca", element: "Anemo", rarity: 5, talentBook: "Conflict", nation: "Natlan" },
+  { name: "Odette", slug: "odette", element: "Cryo", rarity: 5, talentBook: "Conflict", nation: "Natlan" },
+];
+
+const WEAPONS_WED_SAT: FarmableWeapon[] = [
+  { name: "Amos' Bow", slug: "amos-bow", type: "Bow", rarity: 5, material: "Dandelion Gladiator", nation: "Mondstadt" },
+  { name: "Wolf's Gravestone", slug: "wolfs-gravestone", type: "Claymore", rarity: 5, material: "Dandelion Gladiator", nation: "Mondstadt" },
+  { name: "Favonius Sword", slug: "favonius-sword", type: "Sword", rarity: 4, material: "Dandelion Gladiator", nation: "Mondstadt" },
+  { name: "Sacrificial Bow", slug: "sacrificial-bow", type: "Bow", rarity: 4, material: "Dandelion Gladiator", nation: "Mondstadt" },
+
+  { name: "Memory of Dust", slug: "memory-of-dust", type: "Catalyst", rarity: 5, material: "Aerosiderite", nation: "Liyue" },
+  { name: "Vortex Vanquisher", slug: "vortex-vanquisher", type: "Polearm", rarity: 5, material: "Aerosiderite", nation: "Liyue" },
+  { name: "Prototype Archaic", slug: "prototype-archaic", type: "Claymore", rarity: 4, material: "Aerosiderite", nation: "Liyue" },
+  { name: "Iron Sting", slug: "iron-sting", type: "Sword", rarity: 4, material: "Aerosiderite", nation: "Liyue" },
+
+  { name: "Engulfing Lightning", slug: "engulfing-lightning", type: "Polearm", rarity: 5, material: "Mask of Wicked Lieutenant", nation: "Inazuma" },
+  { name: "Haran Geppaku Futsu", slug: "haran-geppaku-futsu", type: "Sword", rarity: 5, material: "Mask of Wicked Lieutenant", nation: "Inazuma" },
+  { name: "Kagura's Verity", slug: "kaguras-verity", type: "Catalyst", rarity: 5, material: "Mask of Wicked Lieutenant", nation: "Inazuma" },
+  { name: "The Catch", slug: "the-catch", type: "Polearm", rarity: 4, material: "Mask of Wicked Lieutenant", nation: "Inazuma" },
+
+  { name: "Light of Foliar Incision", slug: "light-of-foliar-incision", type: "Sword", rarity: 5, material: "Scorching Might", nation: "Sumeru" },
+  { name: "Tulaytullah's Remembrance", slug: "tulaytullahs-remembrance", type: "Catalyst", rarity: 5, material: "Scorching Might", nation: "Sumeru" },
+  { name: "Beacon of the Reed Sea", slug: "beacon-of-the-reed-sea", type: "Claymore", rarity: 5, material: "Scorching Might", nation: "Sumeru" },
+  { name: "Toukabou Shigure", slug: "toukabou-shigure", type: "Sword", rarity: 4, material: "Scorching Might", nation: "Sumeru" },
+
+  { name: "Cashflow Supervision", slug: "cashflow-supervision", type: "Catalyst", rarity: 5, material: "Pure Drop / Sublimated", nation: "Fontaine" },
+  { name: "Crimson Moon's Semblance", slug: "crimson-moons-semblance", type: "Polearm", rarity: 5, material: "Pure Drop / Sublimated", nation: "Fontaine" },
+  { name: "Rightful Reward", slug: "rightful-reward", type: "Polearm", rarity: 4, material: "Pure Drop / Sublimated", nation: "Fontaine" },
+  { name: "Ultimate Overlord's Mega Magic Sword", slug: "ultimate-overlords-mega-magic-sword", type: "Claymore", rarity: 4, material: "Pure Drop / Sublimated", nation: "Fontaine" },
+
+  { name: "Surf's Up", slug: "surfs-up", type: "Catalyst", rarity: 5, material: "Night-Wind's Mystic Essence", nation: "Natlan" },
+  { name: "Peak Patrol Song", slug: "peak-patrol-song", type: "Sword", rarity: 5, material: "Night-Wind's Mystic Essence", nation: "Natlan" },
+  { name: "Flute of Ezpitzal", slug: "flute-of-ezpitzal", type: "Sword", rarity: 4, material: "Night-Wind's Mystic Essence", nation: "Natlan" },
+  { name: "Ash-Graven Drinking Horn", slug: "ash-graven-drinking-horn", type: "Catalyst", rarity: 4, material: "Night-Wind's Mystic Essence", nation: "Natlan" },
+];
+
+const ALL_CHARS = [...CHARS_MON_THU, ...CHARS_TUE_FRI, ...CHARS_WED_SAT];
+const ALL_WEAPONS = [...WEAPONS_MON_THU, ...WEAPONS_TUE_FRI, ...WEAPONS_WED_SAT];
+
+const DAY_DATA: Record<number, { dayName: string; chars: FarmableCharacter[]; weapons: FarmableWeapon[] }> = {
+  0: { dayName: "Sunday", chars: ALL_CHARS, weapons: ALL_WEAPONS },
+  1: { dayName: "Monday", chars: CHARS_MON_THU, weapons: WEAPONS_MON_THU },
+  2: { dayName: "Tuesday", chars: CHARS_TUE_FRI, weapons: WEAPONS_TUE_FRI },
+  3: { dayName: "Wednesday", chars: CHARS_WED_SAT, weapons: WEAPONS_WED_SAT },
+  4: { dayName: "Thursday", chars: CHARS_MON_THU, weapons: WEAPONS_MON_THU },
+  5: { dayName: "Friday", chars: CHARS_TUE_FRI, weapons: WEAPONS_TUE_FRI },
+  6: { dayName: "Saturday", chars: CHARS_WED_SAT, weapons: WEAPONS_WED_SAT },
 };
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const ELEMENT_COLORS: Record<string, string> = {
+  Pyro: "bg-[#e25d43]/15 text-[#f08570] border-[#e25d43]/30",
+  Hydro: "bg-[#4fc7f4]/15 text-[#72d6ff] border-[#4fc7f4]/30",
+  Anemo: "bg-[#72e2c4]/15 text-[#8ef0d8] border-[#72e2c4]/30",
+  Electro: "bg-[#b877f6]/15 text-[#cc9cff] border-[#b877f6]/30",
+  Dendro: "bg-[#9fd943]/15 text-[#b9ee66] border-[#9fd943]/30",
+  Cryo: "bg-[#99e8ff]/15 text-[#c2f2ff] border-[#99e8ff]/30",
+  Geo: "bg-[#e3b552]/15 text-[#ffd77d] border-[#e3b552]/30",
+};
 
 export function HomeRotation() {
   const [server, setServer] = useState<ServerRegion>("asia");
   const [activeServerDay, setActiveServerDay] = useState<number>(3);
   const [selectedDay, setSelectedDay] = useState<number>(3);
+  const [activeTab, setActiveTab] = useState<"characters" | "weapons">("characters");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [countdown, setCountdown] = useState<string>("--:--:--");
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [filterType, setFilterType] = useState<"all" | "talents" | "weapons">("all");
 
   useEffect(() => {
     const detected = detectUserServer();
@@ -309,20 +333,44 @@ export function HomeRotation() {
     return () => clearInterval(interval);
   }, [server]);
 
-  // Keep selected day in sync with active server day on initial load
+  // Keep selected day in sync with server day on initial load
   useEffect(() => {
     setSelectedDay(activeServerDay);
   }, [activeServerDay]);
 
-  const schedule = SCHEDULES[selectedDay] ?? SCHEDULES[0];
+  const currentData = DAY_DATA[selectedDay] ?? DAY_DATA[0];
   const isToday = selectedDay === activeServerDay;
+
+  const filteredCharacters = useMemo(() => {
+    if (!searchQuery.trim()) return currentData.chars;
+    const q = searchQuery.toLowerCase().trim();
+    return currentData.chars.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.element.toLowerCase().includes(q) ||
+        c.talentBook.toLowerCase().includes(q) ||
+        c.nation.toLowerCase().includes(q)
+    );
+  }, [currentData.chars, searchQuery]);
+
+  const filteredWeapons = useMemo(() => {
+    if (!searchQuery.trim()) return currentData.weapons;
+    const q = searchQuery.toLowerCase().trim();
+    return currentData.weapons.filter(
+      (w) =>
+        w.name.toLowerCase().includes(q) ||
+        w.type.toLowerCase().includes(q) ||
+        w.material.toLowerCase().includes(q) ||
+        w.nation.toLowerCase().includes(q)
+    );
+  }, [currentData.weapons, searchQuery]);
 
   return (
     <>
       <section className="page-heading">
         <div>
           <h1>Home</h1>
-          <p>Daily domain drops, talent books, and server reset schedule.</p>
+          <p>Find what characters and weapons you can farm today.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -353,17 +401,18 @@ export function HomeRotation() {
       </section>
 
       <section className="rotation-section" id="rotation" aria-labelledby="rotation-title">
-        <div className="section-header flex-wrap gap-3">
-          <div>
+        {/* Section Header */}
+        <div className="section-header flex-wrap gap-4 py-3">
+          <div className="flex items-center gap-3">
             <span className="section-icon">
               <Icon name="calendar" />
             </span>
             <div>
               <h2 id="rotation-title">
-                {isToday ? "Today's Rotation" : `${schedule.dayName}'s Rotation`}
+                {isToday ? `What Can I Farm Today? (${currentData.dayName})` : `What Can I Farm on ${currentData.dayName}?`}
               </h2>
               <p>
-                {schedule.dayName} · {SERVER_CONFIG[server].label} · {selectedDay === 0 ? "All material domains open" : "Domains of Forgery & Mastery open"}
+                {SERVER_CONFIG[server].label} · {selectedDay === 0 ? "Sunday Free Choice: All materials open" : "Domains of Mastery & Forgery open"}
               </p>
             </div>
           </div>
@@ -377,7 +426,10 @@ export function HomeRotation() {
               return (
                 <button
                   key={dayLabel}
-                  onClick={() => setSelectedDay(dayIndex)}
+                  onClick={() => {
+                    setSelectedDay(dayIndex);
+                    setSearchQuery("");
+                  }}
                   className={`px-2.5 py-1 rounded text-xs font-mono transition-all cursor-pointer flex items-center gap-1 ${
                     isSelected
                       ? "bg-[var(--accent)] text-[var(--surface-sunken)] font-bold shadow-[0_0_10px_rgba(98,213,163,0.3)]"
@@ -387,180 +439,147 @@ export function HomeRotation() {
                   }`}
                 >
                   <span>{dayLabel}</span>
-                  {isServerToday && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-[var(--surface-sunken)]" : "bg-[var(--accent)]"}`} />}
+                  {isServerToday && (
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isSelected ? "bg-[var(--surface-sunken)]" : "bg-[var(--accent)]"
+                      }`}
+                    />
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* 3 Main Summary Cards */}
-        <div className="rotation-grid">
-          {/* Weapon Materials */}
-          <div
-            onClick={() => {
-              setIsExpanded(true);
-              setFilterType("weapons");
-            }}
-            className="rotation-card gold group cursor-pointer"
-          >
-            <span className="rotation-icon">
-              <Icon name="sword" />
-            </span>
-            <div>
-              <span>Weapon Materials</span>
-              <strong>{schedule.weaponTitle}</strong>
-              <small>{selectedDay === 0 ? "Sunday Choice" : "6 Regional Weapon Domains"}</small>
-            </div>
-            <div className="drop-stack">
-              {["1", "2", "3"].map((d) => (
-                <i key={d}>✦</i>
-              ))}
-            </div>
-            <Icon name="chevron" size={14} />
+        {/* Tab & Search Filter Bar */}
+        <div className="p-3.5 border-b border-white/5 bg-[var(--surface-raised)]/60 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("characters")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === "characters"
+                  ? "bg-[#6bc8d7] text-black shadow-[0_0_14px_rgba(107,200,215,0.3)]"
+                  : "bg-[var(--surface-sunken)] text-[var(--text-muted)] hover:text-[var(--text-light)] border border-white/5"
+              }`}
+            >
+              <Users size={14} />
+              <span>Characters ({currentData.chars.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("weapons")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                activeTab === "weapons"
+                  ? "bg-[#e2b96a] text-black shadow-[0_0_14px_rgba(226,185,106,0.3)]"
+                  : "bg-[var(--surface-sunken)] text-[var(--text-muted)] hover:text-[var(--text-light)] border border-white/5"
+              }`}
+            >
+              <Sword size={14} />
+              <span>Weapons ({currentData.weapons.length})</span>
+            </button>
           </div>
 
-          {/* Talent Books */}
-          <div
-            onClick={() => {
-              setIsExpanded(true);
-              setFilterType("talents");
-            }}
-            className="rotation-card cyan group cursor-pointer"
-          >
-            <span className="rotation-icon">
-              <Icon name="users" />
-            </span>
-            <div>
-              <span>Talent Books</span>
-              <strong>{schedule.talentTitle}</strong>
-              <small>{selectedDay === 0 ? "Sunday Choice" : "6 Regional Talent Domains"}</small>
-            </div>
-            <div className="drop-stack">
-              {["1", "2", "3"].map((d) => (
-                <i key={d}>✦</i>
-              ))}
-            </div>
-            <Icon name="chevron" size={14} />
+          <div className="relative min-w-[220px] max-w-xs flex-1">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              placeholder={activeTab === "characters" ? "Search character, element, book..." : "Search weapon, type, material..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[var(--surface-sunken)] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--text-light)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+            />
           </div>
-
-          {/* Weekly Bosses */}
-          <Link className="rotation-card violet group" href="/database/domains/">
-            <span className="rotation-icon">
-              <Icon name="enemy" />
-            </span>
-            <div>
-              <span>Weekly Bosses</span>
-              <strong>3 discounted claims</strong>
-              <small>30 Resin each · Resets Monday</small>
-            </div>
-            <div className="drop-stack">
-              {["W", "30", "3×"].map((drop) => (
-                <i key={drop}>{drop}</i>
-              ))}
-            </div>
-            <Icon name="chevron" size={14} />
-          </Link>
         </div>
 
-        {/* Toggle Detailed Breakdown Button */}
-        <div className="border-t border-white/5 px-4 py-2.5 flex items-center justify-between bg-[var(--surface-raised)]/40">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs font-semibold text-[var(--accent)] hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            <span>{isExpanded ? "Hide Full Drops & Character Matrix" : `View All ${schedule.dayName} Regional Drops & Benefiting Characters`}</span>
-          </button>
+        {/* Content Area: Direct Character Cards */}
+        {activeTab === "characters" && (
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {filteredCharacters.map((char) => {
+              const colorClass = ELEMENT_COLORS[char.element] || "bg-white/10 text-white border-white/20";
 
-          <Link href="/database/domains/" className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
-            All Domains Index →
-          </Link>
-        </div>
-
-        {/* Expandable Regional Drop Matrix */}
-        {isExpanded && (
-          <div className="p-4 border-t border-white/5 bg-[var(--surface-sunken)]/60">
-            {/* Filter Toggle */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">Filter:</span>
-              <button
-                onClick={() => setFilterType("all")}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                  filterType === "all" ? "bg-[var(--accent)] text-[var(--surface-sunken)] font-bold" : "bg-[var(--surface-raised)] text-[var(--text-muted)]"
-                }`}
-              >
-                All Drops
-              </button>
-              <button
-                onClick={() => setFilterType("talents")}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                  filterType === "talents" ? "bg-[#6bc8d7] text-black font-bold" : "bg-[var(--surface-raised)] text-[var(--text-muted)]"
-                }`}
-              >
-                <Users size={12} /> Talent Books
-              </button>
-              <button
-                onClick={() => setFilterType("weapons")}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
-                  filterType === "weapons" ? "bg-[#e2b96a] text-black font-bold" : "bg-[var(--surface-raised)] text-[var(--text-muted)]"
-                }`}
-              >
-                <Sword size={12} /> Weapon Materials
-              </button>
-            </div>
-
-            {/* 6 Nations Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {schedule.nations.map((nationItem) => (
-                <div key={nationItem.nation} className="bg-[var(--surface-raised)] border border-white/5 rounded-xl p-3.5 flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <strong className="text-sm font-semibold text-[var(--text-light)]">{nationItem.nation}</strong>
-                    <span className="text-[10px] font-mono uppercase text-[var(--accent)] tracking-wider">Region</span>
+              return (
+                <Link
+                  href={`/characters/${char.slug}`}
+                  key={char.name}
+                  className="bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-2.5 flex flex-col items-center gap-2 transition-all hover:scale-[1.02] group"
+                >
+                  <div className="w-16 h-16 relative rounded-lg overflow-hidden bg-[var(--surface-raised)]">
+                    <CharacterPortrait slug={char.slug} name={char.name} sizes="64px" />
                   </div>
 
-                  {/* Talent Series */}
-                  {(filterType === "all" || filterType === "talents") && (
-                    <div className="flex flex-col gap-1 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[var(--text-muted)] flex items-center gap-1">
-                          <Users size={11} className="text-[#6bc8d7]" /> {nationItem.domainTalent}
-                        </span>
-                        <Link
-                          href={`/database/materials?q=${encodeURIComponent(nationItem.talentSeries)}`}
-                          className="font-bold text-[#6bc8d7] hover:underline"
-                        >
-                          {nationItem.talentSeries} Series →
-                        </Link>
-                      </div>
-                      <div className="text-[11px] text-[var(--text-muted)] pl-4">
-                        Used by: <span className="text-[var(--text-light)]">{nationItem.talentCharacters.slice(0, 4).join(", ")}{nationItem.talentCharacters.length > 4 ? "..." : ""}</span>
-                      </div>
+                  <div className="text-center w-full min-w-0">
+                    <div className="flex items-center justify-center gap-1">
+                      <strong className="text-xs font-semibold text-[var(--text-light)] group-hover:text-[var(--accent)] truncate">
+                        {char.name}
+                      </strong>
                     </div>
-                  )}
 
-                  {/* Weapon Series */}
-                  {(filterType === "all" || filterType === "weapons") && (
-                    <div className="flex flex-col gap-1 text-xs pt-1 border-t border-white/5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[var(--text-muted)] flex items-center gap-1">
-                          <Sword size={11} className="text-[#e2b96a]" /> {nationItem.domainWeapon}
-                        </span>
-                        <Link
-                          href={`/database/materials?q=${encodeURIComponent(nationItem.weaponSeries)}`}
-                          className="font-bold text-[#e2b96a] hover:underline"
-                        >
-                          {nationItem.weaponSeries} Series →
-                        </Link>
-                      </div>
-                      <div className="text-[11px] text-[var(--text-muted)] pl-4">
-                        Used by: <span className="text-[var(--text-light)]">{nationItem.weaponItems.slice(0, 3).join(", ")}</span>
-                      </div>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded border font-mono ${colorClass}`}>
+                        {char.element}
+                      </span>
+                      <span className="text-[10px] text-[var(--banner-gold)] font-mono">
+                        {"✦".repeat(char.rarity)}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+
+                    <span className="text-[10px] text-[#6bc8d7] block mt-1 font-medium truncate">
+                      {char.talentBook} Series
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+
+            {filteredCharacters.length === 0 && (
+              <div className="col-span-full p-8 text-center text-xs text-[var(--text-muted)]">
+                No farmable characters found matching &quot;{searchQuery}&quot;.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Content Area: Direct Weapon Cards */}
+        {activeTab === "weapons" && (
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {filteredWeapons.map((weapon) => {
+              return (
+                <Link
+                  href={`/database/materials?q=${encodeURIComponent(weapon.material)}`}
+                  key={weapon.name}
+                  className="bg-[var(--surface-sunken)] border border-white/5 hover:border-[#e2b96a] rounded-xl p-3 flex flex-col gap-2 transition-all hover:scale-[1.02] group"
+                >
+                  <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                    <span className="text-[10px] text-[var(--banner-gold)] font-mono">
+                      {"✦".repeat(weapon.rarity)}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-mono uppercase">
+                      {weapon.type}
+                    </span>
+                  </div>
+
+                  <strong className="text-xs font-semibold text-[var(--text-light)] group-hover:text-[#e2b96a] line-clamp-2 min-h-[32px]">
+                    {weapon.name}
+                  </strong>
+
+                  <div className="mt-auto pt-1 border-t border-white/5">
+                    <span className="text-[10px] text-[#e2b96a] block font-medium truncate">
+                      {weapon.material}
+                    </span>
+                    <small className="text-[9px] text-[var(--text-muted)] block">
+                      {weapon.nation}
+                    </small>
+                  </div>
+                </Link>
+              );
+            })}
+
+            {filteredWeapons.length === 0 && (
+              <div className="col-span-full p-8 text-center text-xs text-[var(--text-muted)]">
+                No farmable weapons found matching &quot;{searchQuery}&quot;.
+              </div>
+            )}
           </div>
         )}
       </section>
