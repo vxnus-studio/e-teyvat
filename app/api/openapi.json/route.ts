@@ -565,53 +565,8 @@ export async function GET() {
           },
         },
       },
-      "/api/e/verify": {
-        post: {
-          tags: ["Knowledge & AI"],
-          summary: "E-Knowledge Hub publisher verification",
-          description: "Verifies the knowledge provider authenticity against E-Hub publisher specifications without revealing secret keys.",
-          operationId: "verifyKnowledgeProvider",
-          security: [
-            {
-              BearerAuth: [],
-            },
-          ],
-          responses: {
-            "200": {
-              description: "Provider verified successfully",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      id: { type: "string", example: "@vxnus/e-teyvat" },
-                      publisher: { type: "string", example: "vxnus" },
-                    },
-                    required: ["id", "publisher"],
-                  },
-                },
-              },
-            },
-            "401": {
-              description: "Unauthorized or invalid publisher key",
-              content: {
-                "application/json": {
-                  schema: { $ref: "#/components/schemas/ErrorResponse" },
-                },
-              },
-            },
-          },
-        },
-      },
     },
     components: {
-      securitySchemes: {
-        BearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          description: "Enter your E Hub publisher bearer key",
-        },
-      },
       schemas: {
         ErrorResponse: {
           type: "object",

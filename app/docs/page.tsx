@@ -347,26 +347,6 @@ const apiEndpoints: ApiEndpoint[] = [
     ),
     notes: "Ideal for AI Agent retrieval tools and fuzzy lore queries across the entire knowledge base.",
   },
-  {
-    id: "hub-provider-verify",
-    method: "POST",
-    path: "/api/e/verify",
-    title: "E-Knowledge Hub Provider Verification",
-    description: "Verifies the knowledge provider authenticity against E-Hub publisher specifications without revealing secret keys.",
-    category: "AI & Knowledge Retrieval",
-    headers: [
-      { name: "Authorization", required: true, description: "Bearer <E_PUBLISHER_API_KEY>" },
-    ],
-    exampleRequest: "curl -X POST https://eteyvat.vxnus.xyz/api/e/verify \\\n  -H \"Authorization: Bearer test-key\"",
-    exampleResponse: JSON.stringify(
-      {
-        id: "@vxnus/e-teyvat",
-        publisher: "vxnus",
-      },
-      null,
-      2
-    ),
-  },
 ];
 
 const categories = [
