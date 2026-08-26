@@ -382,20 +382,14 @@ export default function ApiDocsPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 shrink-0">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">Base URL</span>
-              <code className="bg-[#0c1512] border border-[var(--line-strong)] text-[var(--green-2)] px-3.5 py-2 rounded-lg text-xs font-mono select-all">
-                https://eteyvat.vxnus.xyz/api
-              </code>
-            </div>
             <a
               href="/api/openapi.json"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-[rgba(98,213,163,0.12)] hover:bg-[rgba(98,213,163,0.2)] text-[var(--green-2)] border border-[rgba(98,213,163,0.3)] text-xs font-mono font-bold px-3.5 py-2 rounded-lg transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-[rgba(98,213,163,0.12)] hover:bg-[rgba(98,213,163,0.2)] text-[var(--green-2)] border border-[rgba(98,213,163,0.3)] text-xs font-mono font-bold px-4 py-2.5 rounded-lg transition-all shadow-sm"
             >
-              <Icon name="code" size={15} />
-              <span>View OpenAPI 3.1 Spec (/api/openapi.json)</span>
+              <Icon name="code" size={16} />
+              <span>OpenAPI 3.1 Spec (/api/openapi.json)</span>
             </a>
           </div>
         </section>
