@@ -30,7 +30,7 @@ export interface TeyvatRelationViewModel {
   predicate: string;
   sourcePath: string;
   metadata: Record<string, unknown>;
-  object: Pick<TeyvatEntityViewModel, "id" | "canonicalId" | "category" | "kind" | "slug" | "name">;
+  object: Pick<TeyvatEntityViewModel, "id" | "canonicalId" | "category" | "kind" | "slug" | "name" | "image">;
 }
 
 export interface EntitySearchResult {

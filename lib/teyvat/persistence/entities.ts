@@ -100,7 +100,21 @@ export class TeyvatPersistentEntityQueries {
       const object = objectMap.get(relation.objectId);
       if (!object) continue;
       const objectView = entityViewModel(toEntityLike(object), revision, aliases);
-      relations.push({ id: relation.id, predicate: relation.predicate, sourcePath: relation.predicate, metadata: relation.metadata, object: { id: objectView.id, canonicalId: objectView.canonicalId, category: objectView.category, kind: objectView.kind, slug: objectView.slug, name: objectView.name } });
+      relations.push({
+        id: relation.id,
+        predicate: relation.predicate,
+        sourcePath: relation.predicate,
+        metadata: relation.metadata,
+        object: {
+          id: objectView.id,
+          canonicalId: objectView.canonicalId,
+          category: objectView.category,
+          kind: objectView.kind,
+          slug: objectView.slug,
+          name: objectView.name,
+          image: objectView.image,
+        },
+      });
     }
     return { item, relations, revision };
   }

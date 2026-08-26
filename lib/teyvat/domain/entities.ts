@@ -145,7 +145,21 @@ export class TeyvatEntityQueries {
       const object = this.byId.get(relation.objectId);
       if (!object) return null;
       const objectView = entityViewModel(object, this.projection.revision, this.aliasesByEntity);
-      return { id: relation.id, predicate: relation.predicate, sourcePath: relation.predicate, metadata: (relation.metadata ?? {}) as Record<string, unknown>, object: { id: objectView.id, canonicalId: objectView.canonicalId, category: objectView.category, kind: objectView.kind, slug: objectView.slug, name: objectView.name } };
+      return {
+        id: relation.id,
+        predicate: relation.predicate,
+        sourcePath: relation.predicate,
+        metadata: (relation.metadata ?? {}) as Record<string, unknown>,
+        object: {
+          id: objectView.id,
+          canonicalId: objectView.canonicalId,
+          category: objectView.category,
+          kind: objectView.kind,
+          slug: objectView.slug,
+          name: objectView.name,
+          image: objectView.image,
+        },
+      };
     }).filter((value): value is TeyvatRelationViewModel => Boolean(value));
     return { item, relations, revision: this.projection.revision };
   }

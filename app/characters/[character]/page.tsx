@@ -157,13 +157,25 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
               <Link
                 href={`/database/materials?q=${encodeURIComponent(material.name)}`}
                 key={material.id}
-                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all"
+                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all hover:scale-[1.02] group"
               >
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] flex items-center justify-center font-bold text-[var(--accent)]">
-                  {material.name.slice(0, 2).toUpperCase()}
+                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] relative overflow-hidden flex items-center justify-center p-1 border border-white/5 shrink-0">
+                  {material.image ? (
+                    <Image
+                      src={material.image}
+                      alt={material.name}
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  ) : (
+                    <span className="font-bold text-xs text-[var(--accent)]">
+                      {material.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <strong className="text-sm block text-[var(--text-light)]">{material.name}</strong>
+                  <strong className="text-sm block text-[var(--text-light)] group-hover:text-[var(--accent)]">{material.name}</strong>
                   <small className="text-xs text-[var(--text-muted)] capitalize">{material.kind}</small>
                 </div>
               </Link>
@@ -186,13 +198,25 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
               <Link
                 href={`/database/materials?q=${encodeURIComponent(material.name)}`}
                 key={material.id}
-                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all"
+                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all hover:scale-[1.02] group"
               >
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] flex items-center justify-center font-bold text-[var(--accent)]">
-                  {material.name.slice(0, 2).toUpperCase()}
+                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] relative overflow-hidden flex items-center justify-center p-1 border border-white/5 shrink-0">
+                  {material.image ? (
+                    <Image
+                      src={material.image}
+                      alt={material.name}
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  ) : (
+                    <span className="font-bold text-xs text-[var(--accent)]">
+                      {material.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <strong className="text-sm block text-[var(--text-light)]">{material.name}</strong>
+                  <strong className="text-sm block text-[var(--text-light)] group-hover:text-[var(--accent)]">{material.name}</strong>
                   <small className="text-xs text-[var(--text-muted)] capitalize">{material.kind}</small>
                 </div>
               </Link>
