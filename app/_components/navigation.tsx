@@ -19,7 +19,8 @@ export type IconName =
   | "menu"
   | "grid"
   | "x"
-  | "sparkles";
+  | "sparkles"
+  | "code";
 
 export function Icon({ name, size = 19 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -37,6 +38,7 @@ export function Icon({ name, size = 19 }: { name: IconName; size?: number }) {
     grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></>,
     x: <path d="m18 6-12 12M6 6l12 12" />,
     sparkles: <><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" /></>,
+    code: <><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></>,
   };
 
   return (
@@ -55,6 +57,7 @@ export const navigation: { label: string; icon: IconName; href: string }[] = [
   { label: "Enemies", icon: "enemy", href: "/database/enemies/" },
   { label: "Knowledge", icon: "quest", href: "/knowledge/" },
   { label: "Explore", icon: "map", href: "/explore/" },
+  { label: "API Docs", icon: "code", href: "/docs/" },
 ];
 
 export const drawerDirectory = [
@@ -82,6 +85,7 @@ export const drawerDirectory = [
     items: [
       { label: "Knowledge Retrieval", href: "/knowledge/", icon: "quest" as IconName, desc: "Trace entities & facts" },
       { label: "Graph Explorer", href: "/explore/", icon: "map" as IconName, desc: "Explore 8,696 graph entities" },
+      { label: "API Documentation", href: "/docs/", icon: "code" as IconName, desc: "Public endpoints & AI tool schemas" },
     ],
   },
   {
