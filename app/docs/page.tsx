@@ -347,6 +347,97 @@ const apiEndpoints: ApiEndpoint[] = [
     ),
     notes: "Ideal for AI Agent retrieval tools and fuzzy lore queries across the entire knowledge base.",
   },
+  {
+    id: "lore-search",
+    method: "GET",
+    path: "/api/v1/lore/search",
+    title: "Lore Engine Narrative Search",
+    description: "Search 1,239 in-game book volumes, 299 artifact relic chronicles, weapon histories, and monster lore with category filtering and snippet extraction.",
+    category: "AI & Knowledge Retrieval",
+    parameters: [
+      { name: "q", type: "string", required: false, description: "Keyword search across lore title, entity, and volume text." },
+      { name: "category", type: "string", required: false, description: "Category filter: book, artifact, weapon, monster, character, or all." },
+      { name: "limit", type: "number", required: false, description: "Maximum results to return (default 20)." },
+      { name: "page", type: "number", required: false, description: "Pagination page number (default 1)." },
+    ],
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/lore/search?q=Dandelion+Sea&category=book\"",
+    exampleResponse: JSON.stringify(
+      {
+        items: [
+          {
+            id: "genshin:document:doc_book_1_vol_1",
+            category: "book",
+            title: "The Fox in the Dandelion Sea — Vol. 1",
+            entityName: "The Fox in the Dandelion Sea",
+            volumeNumber: 1,
+            snippet: "\"Dandelion, Dandelion, ride the wind to a faraway land,\" the Fox chants...",
+          },
+        ],
+        total: 11,
+        page: 1,
+        limit: 20,
+        categories: { all: 11, books: 11, artifacts: 0, weapons: 0, monsters: 0, characters: 0 },
+        preview: false,
+      },
+      null,
+      2
+    ),
+    notes: "NOTICE: Currently operates as a deterministic lexical search over canonical records (books, artifact lore, weapon legends, monster profiles). Autonomous AI reasoning/synthesis is not active in Phase 1; endpoints return verbatim canonical text for grounded evidence.",
+  },
+  {
+    id: "lore-books",
+    method: "GET",
+    path: "/api/v1/lore/books",
+    title: "List In-Game Book Chronicles",
+    description: "List and browse all in-game book chronicles with total volume counts and preview snippets.",
+    category: "AI & Knowledge Retrieval",
+    parameters: [
+      { name: "q", type: "string", required: false, description: "Filter by book title substring." },
+      { name: "limit", type: "number", required: false, description: "Records limit (default 24)." },
+      { name: "page", type: "number", required: false, description: "Page number (default 1)." },
+    ],
+    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/lore/books?q=Gunnhildr\"",
+    exampleResponse: JSON.stringify(
+      {
+        items: [
+          {
+            id: "genshin:book:2",
+            slug: "biography-of-gunnhildr",
+            name: "Biography of Gunnhildr",
+            volumeCount: 1,
+            sampleSnippet: "A brief history of the ancient Gunnhildr clan...",
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 24,
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: "provider-verify",
+    method: "POST",
+    path: "/api/e/verify",
+    title: "E Knowledge Provider Verification",
+    description: "Handshake verification endpoint for E knowledge provider registration and publisher authorization.",
+    category: "Core & Health",
+    headers: [
+      { name: "Authorization", required: false, description: "Optional Bearer token containing publisher verification key." },
+    ],
+    exampleRequest: "curl -X POST https://eteyvat.vxnus.xyz/api/e/verify -H \"Authorization: Bearer <KEY>\"",
+    exampleResponse: JSON.stringify(
+      {
+        valid: true,
+        provider: "@vxnus/e-teyvat",
+        publisher: "vxnus",
+      },
+      null,
+      2
+    ),
+    notes: "Part of the @vxnus/e provider distribution protocol.",
+  },
 ];
 
 const categories = [
@@ -612,24 +703,28 @@ export default function ApiDocsPage() {
           <div className="flex items-center gap-2">
             <Icon name="sparkles" size={20} />
             <h3 className="text-base font-bold text-[var(--green-2)] m-0">
-              Integrating with Large Language Models & AI Tools
+              AI Agent & Large Language Model Integration (RAG Architecture)
             </h3>
           </div>
           <p className="text-xs md:text-sm text-[var(--text-2)] leading-relaxed m-0 max-w-3xl">
-            When constructing Function Calling tool definitions for AI agents (OpenAI, Gemini, Claude, LangChain, etc.), register these 3 core retrieval tools:
+            <strong>Ground Truth vs. Reasoning:</strong> E-Teyvat serves as the deterministic <strong>Retrieval Layer (Ground Truth)</strong>, providing verbatim in-game chronicles, books, relic stories, and graph relations. External AI agents (Claude, Gemini, GPT, LangChain, etc.) invoke these endpoints as tool calls to retrieve raw canonical evidence, allowing the external AI model to perform the <strong>semantic reasoning, timeline synthesis, and answer generation</strong> with exact source citations.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-2">
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">find_entity(query, kind)</code>
               <span className="text-xs text-[var(--text-3)]">Resolves names & pulls canonical stats from <code>/api/v1/entities</code>.</span>
             </div>
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">get_farming_sources(target)</code>
-              <span className="text-xs text-[var(--text-3)]">Extracts exact domain days & boss drops via <code>/api/v1/farming</code>.</span>
+              <span className="text-xs text-[var(--text-3)]">Extracts exact domain schedules & boss drops via <code>/api/v1/farming</code>.</span>
+            </div>
+            <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
+              <code className="text-xs font-mono text-[var(--gold)] font-bold">search_lore(query, category)</code>
+              <span className="text-xs text-[var(--text-3)]">Retrieves 1,239 book volumes, artifact lore & legends via <code>/api/v1/lore/search</code>.</span>
             </div>
             <div className="bg-[#090f0d] border border-[var(--line)] p-4 rounded-lg flex flex-col gap-1">
               <code className="text-xs font-mono text-[var(--green)] font-bold">search_knowledge(query)</code>
-              <span className="text-xs text-[var(--text-3)]">Deep lexical search over story text via <code>/api/v1/knowledge/search</code>.</span>
+              <span className="text-xs text-[var(--text-3)]">Full-text rank search over chunked documents via <code>/api/v1/knowledge/search</code>.</span>
             </div>
           </div>
         </section>

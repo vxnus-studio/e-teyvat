@@ -6,13 +6,15 @@ Teyvat is an open structured knowledge base for **Genshin Impact**, designed for
 
 Rather than acting as another wiki, Teyvat exposes canonical entities, relationships, and searchable knowledge through public APIs. It can be used for AI retrieval, applications, websites, bots, and research that require consistent Genshin data.
 
-Built with a static Next.js frontend, Cloudflare Workers, Neon Postgres, and Drizzle ORM, the project focuses on reliable data synchronization, graph relationships, and long-term machine-readable knowledge.
+Built with a full-stack Next.js App Router frontend, Neon Postgres, and Drizzle ORM, the project focuses on reliable data synchronization, graph relationships, and long-term machine-readable knowledge.
 
 ## Documentation
 
 * [Architecture and AI Retrieval](docs/architecture.md)
 * [Read API Reference](docs/api.md)
-* [Hosted provider handoff](docs/PHASE-5-HANDOFF.md)
+* [Banner Intelligence & Rerun Pressure](docs/banners.md)
+* [Character Feature Roadmap](docs/character-feature-roadmap.md)
+* [The Lore Engine](docs/lore-engine.md)
 
 ## Getting Started
 
@@ -25,7 +27,7 @@ bun dev
 
 Open **http://localhost:3000**.
 
-The frontend works as a static preview by default. API-backed features become available once the hosted worker has a valid `DATABASE_URL`.
+The frontend works as a static preview by default. API-backed features become available once the application has a valid `DATABASE_URL`.
 
 For local database tooling, copy:
 
@@ -39,7 +41,7 @@ and configure your database connection.
 
 1. Create a Neon project.
 2. Copy the pooled PostgreSQL connection string.
-3. Set `DATABASE_URL` locally and in your GitHub Actions secrets.
+3. Set `DATABASE_URL` locally and in your deployment environment secrets.
 4. Apply the database schema:
 
 ```bash
@@ -50,52 +52,54 @@ bun run db:migrate
 
 ```bash
 bun run sync:genshin
+bun run sync:banners
 ```
 
-6. Configure `DATABASE_URL` for the deployed Cloudflare Worker.
+6. Configure `DATABASE_URL` for the deployed Next.js application.
 
-A scheduled GitHub Actions workflow runs monthly to keep the dataset synchronized with new Genshin releases. Manual synchronization is also supported.
+A scheduled GitHub Actions workflow runs periodically to keep the dataset synchronized with new Genshin releases. Manual synchronization is also supported.
 
 ## Data Model
 
-The database is organized into several core tables:
+The database is organized into core knowledge tables:
 
-* **entities** — canonical records imported from the genshin-db v5 dataset
-* **aliases** — normalized names for robust entity resolution
-* **relations** — graph edges connecting entities (such as `requires`, `located_in`, and `rewards`)
-* **knowledge_documents** — searchable long-form knowledge with optional vector support
-* **sync_runs** — import history, coverage statistics, and validation results
+* **entities** / **teyvat_entities** — canonical records imported from structured game data and normalized projections
+* **aliases** / **teyvat_aliases** — normalized names for robust entity resolution
+* **relations** / **teyvat_relations** — graph edges connecting entities (such as `requires`, `located_in`, `rewards`, `ascension_cost`, `talent_material`, `recipe_ingredient`)
+* **knowledge_documents** / **teyvat_documents** — searchable long-form knowledge with full-text search and vector support
+* **teyvat_chunks** / **teyvat_embeddings** — chunked retrieval units and revision-scoped vector embeddings
+* **banner_phases** / **banner_character_statistics** — banner rotation timelines and statistical rerun pressure model
+* **sync_runs** / **teyvat_dataset_revisions** — import audit history, revision hashes, and coverage statistics
 
 The importer hashes every source record, skips unchanged content, preserves existing embeddings, and rebuilds graph relationships after each successful synchronization.
 
-Vector storage is prepared for future embedding providers, while full-text search and graph traversal work without embeddings.
+### E Knowledge Provider Status
 
-The E-compatible provider endpoints are:
+* `POST /api/e/verify` — Provider identity and key verification (**Implemented**)
+* `GET /api/e/manifest` — E manifest advertising dataset revision & capabilities (*Future Plan*)
+* `POST /api/e/retrieve` — E lexical/hybrid cited chunk retrieval (*Future Plan*)
 
-* `GET /api/e/manifest`
-* `POST /api/e/retrieve`
-
-The manifest advertises semantic retrieval only after the active revision has
-complete revision-scoped embeddings. Keep embedding configuration server-side;
-Siduri receives only the public HTTPS provider URL.
-
-E Hub publisher ownership and authentication are intentionally outside this
-repository. The Hub is pivoting to Supabase for Auth and control-plane
-metadata; this provider remains independently operated on Neon.
+E Hub publisher ownership and authentication are intentionally outside this repository. This provider remains independently operated on Neon.
 
 ## Read API
- 
-| Endpoint                           | Description                |
-| ---------------------------------- | -------------------------- |
-| `GET /api/health`                  | Health check & telemetry   |
-| `GET /api/v1/entities`             | Search entities            |
-| `GET /api/v1/entities/:kind/:slug` | Retrieve a single entity   |
-| `GET /api/v1/farming`              | Farming recommendations    |
-| `GET /api/v1/knowledge/search`     | Search knowledge documents |
-| `GET /api/v1/banners/rerun-pressure` | Banner rerun rankings    |
-| `GET /api/v1/characters/:char/banner-history` | Character banner history |
-| `GET /api/v1/characters/:char/rerun-analysis` | Character rerun analysis |
-| `GET /api/openapi.json`            | OpenAPI 3.1 Specification  |
+
+| Endpoint | Method | Status | Description |
+| -------- | ------ | ------ | ----------- |
+| `/api/health` | GET | Implemented | Health check, dataset revision & system telemetry |
+| `/api/v1/entities` | GET | Implemented | Search canonical entities across kinds with pagination |
+| `/api/v1/entities/:kind/:slug` | GET | Implemented | Retrieve a single entity and outgoing relations |
+| `/api/v1/farming` | GET | Implemented | Farming pathways, material costs & domain schedules |
+| `/api/v1/lore/search` | GET | Implemented | Search 1,239 book volumes, relics & weapon lore |
+| `/api/v1/lore/books` | GET | Implemented | List in-game book chronicles & volume counts |
+| `/api/v1/lore/books/:slug` | GET | Implemented | Retrieve full multi-volume text anthology |
+| `/api/v1/knowledge/search` | GET | Implemented | PostgreSQL full-text rank search over lore chunks |
+| `/api/v1/banners/rerun-pressure` | GET | Implemented | Character banner rerun pressure rankings |
+| `/api/v1/characters/:char/banner-history` | GET | Implemented | Historical character banner appearance timeline |
+| `/api/v1/characters/:char/rerun-analysis` | GET | Implemented | Statistical rerun distribution & pressure analysis |
+| `/api/e/verify` | POST | Implemented | E Provider verification handshake |
+| `/api/openapi.json` | GET | Implemented | OpenAPI 3.1 Specification |
+| `/api/e/manifest` | GET | *Future Plan* | E-compatible dataset manifest |
+| `/api/e/retrieve` | POST | *Future Plan* | E-compatible cited chunk retrieval |
 
 ## License
 

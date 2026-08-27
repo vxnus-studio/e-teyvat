@@ -26,18 +26,18 @@ The confidence score (0-100) measures the reliability of the statistical estimat
 
 ## API Specifications
 
-Read-only API endpoints are available under `/api/v1/genshin`:
+Read-only API endpoints are available:
 
 ### 1. Character Banner History
-`GET /api/v1/genshin/characters/:character_slug/banner-history`
+`GET /api/v1/characters/:character_slug/banner-history` *(Legacy: `/api/v1/genshin/characters/:character_slug/banner-history`)*
 Returns chronological appearances, calculated wait intervals, and model analysis for a specific character.
 
 ### 2. Rerun Analysis
-`GET /api/v1/genshin/characters/:character_slug/rerun-analysis`
+`GET /api/v1/characters/:character_slug/rerun-analysis` *(Legacy: `/api/v1/genshin/characters/:character_slug/rerun-analysis`)*
 Returns pre-calculated statistical data (median, mean, intervals, pressure score, confidence score).
 
 ### 3. Rerun Pressure Rankings
-`GET /api/v1/genshin/banners/rerun-pressure`
+`GET /api/v1/banners/rerun-pressure` *(Legacy: `/api/v1/genshin/banners/rerun-pressure`)*
 Returns a ranked list of characters based on their Rerun Pressure Score.
 **Params:**
 - `limit` (default: 50)
@@ -46,8 +46,8 @@ Returns a ranked list of characters based on their Rerun Pressure Score.
 
 ## Architecture
 
-Data is sourced from the [Samsara](https://github.com/benlei/samsara-web) dataset. 
-The ingestion pipeline (`bun run sync:banners`) fetches the upstream `banners.yaml`, parses version strings (including Chronicles like "Luna V.1"), resolves character aliases to canonical Teyvat entities, and upserts phase data.
+Data is ingested through historical banner rotation records. 
+The ingestion pipeline (`bun run sync:banners`) parses version strings (including Chronicles like "Luna V.1"), resolves character aliases to canonical Teyvat entities, and upserts phase data.
 Statistics are deterministically calculated during sync and stored in the database (`banner_character_statistics`) rather than calculated on the fly.
 
 ## Limitations & Disclaimer

@@ -54,7 +54,7 @@ export const navigation: { label: string; icon: IconName; href: string }[] = [
   { label: "Weapons", icon: "sword", href: "/database/weapons/" },
   { label: "Artifacts", icon: "artifact", href: "/database/artifacts/" },
   { label: "Banners", icon: "calendar", href: "/database/banners/" },
-  { label: "Enemies", icon: "enemy", href: "/database/enemies/" },
+  { label: "Lore Engine", icon: "sparkles", href: "/lore-engine/" },
   { label: "Knowledge", icon: "quest", href: "/knowledge/" },
   { label: "Explore", icon: "map", href: "/explore/" },
   { label: "API Docs", icon: "code", href: "/docs/" },
@@ -83,6 +83,7 @@ export const drawerDirectory = [
   {
     category: "AI & Graph System",
     items: [
+      { label: "Lore Engine", href: "/lore-engine/", icon: "sparkles" as IconName, desc: "1,239 books & relic chronicles" },
       { label: "Knowledge Retrieval", href: "/knowledge/", icon: "quest" as IconName, desc: "Trace entities & facts" },
       { label: "Graph Explorer", href: "/explore/", icon: "map" as IconName, desc: "Explore 8,696 graph entities" },
       { label: "API Documentation", href: "/docs/", icon: "code" as IconName, desc: "Public endpoints & AI tool schemas" },

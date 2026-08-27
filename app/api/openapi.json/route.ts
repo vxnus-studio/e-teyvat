@@ -7,7 +7,7 @@ export async function GET() {
       title: "E-Teyvat Knowledge Base API",
       version: "1.0.0",
       description:
-        "Open structured knowledge base and graph database for Genshin Impact entities, weapons, materials, farming pathways, banner rotations, and AI retrieval.",
+        "Open structured knowledge base and deterministic Ground-Truth Retrieval API for Genshin Impact entities, weapons, materials, farming pathways, banner rotations, and lore archives. Designed for RAG pipelines and external AI Agents (Claude, Gemini, GPT): client agents retrieve verbatim canonical evidence from these endpoints to execute semantic reasoning, timeline deduction, and synthesis with exact source citations.",
       contact: {
         name: "VXNUS Labs",
         url: "https://vxnus.xyz",
@@ -67,6 +67,40 @@ export async function GET() {
             },
             "503": {
               description: "Database connection failed",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/e/verify": {
+        post: {
+          tags: ["Core & Health"],
+          summary: "E Knowledge Provider Verification",
+          description: "Handshake verification endpoint for E knowledge provider registration and publisher authorization.",
+          operationId: "verifyProvider",
+          responses: {
+            "200": {
+              description: "Provider registration verified",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      valid: { type: "boolean", example: true },
+                      provider: { type: "string", example: "@vxnus/e-teyvat" },
+                      publisher: { type: "string", example: "vxnus" },
+                    },
+                    required: ["valid", "provider", "publisher"],
+                  },
+                },
+              },
+            },
+            "503": {
+              description: "Knowledge provider unavailable",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -559,6 +593,112 @@ export async function GET() {
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/ErrorResponse" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/v1/lore/search": {
+        get: {
+          tags: ["Knowledge & AI"],
+          summary: "Lore Engine Narrative Search",
+          description: "Deterministic lexical search over 1,239 in-game book volumes, 299 artifact relic chronicles, weapon histories, and monster lore with category filtering and snippet extraction. Returns verbatim canonical source texts for external AI agents to perform semantic reasoning, timeline deduction, and grounded synthesis.",
+          operationId: "searchLore",
+          parameters: [
+            {
+              name: "q",
+              in: "query",
+              required: false,
+              description: "Keyword search across lore title, entity, and volume text.",
+              schema: { type: "string" },
+            },
+            {
+              name: "category",
+              in: "query",
+              required: false,
+              description: "Category filter.",
+              schema: { type: "string", enum: ["all", "book", "artifact", "weapon", "monster", "character"] },
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              description: "Maximum results to return (default 20).",
+              schema: { type: "integer", default: 20 },
+            },
+            {
+              name: "page",
+              in: "query",
+              required: false,
+              description: "Pagination page number (default 1).",
+              schema: { type: "integer", default: 1 },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Search results with category facets and metadata",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      items: { type: "array", items: { type: "object" } },
+                      total: { type: "integer" },
+                      page: { type: "integer" },
+                      limit: { type: "integer" },
+                      categories: { type: "object" },
+                    },
+                    required: ["items", "total"],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/v1/lore/books": {
+        get: {
+          tags: ["Knowledge & AI"],
+          summary: "List In-Game Book Chronicles",
+          description: "List and browse all in-game book chronicles with total volume counts and preview snippets.",
+          operationId: "listLoreBooks",
+          parameters: [
+            {
+              name: "q",
+              in: "query",
+              required: false,
+              description: "Filter by book title substring.",
+              schema: { type: "string" },
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              description: "Records limit (default 24).",
+              schema: { type: "integer", default: 24 },
+            },
+            {
+              name: "page",
+              in: "query",
+              required: false,
+              description: "Page number (default 1).",
+              schema: { type: "integer", default: 1 },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "List of in-game book chronicles",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      items: { type: "array", items: { type: "object" } },
+                      total: { type: "integer" },
+                    },
+                    required: ["items", "total"],
+                  },
                 },
               },
             },

@@ -1,6 +1,7 @@
 import { getTeyvatBootstrap } from "../bootstrap.ts";
 import { TeyvatEntityQueries } from "./entities.ts";
 import { TeyvatFarmingQueries } from "./farming.ts";
+import { TeyvatLoreQueries } from "./lore.ts";
 import { TeyvatPersistentEntityQueries } from "../persistence/entities.ts";
 import { TeyvatPersistentFarmingQueries } from "../persistence/farming.ts";
 
@@ -8,6 +9,7 @@ let cached: Promise<TeyvatEntityQueries> | undefined;
 let persistentCached: Promise<TeyvatPersistentEntityQueries> | undefined;
 let farmingCached: Promise<TeyvatFarmingQueries> | undefined;
 let persistentFarmingCached: Promise<TeyvatPersistentFarmingQueries> | undefined;
+let loreCached: Promise<TeyvatLoreQueries> | undefined;
 
 export function getTeyvatEntityQueries(): Promise<TeyvatEntityQueries> {
   cached ??= getTeyvatBootstrap().then(({ projection }) => new TeyvatEntityQueries(projection));
@@ -45,8 +47,20 @@ export function resetTeyvatPersistentFarmingQueriesForTests(): void {
   persistentFarmingCached = undefined;
 }
 
+export function getTeyvatLoreQueries(): Promise<TeyvatLoreQueries> {
+  loreCached ??= getTeyvatBootstrap().then(({ projection }) => new TeyvatLoreQueries(projection));
+  return loreCached;
+}
+
+export function resetTeyvatLoreQueriesForTests(): void {
+  loreCached = undefined;
+}
+
 export { TeyvatEntityQueries } from "./entities.ts";
 export { TeyvatFarmingQueries } from "./farming.ts";
+export { TeyvatLoreQueries } from "./lore.ts";
 export { TeyvatPersistentEntityQueries } from "../persistence/entities.ts";
 export { TeyvatPersistentFarmingQueries } from "../persistence/farming.ts";
 export type * from "./types.ts";
+export type * from "./lore.ts";
+
