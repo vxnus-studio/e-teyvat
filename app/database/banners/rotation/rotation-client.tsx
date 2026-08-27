@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, Filter, Orbit, Search, Sparkles, Sword } from "lucide-react";
-import { CharacterPortrait } from "../banner-visuals";
+import { CharacterPortrait, WeaponPortrait } from "../banner-visuals";
 
 export interface TimelineCharacter {
   slug: string;
@@ -194,7 +194,6 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
                           sizes="130px"
                         />
                         <span>
-                          <small>✦ 5-star feature</small>
                           <strong>{character.name}</strong>
                         </span>
                       </Link>
@@ -204,7 +203,6 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
 
                   {/* Four-Star Characters */}
                   <div className="phase-four-stars">
-                    <span className="roster-label">4-star characters</span>
                     <div>
                       {fourStars.map((character) => (
                         <Link href={`/characters/${character.slug}/banner-history`} key={character.slug}>
@@ -223,36 +221,57 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
                   </div>
                 </div>
 
-                {/* Weapons in this Phase */}
-                {fiveStarWeapons.length > 0 && (
-                  <div className="border-t border-white/5 pt-3 mt-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sword size={12} className="text-amber-400" />
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">
-                        Epitome Invocation Weapons
-                      </span>
+                {/* Epitome Invocation (Weapons in this Phase) */}
+                {(fiveStarWeapons.length > 0 || fourStarWeapons.length > 0) && (
+                  <div className="border-t border-white/5">
+                    <div className="px-4 py-1.5 bg-black/20 border-b border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Sword size={12} className="text-[var(--banner-gold)]" />
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--banner-gold)]">
+                          Epitome Invocation
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {fiveStarWeapons.map((weapon) => (
-                        <Link
-                          href={`/database/weapons/${weapon.slug}`}
-                          key={weapon.slug}
-                          className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 hover:border-amber-400 rounded-lg px-2.5 py-1 text-xs text-amber-200 transition-all hover:scale-105"
-                        >
-                          <span className="text-amber-400 text-[10px]">✦✦✦✦✦</span>
-                          <strong className="font-semibold">{weapon.name}</strong>
-                        </Link>
-                      ))}
-                      {fourStarWeapons.map((weapon) => (
-                        <Link
-                          href={`/database/weapons/${weapon.slug}`}
-                          key={weapon.slug}
-                          className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 hover:border-purple-400 rounded-lg px-2 py-1 text-xs text-purple-200 transition-all"
-                        >
-                          <span className="text-purple-300 text-[10px]">✦✦✦✦</span>
-                          <span>{weapon.name}</span>
-                        </Link>
-                      ))}
+
+                    <div className="phase-lineup">
+                      {/* Five-Star Weapons */}
+                      <div className="phase-five-stars">
+                        {fiveStarWeapons.map((weapon) => (
+                          <Link href={`/database/weapons/${weapon.slug}`} key={weapon.slug}>
+                            <WeaponPortrait
+                              slug={weapon.slug}
+                              name={weapon.name}
+                              imageUrl={weapon.imageUrl}
+                              sizes="130px"
+                            />
+                            <span>
+                              <strong>{weapon.name}</strong>
+                            </span>
+                          </Link>
+                        ))}
+                        {!fiveStarWeapons.length && <span className="phase-no-data">No 5-star weapon</span>}
+                      </div>
+
+                      {/* Four-Star Weapons */}
+                      <div className="phase-four-stars">
+                        <div>
+                          {fourStarWeapons.map((weapon) => (
+                            <Link href={`/database/weapons/${weapon.slug}`} key={weapon.slug}>
+                              <WeaponPortrait
+                                slug={weapon.slug}
+                                name={weapon.name}
+                                imageUrl={weapon.imageUrl}
+                                sizes="38px"
+                              />
+                              <span>{weapon.name}</span>
+                              <ArrowRight size={10} />
+                            </Link>
+                          ))}
+                          {!fourStarWeapons.length && (
+                            <span className="text-xs text-[var(--text-muted)]">Standard 4-stars</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
