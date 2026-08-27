@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "./navigation";
 import { Globe, Search, Sword, Users } from "lucide-react";
-import { CharacterPortrait } from "../database/banners/banner-visuals";
+import { CharacterPortrait, WeaponPortrait } from "../database/banners/banner-visuals";
 
 type ServerRegion = "asia" | "america" | "europe";
 
@@ -546,30 +546,33 @@ export function HomeRotation() {
             {filteredWeapons.map((weapon) => {
               return (
                 <Link
-                  href={`/database/materials?q=${encodeURIComponent(weapon.material)}`}
+                  href={`/database/weapons/${weapon.slug}`}
                   key={weapon.name}
-                  className="bg-[var(--surface-sunken)] border border-white/5 hover:border-[#e2b96a] rounded-xl p-3 flex flex-col gap-2 transition-all hover:scale-[1.02] group"
+                  className="bg-[var(--surface-sunken)] border border-white/5 hover:border-[#e2b96a] rounded-xl p-2.5 flex flex-col items-center gap-2 transition-all hover:scale-[1.02] group"
                 >
-                  <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-                    <span className="text-[10px] text-[var(--banner-gold)] font-mono">
-                      {"✦".repeat(weapon.rarity)}
-                    </span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono uppercase">
-                      {weapon.type}
-                    </span>
+                  <div className="w-16 h-16 relative rounded-lg overflow-hidden bg-[var(--surface-raised)] flex items-center justify-center p-1">
+                    <WeaponPortrait slug={weapon.slug} name={weapon.name} sizes="64px" />
                   </div>
 
-                  <strong className="text-xs font-semibold text-[var(--text-light)] group-hover:text-[#e2b96a] line-clamp-2 min-h-[32px]">
-                    {weapon.name}
-                  </strong>
+                  <div className="text-center w-full min-w-0">
+                    <div className="flex items-center justify-center gap-1">
+                      <strong className="text-xs font-semibold text-[var(--text-light)] group-hover:text-[#e2b96a] truncate" title={weapon.name}>
+                        {weapon.name}
+                      </strong>
+                    </div>
 
-                  <div className="mt-auto pt-1 border-t border-white/5">
-                    <span className="text-[10px] text-[#e2b96a] block font-medium truncate">
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <span className="text-[10px] px-1.5 py-0.2 rounded border font-mono bg-[#e2b96a]/15 text-[#ffd77d] border-[#e2b96a]/30">
+                        {weapon.type}
+                      </span>
+                      <span className="text-[10px] text-[var(--banner-gold)] font-mono">
+                        {"✦".repeat(weapon.rarity)}
+                      </span>
+                    </div>
+
+                    <span className="text-[10px] text-[#e2b96a] block mt-1 font-medium truncate" title={weapon.material}>
                       {weapon.material}
                     </span>
-                    <small className="text-[9px] text-[var(--text-muted)] block">
-                      {weapon.nation}
-                    </small>
                   </div>
                 </Link>
               );

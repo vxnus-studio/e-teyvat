@@ -53,6 +53,7 @@ export const navigation: { label: string; icon: IconName; href: string }[] = [
   { label: "Characters", icon: "users", href: "/database/characters/" },
   { label: "Weapons", icon: "sword", href: "/database/weapons/" },
   { label: "Artifacts", icon: "artifact", href: "/database/artifacts/" },
+  { label: "Enemies", icon: "enemy", href: "/database/enemies/" },
   { label: "Banners", icon: "calendar", href: "/database/banners/" },
   { label: "Lore Engine", icon: "sparkles", href: "/lore-engine/" },
   { label: "Knowledge", icon: "quest", href: "/knowledge/" },

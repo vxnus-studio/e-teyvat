@@ -110,6 +110,15 @@ const avatarIconMap: Record<string, string> = {
   zhongli: "UI_AvatarIcon_Zhongli",
 };
 
+import { weaponIconMap } from "./weapon-icons";
+
+const localWeaponImages: Record<string, string> = {
+  "a-thousand-floating-dreams": "/weapons/floating-dreams.png",
+  "light-of-foliar-incision": "/weapons/foliar-incision.png",
+  "hunters-path": "/weapons/hunters-path.png",
+  "hunter-s-path": "/weapons/hunters-path.png",
+};
+
 export function CharacterPortrait({
   slug,
   name,
@@ -147,6 +156,47 @@ export function CharacterPortrait({
   );
 }
 
+export function WeaponPortrait({
+  slug,
+  name,
+  imageUrl,
+  className = "",
+  sizes = "180px",
+}: {
+  slug: string;
+  name: string;
+  imageUrl?: string | null;
+  className?: string;
+  sizes?: string;
+}) {
+  const [error, setError] = useState(false);
+  const cleanSlug = slug.toLowerCase();
+  const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+  const compactName = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const icon = weaponIconMap[cleanSlug] ?? weaponIconMap[cleanName] ?? weaponIconMap[compactName];
+  const cdnUrl = icon ? `https://enka.network/ui/${icon}.png` : null;
+  const src = imageUrl || localWeaponImages[cleanSlug] || cdnUrl;
+
+  return (
+    <span className={`banner-character-art ${className}`}>
+      {src && !error ? (
+        <Image
+          src={src}
+          alt={`${name} weapon artwork`}
+          fill
+          sizes={sizes}
+          onError={() => setError(true)}
+          className="object-contain"
+        />
+      ) : (
+        <span className="banner-character-fallback" aria-hidden="true">
+          {name.slice(0, 2).toUpperCase()}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function SignalGlyph({ value }: { value: number }) {
   return (
     <span className="signal-glyph" aria-hidden="true">
@@ -156,3 +206,4 @@ export function SignalGlyph({ value }: { value: number }) {
     </span>
   );
 }
+
