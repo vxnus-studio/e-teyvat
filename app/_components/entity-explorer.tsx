@@ -1,8 +1,22 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Flame, Droplets, Wind, Zap, Snowflake, Leaf, Mountain, Star, HelpCircle } from "lucide-react";
+import { 
+  Flame, 
+  Droplets, 
+  Wind, 
+  Zap, 
+  Snowflake, 
+  Leaf, 
+  Mountain, 
+  Star, 
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
+} from "lucide-react";
 
 type EntityPreview = {
   id: number;
@@ -33,6 +47,33 @@ const kindLabels: Record<string, string> = {
   enemies: "Enemy",
   geographies: "Region",
 };
+
+function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+  const delta = 1;
+  const range: number[] = [];
+  const rangeWithDots: (number | string)[] = [];
+  let prev: number | undefined;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+      range.push(i);
+    }
+  }
+
+  for (const i of range) {
+    if (prev !== undefined) {
+      if (i - prev === 2) {
+        rangeWithDots.push(prev + 1);
+      } else if (i - prev !== 1) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    prev = i;
+  }
+
+  return rangeWithDots;
+}
 
 function EntityImage({ entity }: { entity: EntityPreview }) {
   const [error, setError] = useState(false);
@@ -68,6 +109,15 @@ export function EntityExplorer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const explorerRef = useRef<HTMLElement>(null);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    if (explorerRef.current) {
+      const topOffset = explorerRef.current.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: topOffset, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -105,8 +155,11 @@ export function EntityExplorer({
     setPage(1); // Reset to page 1 on new search
   }
 
+  const totalPages = result ? Math.ceil(result.total / result.limit) : 0;
+  const paginationRange = totalPages > 1 ? getPaginationRange(page, totalPages) : [];
+
   return (
-    <section className="entity-explorer" aria-busy={loading}>
+    <section ref={explorerRef} className="entity-explorer" aria-busy={loading}>
       <form className="entity-search" onSubmit={submit}>
         <label>
           <span className="sr-only">
@@ -285,25 +338,92 @@ export function EntityExplorer({
         })}
       </div>
 
-      {result && result.total > result.limit && (
-        <div className="flex items-center justify-center gap-4 mt-8 pt-4 border-t border-[var(--border)]">
-          <button 
-            disabled={page === 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="px-4 py-2 bg-[var(--surface-raised)] border border-[var(--border)] rounded text-sm text-[var(--text-light)] disabled:opacity-50 hover:bg-[var(--surface-sunken)] transition-colors"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-[var(--text-muted)]">
-            Page {result.page} of {Math.ceil(result.total / result.limit)}
-          </span>
-          <button 
-            disabled={page >= Math.ceil(result.total / result.limit)}
-            onClick={() => setPage(p => p + 1)}
-            className="px-4 py-2 bg-[var(--surface-raised)] border border-[var(--border)] rounded text-sm text-[var(--text-light)] disabled:opacity-50 hover:bg-[var(--surface-sunken)] transition-colors"
-          >
-            Next
-          </button>
+      {result && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--line)]">
+          <div className="text-xs text-[var(--text-3)] font-mono">
+            Showing <span className="text-[var(--text-light)] font-semibold">{(page - 1) * result.limit + 1}</span>–
+            <span className="text-[var(--text-light)] font-semibold">{Math.min(page * result.limit, result.total)}</span> of{" "}
+            <span className="text-[var(--text-light)] font-semibold">{result.total}</span> entities
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* First Page button */}
+            <button
+              disabled={page <= 1}
+              onClick={() => handlePageChange(1)}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-3)] hover:text-[var(--text)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="First page"
+              aria-label="First page"
+            >
+              <ChevronsLeft size={16} />
+            </button>
+
+            {/* Previous button */}
+            <button
+              disabled={page <= 1}
+              onClick={() => handlePageChange(Math.max(1, page - 1))}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-xs text-[var(--text-2)] hover:text-white hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Previous page"
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+              <span className="hidden sm:inline">Prev</span>
+            </button>
+
+            {/* Page number buttons */}
+            <div className="flex items-center gap-1">
+              {paginationRange.map((pageNum, idx) => {
+                if (pageNum === "...") {
+                  return (
+                    <span
+                      key={`dots-${idx}`}
+                      className="px-2 py-1 text-xs text-[var(--text-3)] font-mono select-none"
+                    >
+                      …
+                    </span>
+                  );
+                }
+                const isCurrent = pageNum === page;
+                return (
+                  <button
+                    key={`page-${pageNum}`}
+                    onClick={() => handlePageChange(pageNum as number)}
+                    aria-current={isCurrent ? "page" : undefined}
+                    className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-lg text-xs font-mono font-bold transition-all duration-200 ${
+                      isCurrent
+                        ? "bg-[var(--green)] text-[#081610] shadow-[0_0_14px_rgba(98,213,163,0.35)] border border-[var(--green)]"
+                        : "bg-[var(--surface-sunken)] text-[var(--text-2)] border border-[var(--line)] hover:bg-[var(--surface-2)] hover:border-[var(--line-strong)] hover:text-white"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next button */}
+            <button
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-xs text-[var(--text-2)] hover:text-white hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Next page"
+              aria-label="Next page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight size={16} />
+            </button>
+
+            {/* Last Page button */}
+            <button
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(totalPages)}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-3)] hover:text-[var(--text)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Last page"
+              aria-label="Last page"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
         </div>
       )}
     </section>

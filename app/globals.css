@@ -9,6 +9,7 @@
   --surface-raised: #182821;
   --line: rgba(190, 220, 205, 0.1);
   --line-strong: rgba(190, 220, 205, 0.17);
+  --border: rgba(190, 220, 205, 0.1);
   --text: #eff7f3;
   --text-light: #f5faf7;
   --text-2: #a1b3aa;
@@ -28,7 +29,41 @@
   --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
-* { box-sizing: border-box; }
+/* Custom Global Scrollbars */
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(98, 213, 163, 0.28) rgba(10, 17, 15, 0.6);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 17, 15, 0.75);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(98, 213, 163, 0.22);
+  border-radius: 9999px;
+  border: 2px solid rgba(10, 17, 15, 0.75);
+  transition: background-color 150ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(98, 213, 163, 0.45);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(98, 213, 163, 0.75);
+}
+
+::-webkit-scrollbar-corner {
+  background: rgba(10, 17, 15, 0.75);
+}
+
 html { background: var(--bg); scroll-behavior: smooth; }
 body {
   background: radial-gradient(circle at 76% 0%, rgba(40, 112, 79, .12), transparent 30rem), var(--bg);
