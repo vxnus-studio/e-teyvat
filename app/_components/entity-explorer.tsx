@@ -339,14 +339,64 @@ export function EntityExplorer({
       </div>
 
       {result && totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--line)]">
-          <div className="text-xs text-[var(--text-3)] font-mono">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--line)] w-full">
+          <div className="text-xs text-[var(--text-3)] font-mono text-center sm:text-left">
             Showing <span className="text-[var(--text-light)] font-semibold">{(page - 1) * result.limit + 1}</span>–
             <span className="text-[var(--text-light)] font-semibold">{Math.min(page * result.limit, result.total)}</span> of{" "}
             <span className="text-[var(--text-light)] font-semibold">{result.total}</span> entities
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Mobile Controller (< sm): Compact layout to eliminate any arrow button overflow */}
+          <div className="flex sm:hidden items-center justify-center gap-1.5 w-full">
+            <button
+              disabled={page <= 1}
+              onClick={() => handlePageChange(1)}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-3)] hover:text-[var(--text)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="First page"
+              aria-label="First page"
+            >
+              <ChevronsLeft size={16} />
+            </button>
+
+            <button
+              disabled={page <= 1}
+              onClick={() => handlePageChange(Math.max(1, page - 1))}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-2)] hover:text-white hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Previous page"
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <div className="px-3.5 py-1.5 bg-[var(--surface-sunken)] border border-[var(--line)] rounded-lg text-xs font-mono text-[var(--text-2)] flex items-center gap-1.5 shadow-inner">
+              <span className="text-[var(--green)] font-bold">{page}</span>
+              <span className="text-[var(--text-3)]">/</span>
+              <span className="text-[var(--text-light)]">{totalPages}</span>
+            </div>
+
+            <button
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-2)] hover:text-white hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Next page"
+              aria-label="Next page"
+            >
+              <ChevronRight size={16} />
+            </button>
+
+            <button
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(totalPages)}
+              className="p-2 rounded-lg bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-3)] hover:text-[var(--text)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] disabled:opacity-30 disabled:pointer-events-none transition-all duration-150"
+              title="Last page"
+              aria-label="Last page"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
+
+          {/* Desktop Controller (>= sm): Full numbered navigation */}
+          <div className="hidden sm:flex items-center gap-1.5 sm:gap-2">
             {/* First Page button */}
             <button
               disabled={page <= 1}
