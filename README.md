@@ -88,21 +88,35 @@ E Hub publisher ownership and authentication are intentionally outside this repo
 | `/api/health` | GET | Implemented | Health check, dataset revision & system telemetry |
 | `/api/v1/entities` | GET | Implemented | Search canonical entities across kinds with pagination |
 | `/api/v1/entities/:kind/:slug` | GET | Implemented | Retrieve a single entity and outgoing relations |
+| `/api/v1/characters/:char/builds` | GET | Implemented | Curated character builds, weapons, artifacts & rotations |
 | `/api/v1/farming` | GET | Implemented | Farming pathways, material costs & domain schedules |
 | `/api/v1/lore/search` | GET | Implemented | Search 1,239 book volumes, relics & weapon lore |
 | `/api/v1/lore/books` | GET | Implemented | List in-game book chronicles & volume counts |
 | `/api/v1/lore/books/:slug` | GET | Implemented | Retrieve full multi-volume text anthology |
-| `/api/v1/knowledge/search` | GET | Implemented | PostgreSQL full-text rank search over lore chunks |
 | `/api/v1/banners/rerun-pressure` | GET | Implemented | Character banner rerun pressure rankings |
 | `/api/v1/characters/:char/banner-history` | GET | Implemented | Historical character banner appearance timeline |
 | `/api/v1/characters/:char/rerun-analysis` | GET | Implemented | Statistical rerun distribution & pressure analysis |
 | `/api/e/verify` | POST | Implemented | E Provider verification handshake |
 | `/api/openapi.json` | GET | Implemented | OpenAPI 3.1 Specification |
-| `/api/e/manifest` | GET | *Future Plan* | E-compatible dataset manifest |
-| `/api/e/retrieve` | POST | *Future Plan* | E-compatible cited chunk retrieval |
+
+## Acknowledgments & Thanks To
+
+e-teyvat is built upon the collective contributions of the Genshin Impact open-source and theorycrafting communities. Special thanks to:
+
+* **[HoYoverse (COGNOSPHERE PTE. LTD.)](https://genshin.hoyoverse.com/)** — For creating the vast, beautiful world of Teyvat and the incredible game experience of *Genshin Impact*.
+* **[Project Amber (gi.yatta.moe)](https://gi.yatta.moe/)** — For developing and maintaining the comprehensive community game data API and asset archive that powers our extraction and normalization pipeline.
+* **[KeqingMains (KQM)](https://keqingmains.com/)** — For their peer-reviewed theorycrafting, character quick guides, weapon calculations, and rotation benchmarks that power our curated build recommendation layer.
+* **[Samsara & Community Banner Trackers](https://samsara.top/)** — For meticulous archival of historical wish banner timelines, phases, and rate-up rosters.
+* **[Enka.Network](https://enka.network/)** — For reliable asset infrastructure and game icon delivery.
+
+## Disclaimer & Copyright
+
+**e-teyvat** is an independent, non-commercial fan-made project created for educational, research, and companion purposes. It is not affiliated with, endorsed, or sponsored by **COGNOSPHERE PTE. LTD. (HoYoverse)**.
+
+* All game content, character designs, illustrations, names, in-game text, audio, and visual assets are copyright and trademarks of **COGNOSPHERE PTE. LTD. / HoYoverse**.
+* All community guides and calculations belong to their respective authors and theorycrafting organizations.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This software and its application code are open source and licensed under the [MIT License](LICENSE).
 
-Game data, artwork, names, and other intellectual property belong to **COGNOSPHERE PTE. LTD. (HoYoverse)**. Teyvat is an independent fan project and is not affiliated with or endorsed by HoYoverse.

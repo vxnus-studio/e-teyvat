@@ -1,6 +1,6 @@
 {
   "projectionVersion": "teyvat-e-projection-v1",
-  "revision": "5a805b7aebf8d58951857fd25aad34fcdceb7580aed29f0729253bb3a05fa959",
+  "revision": "d9df8649c43431cf744a204aada195d988334c4cd0e7166f71b8a8be6b5ffa7f",
   "source": {
     "entitiesSha256": "43d239ccabc3c0c96b6d46d8c72f344ec09a2a49c602bf9d708c604177b7e499",
     "relationsSha256": "755e6b28a569cac3828c826fec2cb957fde016fdcef7421a1449422f4a022f18",
@@ -13,7 +13,7 @@
     "relations": 14244,
     "documents": 11610
   },
-  "artifactSha256": "2c45842811beb99b7f1b6c20741cddd174cbee5ae1d29ca8a037f09a6e610771",
-  "artifactBytes": 33168399,
-  "generatedAt": "2026-08-23T06:14:57.412Z"
+  "artifactSha256": "2cfc60bc3c2407f4840e041da74a619a661f25c335e1baa17b463c4fe0ccbe57",
+  "artifactBytes": 38862186,
+  "generatedAt": "2026-08-27T04:01:57.699Z"
 }

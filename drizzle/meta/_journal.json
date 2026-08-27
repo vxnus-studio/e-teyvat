@@ -64,6 +64,13 @@
       "when": 1787795743202,
       "tag": "0008_whole_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787802387063,
+      "tag": "0009_cooing_shadow_king",
+      "breakpoints": true
     }
   ]
 }

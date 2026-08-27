@@ -67,11 +67,25 @@ export function projectRelations(records: CanonicalRelation[], canonicalRecords:
       targetKey = `food:${String(record.target_id)}`;
       recipeRemaps++;
     }
-    const subjectId = entities.get(sourceKey)?.id ?? synthetic.get(sourceKey)?.id;
-    const objectId = entities.get(targetKey)?.id ?? synthetic.get(targetKey)?.id;
-    if (!subjectId || !objectId) throw new Error(`Unresolved projected relation ${sourceKey} ${record.relation_type} ${targetKey}`);
+    const subject = entities.get(sourceKey) ?? synthetic.get(sourceKey);
+    const object = entities.get(targetKey) ?? synthetic.get(targetKey);
+    if (!subject || !object) throw new Error(`Unresolved projected relation ${sourceKey} ${record.relation_type} ${targetKey}`);
     const key = stableStringify({ sourceKey, predicate: predicate(record.relation_type), targetKey, properties: record.properties ?? {} });
-    relations.push({ id: hashId("genshin:relation", key), subjectId, predicate: predicate(record.relation_type), objectId, metadata: { canonical: jsonObject(record.properties), sourceCategory: record.source_category, sourceId: String(record.source_id), targetCategory, targetId: String(record.target_id) } });
+    relations.push({
+      id: hashId("genshin:relation", key),
+      subjectId: subject.id,
+      predicate: predicate(record.relation_type),
+      objectId: object.id,
+      metadata: {
+        canonical: jsonObject(record.properties),
+        sourceCategory: record.source_category,
+        sourceId: String(record.source_id),
+        targetCategory,
+        targetId: String(record.target_id),
+      },
+      provenance: subject.provenance,
+      temporal: subject.temporal,
+    });
   }
   return { relations: relations.sort((a, b) => a.id.localeCompare(b.id)), recipeRemaps, syntheticEntities: [...synthetic.values()].sort((a, b) => a.id.localeCompare(b.id)) };
 }

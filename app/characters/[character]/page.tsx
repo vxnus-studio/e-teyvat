@@ -1,17 +1,19 @@
 import { CharacterPortrait } from "@/app/database/banners/banner-visuals";
-import { getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
+import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
 import { ArrowLeft, ArrowRight, CalendarDays, Gem, Orbit, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CharacterBuildsSection } from "./character-builds";
 import {
   ProgressionCalculator,
   type AscensionPhase,
   type MaterialItem,
   type TalentLevel,
 } from "./progression-calculator";
+
 
 type DataRecord = Record<string, unknown>;
 
@@ -71,6 +73,10 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
 
   const bannerQueries = await getTeyvatBannerQueries();
   const { statistics: stats } = await bannerQueries.character(slug);
+
+  // Character Build Recommendations lookup
+  const buildQueries = getTeyvatBuildQueries();
+  const builds = await buildQueries.getCharacterBuilds(slug);
 
   // Signature Weapon lookup
   const signatureSlug = getSignatureWeaponSlug(slug);
@@ -310,11 +316,26 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
         </section>
       )}
 
+      {/* Character Build Recommendations Section */}
+      <section className="mb-10">
+        <header className="banner-section-heading mb-4">
+          <div>
+            <span>01 / Build Strategy & Theorycrafting</span>
+            <h2>Build Recommendations</h2>
+          </div>
+          <p>
+            Curated equipment, optimal artifact stats, team synergies, and combat rotations
+          </p>
+        </header>
+
+        <CharacterBuildsSection builds={builds} characterName={character.name} />
+      </section>
+
       {/* Progression & Materials Section */}
       <section className="mb-10">
         <header className="banner-section-heading mb-4">
           <div>
-            <span>01 / Progression Calculator</span>
+            <span>02 / Progression Calculator</span>
             <h2>Progression Materials</h2>
           </div>
           <p>

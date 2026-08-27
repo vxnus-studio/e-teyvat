@@ -16,3 +16,9 @@
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+# private local ingestion scripts
+scripts/ingest-builds.ts
+scripts/ingest-character-builds.ts
+scripts/*builds*.ts
+

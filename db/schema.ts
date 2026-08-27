@@ -378,3 +378,114 @@ export type NewTeyvatRelation = typeof teyvatRelations.$inferInsert;
 export type TeyvatDocument = typeof teyvatDocuments.$inferSelect;
 export type NewTeyvatDocument = typeof teyvatDocuments.$inferInsert;
 export type NewTeyvatChunk = typeof teyvatChunks.$inferInsert;
+
+export interface BuildWeaponRecommendation {
+  weaponSlug: string;
+  rank: number;
+  tier: "BiS" | "Alternative" | "F2P" | "Situational";
+  refinement?: string;
+  notes?: string;
+}
+
+export interface BuildArtifactSetOption {
+  artifactSlug: string;
+  pieces: 2 | 4;
+}
+
+export interface BuildArtifactRecommendation {
+  rank: number;
+  sets: BuildArtifactSetOption[];
+  notes?: string;
+}
+
+export interface BuildMainStats {
+  sands: string[];
+  goblet: string[];
+  circlet: string[];
+}
+
+export interface BuildTeammate {
+  characterSlug: string;
+  role: string;
+  alternatives?: string[];
+}
+
+export interface BuildTeamRecommendation {
+  name: string;
+  description?: string;
+  members: BuildTeammate[];
+}
+
+export interface BuildRotationStep {
+  actor: string;
+  action: string;
+  notes?: string;
+}
+
+export interface BuildProvenance {
+  source: string;
+  url?: string;
+  version?: string;
+  author?: string;
+}
+
+export const characterBuildRecommendations = pgTable(
+  "character_build_recommendations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    characterSlug: text("character_slug").notNull(),
+    characterId: text("character_id").references(() => teyvatEntities.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    title: text("title"),
+    isPrimary: boolean("is_primary").notNull().default(true),
+    playstyle: text("playstyle"),
+    weaponRecommendations: jsonb("weapon_recommendations")
+      .$type<BuildWeaponRecommendation[]>()
+      .notNull()
+      .default([]),
+    artifactRecommendations: jsonb("artifact_recommendations")
+      .$type<BuildArtifactRecommendation[]>()
+      .notNull()
+      .default([]),
+    mainStats: jsonb("main_stats")
+      .$type<BuildMainStats>()
+      .notNull()
+      .default({ sands: [], goblet: [], circlet: [] }),
+    substatPriority: jsonb("substat_priority")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    statTargets: jsonb("stat_targets")
+      .$type<Record<string, string>>()
+      .notNull()
+      .default({}),
+    talentPriority: jsonb("talent_priority")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    teamRecommendations: jsonb("team_recommendations")
+      .$type<BuildTeamRecommendation[]>()
+      .notNull()
+      .default([]),
+    rotationGuide: jsonb("rotation_guide")
+      .$type<BuildRotationStep[]>()
+      .notNull()
+      .default([]),
+    authorNotes: text("author_notes"),
+    provenance: jsonb("provenance")
+      .$type<BuildProvenance>()
+      .notNull()
+      .default({ source: "KeqingMains" }),
+    gameVersion: text("game_version").notNull().default("5.4"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("char_build_slug_idx").on(table.characterSlug),
+    index("char_build_primary_idx").on(table.characterSlug, table.isPrimary),
+  ],
+);
+
+export type CharacterBuildRecommendation = typeof characterBuildRecommendations.$inferSelect;
+export type NewCharacterBuildRecommendation = typeof characterBuildRecommendations.$inferInsert;
+

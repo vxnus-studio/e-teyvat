@@ -43,7 +43,49 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
       await tx.delete(teyvatSources);
       await tx.delete(teyvatDatasetRevisions);
 
-      await tx.insert(teyvatSources).values({ id: "e-teyvat", title: "E-Teyvat", license: "CC-BY-4.0", uri: "https://github.com/vxnuslabs/e-teyvat", metadata: { licenseDescription: "Creative Commons Attribution 4.0 International", licenseUrl: "https://creativecommons.org/licenses/by/4.0/" } });
+      await tx.insert(teyvatSources).values([
+        {
+          id: "hoyoverse",
+          title: "HoYoverse / COGNOSPHERE Pte., Ltd.",
+          license: "All rights reserved by HoYoverse",
+          uri: "https://genshin.hoyoverse.com/",
+          metadata: {
+            type: "intellectual_property",
+            description: "Original game data, character designs, audio, and imagery belong to HoYoverse (COGNOSPHERE Pte., Ltd.).",
+          },
+        },
+        {
+          id: "project-amber",
+          title: "Project Amber",
+          license: "Community API Data",
+          uri: "https://gi.yatta.moe/",
+          metadata: {
+            type: "game_data_provider",
+            description: "Community API service and game asset normalization provided by Project Amber (gi.yatta.moe).",
+          },
+        },
+        {
+          id: "keqingmains",
+          title: "KeqingMains (KQM)",
+          license: "Community Theorycrafting (Attribution requested)",
+          uri: "https://keqingmains.com/",
+          metadata: {
+            type: "theorycrafting_guide_provider",
+            description: "Comprehensive character builds, rotations, and weapon rankings curated by KQM theorycrafting community.",
+          },
+        },
+        {
+          id: "e-teyvat",
+          title: "E-Teyvat",
+          license: "CC-BY-4.0",
+          uri: "https://github.com/vxnuslabs/e-teyvat",
+          metadata: {
+            type: "application",
+            licenseDescription: "Creative Commons Attribution 4.0 International",
+            licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+          },
+        },
+      ]);
 
       await insertChunks(projection.entities, (chunk) => tx.insert(teyvatEntities).values(chunk.map((entity) => ({
         id: entity.id,

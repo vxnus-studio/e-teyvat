@@ -14,8 +14,11 @@ export {
   getTeyvatLoreQueries,
   resetTeyvatLoreQueriesForTests,
 } from "./domain/index.ts";
+export { getTeyvatBuildQueries, TeyvatBuildQueries } from "./persistence/builds.ts";
 
 export type { TeyvatBootstrap } from "./bootstrap.ts";
 export type { TeyvatProjection, ProjectionInput } from "./projection/types.ts";
 export type * from "./domain/lore.ts";
+export type * from "./persistence/builds.ts";
+
 

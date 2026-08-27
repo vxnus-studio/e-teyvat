@@ -1,9 +1,19 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CanonicalDocument, CanonicalRecord, CanonicalRelation, ProjectionInput } from "./types.ts";
 
 export function dataRoot(): string {
-  return resolve(process.env.GENSHIN_DATA_ROOT || join(process.cwd(), "..", "genshin-data"), "data", "normalized");
+  if (process.env.GENSHIN_DATA_ROOT) {
+    const raw = process.env.GENSHIN_DATA_ROOT;
+    return raw.endsWith("normalized") ? resolve(raw) : resolve(raw, "data", "normalized");
+  }
+  const candidates = [join(process.cwd(), "..", "gi-data"), join(process.cwd(), "..", "genshin-data")];
+  for (const candidate of candidates) {
+    if (existsSync(join(candidate, "data", "normalized", "entities", "canonical_entities.json"))) {
+      return resolve(candidate, "data", "normalized");
+    }
+  }
+  return resolve(join(process.cwd(), "..", "gi-data"), "data", "normalized");
 }
 
 function readJson<T>(path: string): T {
