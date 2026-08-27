@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, ChevronRight, Layers, Sparkles, Sword } from "lucide-react";
+import { Layers, Sparkles, Sword } from "lucide-react";
 
 export interface MaterialItem {
   id: string;
@@ -30,16 +30,19 @@ export interface TalentLevel {
 interface ProgressionCalculatorProps {
   ascensionPhases: AscensionPhase[];
   totalAscensionMaterials: MaterialItem[];
-  talentLevels: TalentLevel[];
-  totalTalentMaterials: MaterialItem[];
+  talentLevels?: TalentLevel[];
+  totalTalentMaterials?: MaterialItem[];
+  titlePrefix?: string;
 }
 
 export function ProgressionCalculator({
   ascensionPhases,
   totalAscensionMaterials,
-  talentLevels,
-  totalTalentMaterials,
+  talentLevels = [],
+  totalTalentMaterials = [],
+  titlePrefix = "Character",
 }: ProgressionCalculatorProps) {
+  const hasTalents = talentLevels.length > 0 && totalTalentMaterials.length > 0;
   const [activeTab, setActiveTab] = useState<"ascension" | "talents">("ascension");
   const [selectedAscPhase, setSelectedAscPhase] = useState<number | "all">("all");
   const [selectedTalentLevel, setSelectedTalentLevel] = useState<number | "all">("all");
@@ -67,18 +70,20 @@ export function ProgressionCalculator({
                 : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
             }`}
           >
-            <Layers size={15} /> Character Ascension (Lvl 1 → 90)
+            <Layers size={15} /> {titlePrefix} Ascension (Lvl 1 → 90)
           </button>
-          <button
-            onClick={() => setActiveTab("talents")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-              activeTab === "talents"
-                ? "bg-[var(--accent)] text-black shadow-md"
-                : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
-            }`}
-          >
-            <Sword size={15} /> Talent Progression (Lvl 1 → 10)
-          </button>
+          {hasTalents && (
+            <button
+              onClick={() => setActiveTab("talents")}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+                activeTab === "talents"
+                  ? "bg-[var(--accent)] text-black shadow-md"
+                  : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
+              }`}
+            >
+              <Sword size={15} /> Talent Progression (Lvl 1 → 10)
+            </button>
+          )}
         </div>
 
         <div className="text-xs text-[var(--text-muted)] flex items-center gap-1 font-mono">
@@ -86,7 +91,7 @@ export function ProgressionCalculator({
         </div>
       </div>
 
-      {activeTab === "ascension" ? (
+      {activeTab === "ascension" || !hasTalents ? (
         <div>
           {/* Phase Selector Pills */}
           <div className="flex flex-wrap items-center gap-2 mb-6">

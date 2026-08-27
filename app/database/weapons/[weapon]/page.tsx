@@ -3,6 +3,11 @@ import { ArrowLeft, ArrowRight, Layers, Orbit, Sparkles, Sword, Zap } from "luci
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ProgressionCalculator,
+  type AscensionPhase,
+  type MaterialItem,
+} from "@/app/characters/[character]/progression-calculator";
 
 type DataRecord = Record<string, unknown>;
 
@@ -39,6 +44,15 @@ function formatStat(value: unknown): string {
 function cleanAffixDescription(desc: string): string {
   return desc.replace(/<color=#[A-Fa-f0-9]+>/g, "").replace(/<\/color>/g, "");
 }
+
+const WEAPON_PHASE_RANGES: Record<number, string> = {
+  1: "Lvl 20 → 40",
+  2: "Lvl 40 → 50",
+  3: "Lvl 50 → 60",
+  4: "Lvl 60 → 70",
+  5: "Lvl 70 → 80",
+  6: "Lvl 80 → 90",
+};
 
 export default async function WeaponDetailPage({
   params,
@@ -80,10 +94,63 @@ export default async function WeaponDetailPage({
   const passiveName = affixData ? text(affixData.name) : null;
   const passiveUpgrades = affixData && typeof affixData.upgrade === "object" ? record(affixData.upgrade) : null;
 
-  // Ascension Material Relations
-  const ascensionRelations = relations.filter((r) => r.predicate === "ascension_material");
-  const uniqueMaterials = Array.from(
-    new Map(ascensionRelations.map((r) => [r.object.id, r.object])).values(),
+  // Build Ascension Phase Progression
+  const materialsByEntityId = new Map(
+    relations
+      .filter((r) => r.predicate === "ascension_material")
+      .map((r) => [r.object.canonicalId.split(":").at(-1)!, r.object]),
+  );
+
+  const promotes = Array.isArray(upgrade.promote) ? (upgrade.promote as DataRecord[]) : [];
+  const ascPhaseMap = new Map<number, MaterialItem[]>();
+  const ascTotalMap = new Map<string, MaterialItem>();
+
+  for (const p of promotes) {
+    const promoteLevel = Number(p.promoteLevel);
+    if (!promoteLevel || promoteLevel <= 0) continue;
+
+    const costItems = record(p.costItems);
+    const phaseMaterials: MaterialItem[] = [];
+
+    for (const [matId, countVal] of Object.entries(costItems)) {
+      const count = Number(countVal) || 0;
+      const objectInfo = materialsByEntityId.get(matId);
+
+      const item: MaterialItem = {
+        id: objectInfo?.id ?? `mat-${matId}`,
+        slug: objectInfo?.slug ?? matId,
+        name: objectInfo?.name ?? `Material ${matId}`,
+        kind: objectInfo?.kind ?? "material",
+        image: objectInfo?.image ?? null,
+        count,
+      };
+
+      phaseMaterials.push(item);
+
+      const existingTotal = ascTotalMap.get(item.id);
+      if (existingTotal) {
+        existingTotal.count += count;
+      } else {
+        ascTotalMap.set(item.id, { ...item, count });
+      }
+    }
+
+    if (phaseMaterials.length > 0) {
+      ascPhaseMap.set(promoteLevel, phaseMaterials);
+    }
+  }
+
+  const ascensionPhases: AscensionPhase[] = Array.from(ascPhaseMap.entries())
+    .map(([phase, materials]) => ({
+      phase,
+      levelRange: WEAPON_PHASE_RANGES[phase] ?? `Phase ${phase}`,
+      mora: Number(promotes.find((p) => Number(p.promoteLevel) === phase)?.coinCost) || 0,
+      materials,
+    }))
+    .sort((a, b) => a.phase - b.phase);
+
+  const totalAscensionMaterials: MaterialItem[] = Array.from(ascTotalMap.values()).sort(
+    (a, b) => b.count - a.count,
   );
 
   return (
@@ -190,49 +257,24 @@ export default async function WeaponDetailPage({
         </section>
       )}
 
-      {/* Ascension Materials */}
-      {uniqueMaterials.length > 0 && (
-        <section className="character-section mb-10">
-          <header className="banner-section-heading">
+      {/* Weapon Ascension Progression Calculator */}
+      {totalAscensionMaterials.length > 0 && (
+        <section className="mb-10">
+          <header className="banner-section-heading mb-4">
             <div>
-              <span>02 / Progression</span>
+              <span>02 / Progression Calculator</span>
               <h2>Ascension Materials</h2>
             </div>
-            <p>{uniqueMaterials.length} required upgrade resources</p>
+            <p>
+              {totalAscensionMaterials.length} required upgrade resources with exact step-by-step quotas
+            </p>
           </header>
-          <div className="flex flex-wrap gap-4 pt-2">
-            {uniqueMaterials.map((material) => (
-              <Link
-                href={`/database/materials/${material.slug}`}
-                key={material.id}
-                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all hover:scale-[1.02] group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] relative overflow-hidden flex items-center justify-center p-1 border border-white/5 shrink-0">
-                  {material.image ? (
-                    <Image
-                      src={material.image}
-                      alt={material.name}
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <span className="font-bold text-xs text-[var(--accent)]">
-                      {material.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <strong className="text-sm block text-[var(--text-light)] group-hover:text-[var(--accent)]">
-                    {material.name}
-                  </strong>
-                  <small className="text-xs text-[var(--text-muted)] capitalize">
-                    {material.kind}
-                  </small>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+          <ProgressionCalculator
+            ascensionPhases={ascensionPhases}
+            totalAscensionMaterials={totalAscensionMaterials}
+            titlePrefix="Weapon"
+          />
         </section>
       )}
     </div>
