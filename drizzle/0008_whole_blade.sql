@@ -1,0 +1,1 @@
+ALTER TABLE "teyvat_documents" ALTER COLUMN "source_id" SET DEFAULT 'genshin-data';

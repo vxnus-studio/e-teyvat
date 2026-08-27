@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import type { CanonicalDocument, CanonicalRecord, CanonicalRelation, ProjectionInput } from "./types.ts";
 
 export function dataRoot(): string {
-  return resolve(process.env.GI_DATA_ROOT || join(process.cwd(), "..", "gi-data"), "data", "normalized");
+  return resolve(process.env.GENSHIN_DATA_ROOT || join(process.cwd(), "..", "genshin-data"), "data", "normalized");
 }
 
 function readJson<T>(path: string): T {

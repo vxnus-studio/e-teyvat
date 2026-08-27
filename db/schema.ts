@@ -305,7 +305,7 @@ export const teyvatDocuments = pgTable(
       .notNull()
       .references(() => teyvatEntities.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
-    sourceId: text("source_id").notNull().default("gi-data"),
+    sourceId: text("source_id").notNull().default("genshin-data"),
     revision: text("revision").notNull().default(""),
     contentHash: varchar("content_hash", { length: 64 }).notNull().default(""),
     provenance: jsonb("provenance").$type<Record<string, unknown>>(),

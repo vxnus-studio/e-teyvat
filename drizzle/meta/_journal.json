@@ -57,6 +57,13 @@
       "when": 1787795630882,
       "tag": "0007_heavy_the_santerians",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787795743202,
+      "tag": "0008_whole_blade",
+      "breakpoints": true
     }
   ]
 }
