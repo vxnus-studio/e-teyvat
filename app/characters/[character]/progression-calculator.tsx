@@ -64,9 +64,9 @@ export function ProgressionCalculator({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab("ascension")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === "ascension"
-                ? "bg-[var(--accent)] text-black shadow-md"
+                ? "bg-[var(--green)] text-[#0a110f] shadow-[0_0_15px_rgba(98,213,163,0.3)] font-extrabold"
                 : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
             }`}
           >
@@ -75,9 +75,9 @@ export function ProgressionCalculator({
           {hasTalents && (
             <button
               onClick={() => setActiveTab("talents")}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === "talents"
-                  ? "bg-[var(--accent)] text-black shadow-md"
+                  ? "bg-[var(--green)] text-[#0a110f] shadow-[0_0_15px_rgba(98,213,163,0.3)] font-extrabold"
                   : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
               }`}
             >
@@ -100,10 +100,10 @@ export function ProgressionCalculator({
             </span>
             <button
               onClick={() => setSelectedAscPhase("all")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 selectedAscPhase === "all"
-                  ? "bg-white/20 text-white font-bold ring-1 ring-white/30"
-                  : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
+                  ? "bg-[var(--green)] text-[#0a110f] font-bold shadow-[0_0_12px_rgba(98,213,163,0.25)]"
+                  : "bg-[var(--surface-raised)] text-[var(--text-2)] hover:text-white hover:border-white/20 border border-white/5"
               }`}
             >
               Total (Lvl 1 → 90)
@@ -112,10 +112,10 @@ export function ProgressionCalculator({
               <button
                 key={phase.phase}
                 onClick={() => setSelectedAscPhase(phase.phase)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   selectedAscPhase === phase.phase
-                    ? "bg-[var(--accent)] text-black font-bold shadow-sm"
-                    : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
+                    ? "bg-[var(--green)] text-[#0a110f] font-bold shadow-[0_0_12px_rgba(98,213,163,0.25)]"
+                    : "bg-[var(--surface-raised)] text-[var(--text-2)] hover:text-white hover:border-white/20 border border-white/5"
                 }`}
               >
                 Phase {phase.phase} ({phase.levelRange})
@@ -176,10 +176,10 @@ export function ProgressionCalculator({
             </span>
             <button
               onClick={() => setSelectedTalentLevel("all")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 selectedTalentLevel === "all"
-                  ? "bg-white/20 text-white font-bold ring-1 ring-white/30"
-                  : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
+                  ? "bg-[var(--green)] text-[#0a110f] font-bold shadow-[0_0_12px_rgba(98,213,163,0.25)]"
+                  : "bg-[var(--surface-raised)] text-[var(--text-2)] hover:text-white hover:border-white/20 border border-white/5"
               }`}
             >
               Total Single Skill (Lvl 1 → 10)
@@ -188,10 +188,10 @@ export function ProgressionCalculator({
               <button
                 key={lvl.level}
                 onClick={() => setSelectedTalentLevel(lvl.level)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   selectedTalentLevel === lvl.level
-                    ? "bg-[var(--accent)] text-black font-bold shadow-sm"
-                    : "bg-[var(--surface-raised)] text-[var(--text-muted)] hover:text-white"
+                    ? "bg-[var(--green)] text-[#0a110f] font-bold shadow-[0_0_12px_rgba(98,213,163,0.25)]"
+                    : "bg-[var(--surface-raised)] text-[var(--text-2)] hover:text-white hover:border-white/20 border border-white/5"
                 }`}
               >
                 {lvl.levelText}

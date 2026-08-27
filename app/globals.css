@@ -5,14 +5,19 @@
   --surface: #111c18;
   --surface-2: #16231e;
   --surface-3: #1a2b24;
+  --surface-sunken: #0c1512;
+  --surface-raised: #182821;
   --line: rgba(190, 220, 205, 0.1);
   --line-strong: rgba(190, 220, 205, 0.17);
   --text: #eff7f3;
+  --text-light: #f5faf7;
   --text-2: #a1b3aa;
   --text-3: #667970;
+  --text-muted: #738a7f;
   --green: #62d5a3;
   --green-2: #9aebc7;
   --gold: #e2b96a;
+  --accent: #62d5a3;
   --radius: 11px;
 }
 
