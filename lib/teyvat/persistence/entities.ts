@@ -9,6 +9,29 @@ const CATEGORY_BY_UI_KIND: Record<string, string> = {
 };
 function categoryForKind(kind?: string): string | undefined { return kind ? CATEGORY_BY_UI_KIND[kind] ?? kind : undefined; }
 
+function getEntityNumericId(id: string): number {
+  const lastPart = id.split(":").at(-1) ?? "";
+  const match = lastPart.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
+function compareTeyvatEntity(a: TeyvatEntity, b: TeyvatEntity): number {
+  const tsA = typeof a.data?.temporal === "object" && a.data.temporal !== null && "release_timestamp" in a.data.temporal && typeof (a.data.temporal as { release_timestamp?: unknown }).release_timestamp === "number"
+    ? ((a.data.temporal as { release_timestamp: number }).release_timestamp)
+    : 0;
+  const tsB = typeof b.data?.temporal === "object" && b.data.temporal !== null && "release_timestamp" in b.data.temporal && typeof (b.data.temporal as { release_timestamp?: unknown }).release_timestamp === "number"
+    ? ((b.data.temporal as { release_timestamp: number }).release_timestamp)
+    : 0;
+
+  if (tsA !== tsB) return tsB - tsA;
+
+  const numA = getEntityNumericId(a.id);
+  const numB = getEntityNumericId(b.id);
+  if (numA !== numB) return numB - numA;
+
+  return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+}
+
 function toEntityLike(row: TeyvatEntity): EntityLike {
   return { id: row.id, kind: row.kind, slug: row.slug, name: row.name, data: row.data, provenance: row.provenance ?? undefined, temporal: row.temporal ?? undefined } as EntityLike;
 }
@@ -74,9 +97,9 @@ export class TeyvatPersistentEntityQueries {
       const aliasEntities = aliasIds.size ? await this.db.select().from(teyvatEntities).where(inArray(teyvatEntities.id, [...aliasIds])).orderBy(asc(teyvatEntities.name), asc(teyvatEntities.id)) : [];
       const merged = new Map(rows.map((row) => [row.id, row]));
       for (const row of aliasEntities) if (!category || row.kind === category) merged.set(row.id, row);
-      rows = [...merged.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+      rows = [...merged.values()].sort(compareTeyvatEntity);
     }
-    rows = rows.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+    rows = rows.sort(compareTeyvatEntity);
     const limit = Math.max(1, Math.min(50, options.limit ?? 24));
     const page = Math.max(1, options.page ?? 1);
     const revision = await this.revision();

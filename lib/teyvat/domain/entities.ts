@@ -165,6 +165,25 @@ export class TeyvatEntityQueries {
   }
 }
 
+function getEntityNumericId(id: string): number {
+  const lastPart = id.split(":").at(-1) ?? "";
+  const match = lastPart.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
 function compareEntity(a: Entity, b: Entity): number {
+  const tsA = typeof a.data?.temporal === "object" && a.data.temporal !== null && "release_timestamp" in a.data.temporal && typeof (a.data.temporal as { release_timestamp?: unknown }).release_timestamp === "number"
+    ? ((a.data.temporal as { release_timestamp: number }).release_timestamp)
+    : 0;
+  const tsB = typeof b.data?.temporal === "object" && b.data.temporal !== null && "release_timestamp" in b.data.temporal && typeof (b.data.temporal as { release_timestamp?: unknown }).release_timestamp === "number"
+    ? ((b.data.temporal as { release_timestamp: number }).release_timestamp)
+    : 0;
+
+  if (tsA !== tsB) return tsB - tsA;
+
+  const numA = getEntityNumericId(a.id);
+  const numB = getEntityNumericId(b.id);
+  if (numA !== numB) return numB - numA;
+
   return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
 }
