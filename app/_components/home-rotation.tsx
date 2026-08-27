@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "./navigation";
-import { Globe, Search, Sparkles, Sword, Users } from "lucide-react";
+import { Globe, Search, Sword, Users } from "lucide-react";
 import { CharacterPortrait } from "../database/banners/banner-visuals";
 
 type ServerRegion = "asia" | "america" | "europe";
@@ -24,6 +24,34 @@ function detectUserServer(): ServerRegion {
   } catch {
     return "asia";
   }
+}
+
+function calculateServerDay(server: ServerRegion): { dayOfWeek: number; countdown: string } {
+  const offset = SERVER_CONFIG[server].offset;
+  const now = new Date();
+  const serverTimeMs = now.getTime() + offset * 3600 * 1000;
+  const serverDate = new Date(serverTimeMs);
+
+  // Effective day flips at 4 AM server time
+  const effectiveMs = serverTimeMs - 4 * 3600 * 1000;
+  const effectiveDate = new Date(effectiveMs);
+  const dayOfWeek = effectiveDate.getUTCDay();
+
+  // Countdown to next 4 AM
+  const hours = serverDate.getUTCHours();
+  const minutes = serverDate.getUTCMinutes();
+  const seconds = serverDate.getUTCSeconds();
+
+  let diffSecs = (4 - hours) * 3600 - minutes * 60 - seconds;
+  if (diffSecs <= 0) {
+    diffSecs += 24 * 3600;
+  }
+
+  const hh = String(Math.floor(diffSecs / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, "0");
+  const ss = String(diffSecs % 60).padStart(2, "0");
+
+  return { dayOfWeek, countdown: `${hh}:${mm}:${ss}` };
 }
 
 export interface FarmableCharacter {
@@ -285,47 +313,20 @@ const ELEMENT_COLORS: Record<string, string> = {
 };
 
 export function HomeRotation() {
-  const [server, setServer] = useState<ServerRegion>("asia");
-  const [activeServerDay, setActiveServerDay] = useState<number>(3);
-  const [selectedDay, setSelectedDay] = useState<number>(3);
+  const [server, setServer] = useState<ServerRegion>(() => detectUserServer());
+  const [userSelectedDay, setUserSelectedDay] = useState<number | null>(null);
+  const [activeServerDay, setActiveServerDay] = useState<number>(() => calculateServerDay(detectUserServer()).dayOfWeek);
   const [activeTab, setActiveTab] = useState<"characters" | "weapons">("characters");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [countdown, setCountdown] = useState<string>("--:--:--");
+  const [countdown, setCountdown] = useState<string>(() => calculateServerDay(detectUserServer()).countdown);
 
-  useEffect(() => {
-    const detected = detectUserServer();
-    setServer(detected);
-  }, []);
+  const selectedDay = userSelectedDay ?? activeServerDay;
 
   useEffect(() => {
     const updateTime = () => {
-      const offset = SERVER_CONFIG[server].offset;
-      const now = new Date();
-      const serverTimeMs = now.getTime() + offset * 3600 * 1000;
-      const serverDate = new Date(serverTimeMs);
-
-      // Effective day flips at 4 AM server time
-      const effectiveMs = serverTimeMs - 4 * 3600 * 1000;
-      const effectiveDate = new Date(effectiveMs);
-      const dayOfWeek = effectiveDate.getUTCDay();
-
+      const { dayOfWeek, countdown: nextCountdown } = calculateServerDay(server);
       setActiveServerDay(dayOfWeek);
-
-      // Countdown to next 4 AM
-      const hours = serverDate.getUTCHours();
-      const minutes = serverDate.getUTCMinutes();
-      const seconds = serverDate.getUTCSeconds();
-
-      let diffSecs = (4 - hours) * 3600 - minutes * 60 - seconds;
-      if (diffSecs <= 0) {
-        diffSecs += 24 * 3600;
-      }
-
-      const hh = String(Math.floor(diffSecs / 3600)).padStart(2, "0");
-      const mm = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, "0");
-      const ss = String(diffSecs % 60).padStart(2, "0");
-
-      setCountdown(`${hh}:${mm}:${ss}`);
+      setCountdown(nextCountdown);
     };
 
     updateTime();
@@ -333,10 +334,9 @@ export function HomeRotation() {
     return () => clearInterval(interval);
   }, [server]);
 
-  // Keep selected day in sync with server day on initial load
-  useEffect(() => {
-    setSelectedDay(activeServerDay);
-  }, [activeServerDay]);
+  const setSelectedDay = (day: number) => {
+    setUserSelectedDay(day);
+  };
 
   const currentData = DAY_DATA[selectedDay] ?? DAY_DATA[0];
   const isToday = selectedDay === activeServerDay;

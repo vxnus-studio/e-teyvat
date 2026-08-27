@@ -141,14 +141,15 @@ export function Sidebar() {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setIsOpen(false);
+  }
 
   const isActive = (href: string) =>
     href === "/" ? pathname === href : pathname.startsWith(href.replace(/\/$/, ""));
-
-  // Automatically close sheet when route changes
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {

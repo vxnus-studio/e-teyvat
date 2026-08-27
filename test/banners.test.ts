@@ -1,4 +1,13 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+
+const expect = (actual: unknown) => ({
+  toBe: (expected: unknown) => assert.strictEqual(actual, expected),
+  toEqual: (expected: unknown) => assert.deepStrictEqual(actual, expected),
+  toBeDefined: () => assert.notStrictEqual(actual, undefined),
+  toBeNull: () => assert.strictEqual(actual, null),
+  toBeGreaterThan: (expected: number) => assert.ok(typeof actual === "number" && actual > expected, `expected ${actual} > ${expected}`),
+});
 import { parseBannersYaml } from "../lib/banners/parser.ts";
 import { calculateCharacterStatistics } from "../lib/banners/statistics.ts";
 import { calculatePressureAndConfidence } from "../lib/banners/pressure-model.ts";

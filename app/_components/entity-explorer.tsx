@@ -69,31 +69,6 @@ export function EntityExplorer({
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
-  function searchParams(search: string, pageNum: number = 1) {
-    const params = new URLSearchParams({ 
-      limit: compact ? "12" : "24",
-      page: pageNum.toString()
-    });
-    if (kind) params.set("kind", kind);
-    if (search) params.set("q", search);
-    return params;
-  }
-
-  async function load(search: string, pageNum: number = 1) {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/entities?${searchParams(search, pageNum)}`);
-      if (!response.ok) throw new Error("The knowledge API is unavailable.");
-      setResult((await response.json()) as EntityResponse);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Search failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     const params = new URLSearchParams({ 
@@ -102,8 +77,6 @@ export function EntityExplorer({
     });
     if (kind) params.set("kind", kind);
     if (submittedQuery) params.set("q", submittedQuery);
-
-    setLoading(true);
     fetch(`/api/entities?${params}`)
       .then((response) => {
         if (!response.ok) throw new Error("The knowledge API is unavailable.");

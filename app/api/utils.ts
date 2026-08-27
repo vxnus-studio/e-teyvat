@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, asc, desc, eq, ilike, or } from "drizzle-orm";
+import { asc, desc, eq, ilike, or } from "drizzle-orm";
 import { teyvatAliases, teyvatDatasetRevisions, teyvatEntities } from "../../db/schema";
 import { getDatabase } from "../../db/client";
 

@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDatabase } from "../db/client.ts";
 import {
   bannerSources,

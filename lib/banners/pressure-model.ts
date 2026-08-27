@@ -135,7 +135,7 @@ export function calculatePressureAndConfidence(
 
     // Confidence Calculation
     // Base on sample size (up to 10 is max confidence from size)
-    let sampleConfidence = Math.min((data.completedIntervalCount / 8) * 100, 100);
+    const sampleConfidence = Math.min((data.completedIntervalCount / 8) * 100, 100);
     
     // Variance penalty
     const variance = data.intervals.reduce((acc, val) => acc + Math.pow(val - data.meanInterval!, 2), 0) / data.completedIntervalCount;

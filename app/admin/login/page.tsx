@@ -28,7 +28,7 @@ export default function LoginPage() {
         const data = await res.json();
         setError(data.error || "Login failed");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);

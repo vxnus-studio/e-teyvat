@@ -72,7 +72,7 @@ export function calculateCharacterStatistics(
   }
 
   const modeIntervals = Array.from(counts.entries())
-    .filter(([_, count]) => count === maxCount)
+    .filter(([, count]) => count === maxCount)
     .map(([val]) => val)
     .sort((a, b) => a - b);
 

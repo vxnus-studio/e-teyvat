@@ -46,7 +46,7 @@ async function run() {
     
     await Promise.all(batch.map(async (entity) => {
       try {
-        const sourceUrl = imageFromData(entity.canonicalData as any);
+        const sourceUrl = imageFromData(entity.canonicalData as Record<string, unknown>);
         if (!sourceUrl) {
           console.warn(`⚠️ [${entity.kind}] ${entity.slug}: No source URL found.`);
           missingCount++;
