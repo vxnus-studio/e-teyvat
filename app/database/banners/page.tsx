@@ -3,7 +3,7 @@ import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { Activity, ArrowRight, CalendarRange, ChartNoAxesCombined, Clock3, Orbit, Sparkles, Sword } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { CharacterPortrait } from "./banner-visuals";
+import { CharacterPortrait, WeaponPortrait } from "./banner-visuals";
 import { WaitDistributionChart } from "./client-charts";
 
 export const metadata = {
@@ -186,70 +186,54 @@ export default async function BannersPage() {
             </p>
           </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* 5-Star Weapons Stage */}
-            <div className="lg:col-span-8 bg-[var(--surface-sunken)] border border-white/5 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-amber-400 font-bold text-xs tracking-widest uppercase flex items-center gap-1.5 font-mono">
-                  <Sparkles size={14} /> 5-Star Featured Weapons
-                </span>
-                <span className="text-xs text-[var(--text-muted)] font-mono">Epitome Invocation</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
-                {fiveStarWeapons.map((weapon) => (
+          <div className="featured-wish-grid">
+            <div className="five-star-stage">
+              <div className="stage-grid" />
+              <span className="rarity-mark">✦ 5-star featured transmission</span>
+              <div className="featured-portraits">
+                {fiveStarWeapons.map((weapon, index) => (
                   <Link
+                    className={`featured-portrait portrait-${index + 1}`}
                     href={`/database/weapons/${weapon.slug}`}
-                    key={weapon.id}
-                    className="flex items-center gap-4 bg-[var(--surface)] hover:bg-[var(--surface-raised)] border border-amber-500/20 hover:border-amber-400/60 rounded-xl p-4 transition-all group hover:scale-[1.02]"
+                    key={weapon.slug || weapon.id}
                   >
-                    <div className="w-16 h-16 rounded-lg bg-black/40 relative overflow-hidden flex items-center justify-center p-2 border border-white/5 shrink-0">
-                      {resolveImageUrl(null, weapon.canonicalData) ? (
-                        <Image
-                          src={resolveImageUrl(null, weapon.canonicalData)!}
-                          alt={weapon.name}
-                          width={56}
-                          height={56}
-                          className="object-contain drop-shadow group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <Sword size={24} className="text-amber-400" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-amber-400 text-xs font-bold tracking-wider">✦✦✦✦✦</span>
-                      <strong className="text-base block text-white group-hover:text-[var(--accent)] transition-colors">
-                        {weapon.name}
-                      </strong>
-                    </div>
+                    <WeaponPortrait
+                      slug={weapon.slug}
+                      name={weapon.name}
+                      imageUrl={resolveImageUrl(null, weapon.canonicalData)}
+                      sizes="(max-width: 760px) 45vw, 260px"
+                    />
+                    <span>
+                      <small>Epitome Invocation</small>
+                      <strong>{weapon.name}</strong>
+                    </span>
                   </Link>
                 ))}
+                {!fiveStarWeapons.length && (
+                  <p className="banner-empty">No featured five-star weapon records in this phase.</p>
+                )}
               </div>
             </div>
-
-            {/* 4-Star Weapons List */}
-            <div className="lg:col-span-4 bg-[var(--surface-sunken)] border border-white/5 rounded-2xl p-6 flex flex-col justify-between">
+            <aside className="four-star-roster">
+              <span className="roster-label">Support armaments</span>
+              <h3>Featured 4-stars</h3>
+              <p>Rate-up weapons in this transmission.</p>
               <div>
-                <span className="text-purple-400 font-bold text-xs tracking-widest uppercase block mb-1 font-mono">
-                  4-Star Weapons
-                </span>
-                <p className="text-xs text-[var(--text-muted)] mb-4">Rate-up armaments</p>
-                <div className="flex flex-col gap-2">
-                  {fourStarWeapons.map((weapon) => (
-                    <Link
-                      href={`/database/weapons/${weapon.slug}`}
-                      key={weapon.id}
-                      className="flex items-center justify-between p-2.5 px-3 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-raised)] border border-white/5 hover:border-purple-400/40 text-sm text-[var(--text-light)] hover:text-white transition-all group"
-                    >
-                      <strong className="group-hover:text-purple-300 transition-colors font-medium">
-                        {weapon.name}
-                      </strong>
-                      <ArrowRight size={13} className="text-[var(--text-muted)] group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  ))}
-                </div>
+                {fourStarWeapons.map((weapon, index) => (
+                  <Link
+                    href={`/database/weapons/${weapon.slug}`}
+                    key={weapon.slug || weapon.id}
+                  >
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{weapon.name}</strong>
+                    <ArrowRight size={13} />
+                  </Link>
+                ))}
+                {!fourStarWeapons.length && (
+                  <p className="text-xs text-[var(--text-muted)] py-3">Standard rate-up weapons.</p>
+                )}
               </div>
-            </div>
+            </aside>
           </div>
         </section>
       )}
