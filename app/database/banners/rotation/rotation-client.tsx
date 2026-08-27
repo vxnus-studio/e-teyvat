@@ -2,10 +2,18 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, Filter, Orbit, Search } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, Filter, Orbit, Search, Sparkles, Sword } from "lucide-react";
 import { CharacterPortrait } from "../banner-visuals";
 
 export interface TimelineCharacter {
+  slug: string;
+  name: string;
+  rarity: number;
+  imageUrl: string | null;
+}
+
+export interface TimelineWeapon {
   slug: string;
   name: string;
   rarity: number;
@@ -22,6 +30,7 @@ export interface TimelinePhase {
   endDate: string | null;
   status: "active" | "upcoming" | "completed";
   characters: TimelineCharacter[];
+  weapons?: TimelineWeapon[];
 }
 
 const ERAS = [
@@ -51,7 +60,8 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
     return eraFiltered.filter((phase) => {
       const matchVersion = phase.version.toLowerCase().includes(q) || phase.phaseKey.toLowerCase().includes(q);
       const matchChar = phase.characters.some((c) => c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q));
-      return matchVersion || matchChar;
+      const matchWeapon = phase.weapons?.some((w) => w.name.toLowerCase().includes(q) || w.slug.toLowerCase().includes(q));
+      return matchVersion || matchChar || matchWeapon;
     });
   }, [eraFiltered, searchQuery]);
 
@@ -59,60 +69,48 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
     return finalFiltered.slice(0, displayCount);
   }, [finalFiltered, displayCount]);
 
-  const hasMore = displayCount < finalFiltered.length;
+  const hasMore = displayedPhases.length < finalFiltered.length;
 
   const handleEraChange = (eraId: string) => {
     setSelectedEra(eraId);
     setDisplayCount(20);
   };
 
-  const formatDate = (isoStr: string | null, fallback: string) => {
-    if (!isoStr) return fallback;
-    const d = new Date(isoStr);
-    return Number.isNaN(d.valueOf()) ? fallback : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const formatDate = (d: string | null, fallback: string) => {
+    if (!d) return fallback;
+    const date = new Date(d);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   return (
-    <div className="banner-subpage">
-      <header className="banner-subpage-hero">
+    <div className="banner-rotation-view">
+      {/* Header Banner */}
+      <section className="rotation-hero">
         <Link className="banner-back-link" href="/database/banners">
-          <ArrowLeft size={13} /> Observatory
+          <ArrowLeft size={13} /> Return to observatory
         </Link>
         <span className="banner-kicker">
-          <Orbit size={13} /> Archive traversal / {allPhases.length} total phases (1.0 → 7.0)
+          <Orbit size={13} /> Complete Timeline Archive
         </span>
-        <h1>
-          Rotation <em>timeline</em>
-        </h1>
+        <h1>Banner Rotation History</h1>
         <p>
-          A chronological scan of featured character transmissions, indexed across all 105 recorded banner phases from Version 1.0 to 7.0.
+          Explore historical character and weapon event wish transmissions across all Genshin Impact versions.
         </p>
-        <div className="timeline-legend">
-          <span>
-            <i className="active-dot" /> Active
-          </span>
-          <span>
-            <i className="five-dot" /> 5-star
-          </span>
-          <span>
-            <i className="four-dot" /> 4-star
-          </span>
-        </div>
-      </header>
+      </section>
 
-      {/* Filter and Navigation Bar */}
-      <div className="flex flex-col gap-3 my-4 bg-[var(--surface-raised)] border border-white/5 rounded-xl p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">
-            <Filter size={13} className="text-[var(--accent)]" />
-            <span>Version Eras:</span>
+      {/* Filter and Search Bar */}
+      <div className="timeline-filter-toolbar bg-[var(--surface)] border border-white/10 rounded-2xl p-4 mb-8 flex flex-col gap-4 shadow-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
+            <Filter size={14} className="text-[var(--accent)]" />
+            <span>Filter by game version / continent:</span>
           </div>
 
-          <div className="relative min-w-[220px] max-w-xs flex-1">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
-              type="text"
-              placeholder="Filter character or version..."
+              type="search"
+              placeholder="Search character, weapon or version..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -157,6 +155,8 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
         {displayedPhases.map((phase) => {
           const fiveStars = phase.characters.filter((character) => character.rarity === 5);
           const fourStars = phase.characters.filter((character) => character.rarity === 4);
+          const fiveStarWeapons = phase.weapons?.filter((w) => w.rarity === 5) ?? [];
+          const fourStarWeapons = phase.weapons?.filter((w) => w.rarity === 4) ?? [];
 
           return (
             <article className={`phase-record ${phase.status === "active" ? "is-active" : ""}`} key={phase.id}>
@@ -181,7 +181,9 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
                   </div>
                   <span className={`phase-status status-${phase.status}`}>{phase.status}</span>
                 </header>
+
                 <div className="phase-lineup">
+                  {/* Five-Star Characters */}
                   <div className="phase-five-stars">
                     {fiveStars.map((character) => (
                       <Link href={`/characters/${character.slug}/banner-history`} key={character.slug}>
@@ -199,8 +201,10 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
                     ))}
                     {!fiveStars.length && <span className="phase-no-data">No five-star record</span>}
                   </div>
+
+                  {/* Four-Star Characters */}
                   <div className="phase-four-stars">
-                    <span className="roster-label">4-star constellation</span>
+                    <span className="roster-label">4-star characters</span>
                     <div>
                       {fourStars.map((character) => (
                         <Link href={`/characters/${character.slug}/banner-history`} key={character.slug}>
@@ -218,6 +222,40 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
                     </div>
                   </div>
                 </div>
+
+                {/* Weapons in this Phase */}
+                {fiveStarWeapons.length > 0 && (
+                  <div className="border-t border-white/5 pt-3 mt-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sword size={12} className="text-amber-400" />
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">
+                        Epitome Invocation Weapons
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {fiveStarWeapons.map((weapon) => (
+                        <Link
+                          href={`/database/weapons/${weapon.slug}`}
+                          key={weapon.slug}
+                          className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 hover:border-amber-400 rounded-lg px-2.5 py-1 text-xs text-amber-200 transition-all hover:scale-105"
+                        >
+                          <span className="text-amber-400 text-[10px]">✦✦✦✦✦</span>
+                          <strong className="font-semibold">{weapon.name}</strong>
+                        </Link>
+                      ))}
+                      {fourStarWeapons.map((weapon) => (
+                        <Link
+                          href={`/database/weapons/${weapon.slug}`}
+                          key={weapon.slug}
+                          className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 hover:border-purple-400 rounded-lg px-2 py-1 text-xs text-purple-200 transition-all"
+                        >
+                          <span className="text-purple-300 text-[10px]">✦✦✦✦</span>
+                          <span>{weapon.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </article>
           );
@@ -249,7 +287,7 @@ export function RotationClient({ allPhases }: { allPhases: TimelinePhase[] }) {
               onClick={() => setDisplayCount(finalFiltered.length)}
               className="px-4 py-2.5 rounded-xl bg-[var(--surface-sunken)] border border-white/5 hover:border-white/20 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-light)] transition-all cursor-pointer"
             >
-              Show All ({finalFiltered.length})
+              Show All {finalFiltered.length}
             </button>
           </div>
         </div>

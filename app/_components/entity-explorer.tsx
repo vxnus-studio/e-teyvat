@@ -225,8 +225,13 @@ export function EntityExplorer({
             );
           }
 
+          const detailHref = entity.kind === "characters" 
+            ? `/characters/${entity.slug}`
+            : `/database/${entity.kind}/${entity.slug}`;
+
           return (
-            <article 
+            <Link 
+              href={detailHref}
               className="group flex flex-col rounded-xl overflow-hidden bg-[var(--surface-sunken)] border border-white/5 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] cursor-pointer h-64 sm:h-72" 
               key={`${entity.kind}:${entity.id}`}
               style={{ borderBottom: `4px solid ${rarityColor}` }}
@@ -269,13 +274,13 @@ export function EntityExplorer({
                 
                 {/* Name (Clamped to 2 lines) */}
                 <h2 
-                  className="text-white font-bold text-center text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-sm"
+                  className="text-white font-bold text-center text-xs sm:text-sm leading-snug line-clamp-2 drop-shadow-sm group-hover:text-[var(--accent)] transition-colors"
                   title={entity.name}
                 >
                   {entity.name}
                 </h2>
               </div>
-            </article>
+            </Link>
           );
         })}
       </div>

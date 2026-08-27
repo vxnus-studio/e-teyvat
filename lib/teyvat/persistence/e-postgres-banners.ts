@@ -25,7 +25,33 @@ export type EBannerCharacter = {
   canonicalData: JsonObject;
 };
 
-export type EBannerAppearance = EBannerCharacter & { phaseId: string; phaseKey: string; version: string; phaseNumber: number; sequenceIndex: number; startDate: Date | null; endDate: Date | null; status: EBannerPhase["status"] };
+export type EBannerAppearance = EBannerCharacter & {
+  phaseId: string;
+  phaseKey: string;
+  version: string;
+  phaseNumber: number;
+  sequenceIndex: number;
+  startDate: Date | null;
+  endDate: Date | null;
+  status: EBannerPhase["status"];
+};
+
+export type EBannerWeaponAppearance = {
+  id: string;
+  slug: string;
+  name: string;
+  rarity: number;
+  canonicalData: JsonObject;
+  phaseId: string;
+  phaseKey: string;
+  version: string;
+  phaseNumber: number;
+  sequenceIndex: number;
+  startDate: Date | null;
+  endDate: Date | null;
+  status: EBannerPhase["status"];
+};
+
 export type EBannerStatistics = Omit<CharacterIntervalData, "characterId"> & {
   characterId: string;
   pressureScore: number | null;
@@ -129,15 +155,29 @@ export class TeyvatBannerQueries {
     return extractRows<AppearanceRow>(result);
   }
 
+  private async weaponAppearanceRows(): Promise<AppearanceRow[]> {
+    const result = await this.db.execute(sql`SELECT r.subject_id, subject.slug AS subject_slug, subject.name AS subject_name, subject.data AS subject_data, r.object_id AS phase_id, phase.data AS phase_data, r.metadata FROM teyvat_relations r JOIN teyvat_entities subject ON subject.id = r.subject_id JOIN teyvat_entities phase ON phase.id = r.object_id WHERE r.predicate = 'appeared_in' AND subject.kind = 'weapon' AND phase.kind = 'banner_phase' ORDER BY (phase.data->>'start_date') ASC, (phase.data->>'sequence_index')::int ASC, subject.name ASC`);
+    return extractRows<AppearanceRow>(result);
+  }
+
   private async dataset() {
-    const [phases, rows] = await Promise.all([this.phases(), this.appearanceRows()]);
+    const [phases, rows, weaponRows] = await Promise.all([
+      this.phases(),
+      this.appearanceRows(),
+      this.weaponAppearanceRows(),
+    ]);
     const phaseMap = new Map(phases.map((phase) => [phase.id, phase]));
     const appearances = rows.flatMap((row) => {
       const phase = phaseMap.get(row.phase_id) ?? phaseFromRow({ id: row.phase_id, data: row.phase_data });
       const character = characterFromRow(row);
       return [{ ...character, phaseId: phase.id, phaseKey: phase.phaseKey, version: phase.version, phaseNumber: phase.phaseNumber, sequenceIndex: phase.sequenceIndex, startDate: phase.startDate, endDate: phase.endDate, status: phase.status }];
     });
-    return { phases, appearances };
+    const weaponAppearances: EBannerWeaponAppearance[] = weaponRows.flatMap((row) => {
+      const phase = phaseMap.get(row.phase_id) ?? phaseFromRow({ id: row.phase_id, data: row.phase_data });
+      const weapon = characterFromRow(row);
+      return [{ ...weapon, phaseId: phase.id, phaseKey: phase.phaseKey, version: phase.version, phaseNumber: phase.phaseNumber, sequenceIndex: phase.sequenceIndex, startDate: phase.startDate, endDate: phase.endDate, status: phase.status }];
+    });
+    return { phases, appearances, weaponAppearances };
   }
 
   private statistics(appearances: EBannerAppearance[], latestSequenceIndex: number): EBannerStatistics[] {
@@ -159,7 +199,7 @@ export class TeyvatBannerQueries {
   }
 
   async overview() {
-    const { phases, appearances } = await this.dataset();
+    const { phases, appearances, weaponAppearances } = await this.dataset();
     const currentPhase = phases.find((phase) => phase.status === "active")
       ?? phases.find((phase) => phase.status === "upcoming")
       ?? phases.at(-1)
@@ -167,7 +207,7 @@ export class TeyvatBannerQueries {
     const latestSequenceIndex = currentPhase?.sequenceIndex ?? phases.at(-1)?.sequenceIndex ?? 0;
     const statistics = this.statistics(appearances, latestSequenceIndex);
     const statsById = new Map(statistics.map((stat) => [stat.characterId, stat]));
-    return { phases, appearances, statistics, statsById, currentPhase };
+    return { phases, appearances, weaponAppearances, statistics, statsById, currentPhase };
   }
 
   async pressure() {
@@ -197,6 +237,33 @@ export class TeyvatBannerQueries {
     }
     const statistics = character ? data.statsById.get(character.id) ?? null : null;
     return { ...data, character, appearances, statistics };
+  }
+
+  async weapon(slug: string) {
+    const data = await this.overview();
+    const appearances = data.weaponAppearances.filter((appearance) => appearance.slug === slug).sort((a, b) => a.sequenceIndex - b.sequenceIndex);
+    let weapon: EBannerWeaponAppearance | null = appearances[0] ?? null;
+    if (!weapon) {
+      const [weaponRow] = await this.db.select().from(teyvatEntities).where(and(eq(teyvatEntities.kind, "weapon"), eq(teyvatEntities.slug, slug))).limit(1);
+      if (weaponRow) {
+        weapon = {
+          id: weaponRow.id,
+          slug: weaponRow.slug,
+          name: weaponRow.name,
+          rarity: numberValue(weaponRow.data?.rarity, 4),
+          canonicalData: weaponRow.data as JsonObject,
+          phaseId: "",
+          phaseKey: "",
+          version: "",
+          phaseNumber: 0,
+          sequenceIndex: 0,
+          startDate: null,
+          endDate: null,
+          status: "completed",
+        };
+      }
+    }
+    return { ...data, weapon, appearances };
   }
 }
 

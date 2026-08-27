@@ -1,10 +1,17 @@
 import { CharacterPortrait } from "@/app/database/banners/banner-visuals";
 import { getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
-import { ArrowLeft, ArrowRight, CalendarDays, Gem, Orbit, RadioTower, Sword, Zap } from "lucide-react";
+import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
+import { ArrowLeft, ArrowRight, CalendarDays, Gem, Orbit, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ProgressionCalculator,
+  type AscensionPhase,
+  type MaterialItem,
+  type TalentLevel,
+} from "./progression-calculator";
 
 type DataRecord = Record<string, unknown>;
 
@@ -21,6 +28,15 @@ function text(value: unknown, fallback = "—"): string {
     if (typeof obj.name === "string" && obj.name) return obj.name;
   }
   return fallback;
+}
+
+function toTitleCase(str: string): string {
+  if (!str || str === "—") return "—";
+  return str
+    .replace(/[_-]/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }
 
 function formatBirthday(value: unknown): string {
@@ -56,15 +72,106 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
   const bannerQueries = await getTeyvatBannerQueries();
   const { statistics: stats } = await bannerQueries.character(slug);
 
+  // Signature Weapon lookup
+  const signatureSlug = getSignatureWeaponSlug(slug);
+  const signatureWeapon = signatureSlug ? await entityQueries.getEntity("weapons", signatureSlug) : null;
+
+  // Process ascension relations and levels
   const ascensionRelations = relations.filter((r) => r.predicate === "ascension_cost");
   const talentRelations = relations.filter((r) => r.predicate === "talent_material");
 
-  const uniqueAscensionMaterials = Array.from(
-    new Map(ascensionRelations.map((r) => [r.object.id, r.object])).values(),
+  // Ascension Phases (Phase 1 to 6)
+  const phaseLevelRanges: Record<number, string> = {
+    1: "Lvl 20 → 40",
+    2: "Lvl 40 → 50",
+    3: "Lvl 50 → 60",
+    4: "Lvl 60 → 70",
+    5: "Lvl 70 → 80",
+    6: "Lvl 80 → 90",
+  };
+
+  const ascPhaseMap = new Map<number, MaterialItem[]>();
+  const ascTotalMap = new Map<string, MaterialItem>();
+
+  for (const rel of ascensionRelations) {
+    const rawLevel = Number(rel.metadata?.canonical && typeof rel.metadata.canonical === "object" ? (rel.metadata.canonical as Record<string, unknown>).promote_level : 1) || 1;
+    // promote_level in data is 2..7 or 1..6
+    const phaseNum = rawLevel >= 2 ? rawLevel - 1 : rawLevel;
+    const count = Number(rel.metadata?.canonical && typeof rel.metadata.canonical === "object" ? (rel.metadata.canonical as Record<string, unknown>).count : 1) || 1;
+
+    const item: MaterialItem = {
+      id: rel.object.id,
+      slug: rel.object.slug,
+      name: rel.object.name,
+      kind: rel.object.kind,
+      image: rel.object.image,
+      count,
+    };
+
+    const existingPhase = ascPhaseMap.get(phaseNum) ?? [];
+    existingPhase.push(item);
+    ascPhaseMap.set(phaseNum, existingPhase);
+
+    const existingTotal = ascTotalMap.get(rel.object.id);
+    if (existingTotal) {
+      existingTotal.count += count;
+    } else {
+      ascTotalMap.set(rel.object.id, { ...item, count });
+    }
+  }
+
+  const ascensionPhases: AscensionPhase[] = Array.from(ascPhaseMap.entries())
+    .map(([phase, materials]) => ({
+      phase,
+      levelRange: phaseLevelRanges[phase] ?? `Phase ${phase}`,
+      mora: [20000, 40000, 60000, 80000, 100000, 120000][phase - 1] ?? 0,
+      materials,
+    }))
+    .sort((a, b) => a.phase - b.phase);
+
+  const totalAscensionMaterials: MaterialItem[] = Array.from(ascTotalMap.values()).sort(
+    (a, b) => b.count - a.count,
   );
 
-  const uniqueTalentMaterials = Array.from(
-    new Map(talentRelations.map((r) => [r.object.id, r.object])).values(),
+  // Talent Levels (Level 2 to 10)
+  const talentLevelMap = new Map<number, MaterialItem[]>();
+  const talentTotalMap = new Map<string, MaterialItem>();
+
+  for (const rel of talentRelations) {
+    const level = Number(rel.metadata?.canonical && typeof rel.metadata.canonical === "object" ? (rel.metadata.canonical as Record<string, unknown>).level : 2) || 2;
+    const count = Number(rel.metadata?.canonical && typeof rel.metadata.canonical === "object" ? (rel.metadata.canonical as Record<string, unknown>).count : 1) || 1;
+
+    const item: MaterialItem = {
+      id: rel.object.id,
+      slug: rel.object.slug,
+      name: rel.object.name,
+      kind: rel.object.kind,
+      image: rel.object.image,
+      count,
+    };
+
+    const existingLevel = talentLevelMap.get(level) ?? [];
+    existingLevel.push(item);
+    talentLevelMap.set(level, existingLevel);
+
+    const existingTotal = talentTotalMap.get(rel.object.id);
+    if (existingTotal) {
+      existingTotal.count += count;
+    } else {
+      talentTotalMap.set(rel.object.id, { ...item, count });
+    }
+  }
+
+  const talentLevels: TalentLevel[] = Array.from(talentLevelMap.entries())
+    .map(([level, materials]) => ({
+      level,
+      levelText: `Level ${level - 1} → ${level}`,
+      materials,
+    }))
+    .sort((a, b) => a.level - b.level);
+
+  const totalTalentMaterials: MaterialItem[] = Array.from(talentTotalMap.values()).sort(
+    (a, b) => b.count - a.count,
   );
 
   const rarity = typeof character.rarity === "number" ? character.rarity : 4;
@@ -74,7 +181,8 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
   const birthday = formatBirthday(data.birthday);
   const substat = formatStat(data.special_prop);
   const element = character.element ?? text(data.element);
-  const weapon = text(data.weapon_type);
+  const rawWeapon = text(data.weapon_type);
+  const weapon = toTitleCase(rawWeapon);
   const description = character.description ?? text(fetter.detail) ?? "";
 
   return (
@@ -143,87 +251,84 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
         ))}
       </section>
 
-      {uniqueAscensionMaterials.length > 0 && (
-        <section className="character-section">
-          <header className="banner-section-heading">
+      {/* Signature Weapon Highlight */}
+      {signatureWeapon && (
+        <section className="mb-8">
+          <header className="banner-section-heading mb-4">
             <div>
-              <span>01 / Progression</span>
-              <h2>Ascension Materials</h2>
+              <span className="text-[var(--accent)] font-mono text-xs uppercase tracking-widest flex items-center gap-1.5">
+                <Sparkles size={13} /> Equipment Synergy
+              </span>
+              <h2 className="text-xl font-extrabold text-white">Signature Weapon</h2>
             </div>
-            <p>{uniqueAscensionMaterials.length} required material families</p>
+            <p>Featured weapon pairing in Epitome Invocation wishes</p>
           </header>
-          <div className="flex flex-wrap gap-4 pt-2">
-            {uniqueAscensionMaterials.map((material) => (
-              <Link
-                href={`/database/materials?q=${encodeURIComponent(material.name)}`}
-                key={material.id}
-                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all hover:scale-[1.02] group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] relative overflow-hidden flex items-center justify-center p-1 border border-white/5 shrink-0">
-                  {material.image ? (
-                    <Image
-                      src={material.image}
-                      alt={material.name}
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <span className="font-bold text-xs text-[var(--accent)]">
-                      {material.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
+
+          <Link
+            href={`/database/weapons/${signatureWeapon.slug}`}
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-gradient-to-r from-[var(--surface-sunken)] to-[var(--surface)] border border-white/10 hover:border-[var(--accent)] rounded-2xl p-5 md:p-6 transition-all hover:scale-[1.01] group shadow-lg"
+          >
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-black/50 relative overflow-hidden flex items-center justify-center p-2 border border-white/10 shrink-0 group-hover:border-[var(--accent)] transition-colors">
+                {signatureWeapon.image ? (
+                  <Image
+                    src={signatureWeapon.image}
+                    alt={signatureWeapon.name}
+                    width={70}
+                    height={70}
+                    className="object-contain drop-shadow-md group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <Sword size={28} className="text-[var(--accent)]" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-amber-400 font-bold text-xs tracking-widest">
+                    {"✦".repeat(signatureWeapon.rarity ?? 5)}
+                  </span>
+                  <span className="text-xs uppercase px-2 py-0.5 rounded bg-white/10 text-[var(--text-muted)] font-mono">
+                    {toTitleCase(text(signatureWeapon.canonicalData.type))}
+                  </span>
                 </div>
-                <div>
-                  <strong className="text-sm block text-[var(--text-light)] group-hover:text-[var(--accent)]">{material.name}</strong>
-                  <small className="text-xs text-[var(--text-muted)] capitalize">{material.kind}</small>
-                </div>
-              </Link>
-            ))}
-          </div>
+                <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-[var(--accent)] transition-colors">
+                  {signatureWeapon.name}
+                </h3>
+                {signatureWeapon.description && (
+                  <p className="text-xs sm:text-sm text-[var(--text-muted)] line-clamp-2 mt-1 max-w-2xl">
+                    {signatureWeapon.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent)] sm:self-center shrink-0">
+              <span>View weapon details</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </section>
       )}
 
-      {uniqueTalentMaterials.length > 0 && (
-        <section className="character-section">
-          <header className="banner-section-heading">
-            <div>
-              <span>02 / Combat System</span>
-              <h2>Talent Materials</h2>
-            </div>
-            <p>{uniqueTalentMaterials.length} required skill materials</p>
-          </header>
-          <div className="flex flex-wrap gap-4 pt-2">
-            {uniqueTalentMaterials.map((material) => (
-              <Link
-                href={`/database/materials?q=${encodeURIComponent(material.name)}`}
-                key={material.id}
-                className="flex items-center gap-3 bg-[var(--surface-sunken)] border border-white/5 hover:border-[var(--accent)] rounded-xl p-3 px-4 transition-all hover:scale-[1.02] group"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] relative overflow-hidden flex items-center justify-center p-1 border border-white/5 shrink-0">
-                  {material.image ? (
-                    <Image
-                      src={material.image}
-                      alt={material.name}
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <span className="font-bold text-xs text-[var(--accent)]">
-                      {material.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <strong className="text-sm block text-[var(--text-light)] group-hover:text-[var(--accent)]">{material.name}</strong>
-                  <small className="text-xs text-[var(--text-muted)] capitalize">{material.kind}</small>
-                </div>
-              </Link>
-            ))}
+      {/* Progression & Materials Section */}
+      <section className="mb-10">
+        <header className="banner-section-heading mb-4">
+          <div>
+            <span>01 / Progression Calculator</span>
+            <h2>Progression Materials</h2>
           </div>
-        </section>
-      )}
+          <p>
+            {totalAscensionMaterials.length + totalTalentMaterials.length} farming resources with exact step-by-step quotas
+          </p>
+        </header>
+
+        <ProgressionCalculator
+          ascensionPhases={ascensionPhases}
+          totalAscensionMaterials={totalAscensionMaterials}
+          talentLevels={talentLevels}
+          totalTalentMaterials={totalTalentMaterials}
+        />
+      </section>
 
       <section className="character-bottom-grid">
         <article>

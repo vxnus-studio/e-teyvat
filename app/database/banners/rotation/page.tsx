@@ -4,14 +4,14 @@ import { RotationClient, TimelinePhase } from "./rotation-client";
 
 export const metadata = {
   title: "Rotation Timeline | E-Teyvat",
-  description: "Chronological timeline of Genshin Impact banner phases from Version 1.0 to 7.0.",
+  description: "Chronological timeline of Genshin Impact character and weapon banner phases from Version 1.0 to 7.0.",
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function BannerRotationPage() {
   const queries = await getTeyvatBannerQueries();
-  const { phases: allPhases, appearances } = await queries.overview();
+  const { phases: allPhases, appearances, weaponAppearances } = await queries.overview();
 
   const charactersByPhase = new Map<
     string,
@@ -34,6 +34,27 @@ export default async function BannerRotationPage() {
     charactersByPhase.set(character.phaseId, phaseCharacters);
   }
 
+  const weaponsByPhase = new Map<
+    string,
+    Array<{
+      slug: string;
+      name: string;
+      rarity: number;
+      imageUrl: string | null;
+    }>
+  >();
+
+  for (const weapon of weaponAppearances) {
+    const phaseWeapons = weaponsByPhase.get(weapon.phaseId) ?? [];
+    phaseWeapons.push({
+      slug: weapon.slug,
+      name: weapon.name,
+      rarity: weapon.rarity,
+      imageUrl: resolveImageUrl(null, weapon.canonicalData),
+    });
+    weaponsByPhase.set(weapon.phaseId, phaseWeapons);
+  }
+
   // Sort descending chronologically (newest 7.0 down to 1.0)
   const phasesChronologicalDesc: TimelinePhase[] = [...allPhases].reverse().map((phase) => ({
     id: phase.id,
@@ -45,6 +66,7 @@ export default async function BannerRotationPage() {
     endDate: phase.endDate ? phase.endDate.toISOString() : null,
     status: phase.status,
     characters: charactersByPhase.get(phase.id) ?? [],
+    weapons: weaponsByPhase.get(phase.id) ?? [],
   }));
 
   return <RotationClient allPhases={phasesChronologicalDesc} />;

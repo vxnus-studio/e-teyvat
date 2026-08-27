@@ -1,28 +1,32 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, CheckCircle, ExternalLink, HelpCircle, Layers, Sparkles } from "lucide-react";
 
 type Source = {
   type?: string;
   kind?: string;
   name: string;
+  slug?: string;
   region?: string;
   availableDays?: string[];
   domainEntrance?: string | null;
 };
 
 type Material = {
-  id?: number;
+  id?: string;
   name: string;
-  quantity?: unknown;
+  slug?: string;
+  quantity?: number | null;
   quantities?: Record<string, number>;
   phase?: string;
   sources: Source[];
-  sourceNotes?: unknown[];
+  sourceNotes?: string[];
 };
 
 type FarmingResponse = {
-  target: { name: string; kind: string; slug: string };
+  target: { id?: string; name: string; kind: string; slug: string };
   materials: Material[];
   revision: string | null;
   preview: boolean;
@@ -37,6 +41,7 @@ export function KnowledgeConsole() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!target.trim()) return;
     setLoading(true);
     setError(null);
     try {
@@ -62,6 +67,7 @@ export function KnowledgeConsole() {
           <input
             onChange={(event) => setTarget(event.target.value)}
             value={target}
+            placeholder="e.g. Furina, Splendor of Tranquil Waters, Lakelight Lily..."
           />
           <span>?</span>
         </label>
@@ -71,17 +77,34 @@ export function KnowledgeConsole() {
       </form>
 
       {error ? <p className="data-error">{error}</p> : null}
+
       {result ? (
         <section className="trace-result" aria-live="polite">
-          <header>
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span>Resolved target</span>
-              <h2>{result.target.name}</h2>
+              <span className="text-[var(--green)] text-xs font-mono tracking-widest uppercase block">
+                Resolved Target ({result.target.kind})
+              </span>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                {result.target.name}
+                {result.target.slug && (
+                  <Link
+                    href={`/database/${result.target.kind === "avatar" ? "characters" : result.target.kind === "weapon" ? "weapons" : result.target.kind === "material" ? "materials" : "characters"}/${result.target.slug}`}
+                    className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors inline-flex items-center"
+                    title="Open entity record"
+                  >
+                    <ExternalLink size={15} />
+                  </Link>
+                )}
+              </h2>
             </div>
-            <code>{result.revision ?? "preview-data"}</code>
+            <code className="text-xs text-[var(--text-3)] font-mono bg-black/30 px-2 py-1 rounded max-w-full truncate">
+              REVISION {result.revision ? result.revision.slice(0, 16) : "PREVIEW"}…
+            </code>
           </header>
+
           <div className="trace-flow">
-            <span className="trace-node target-node">{result.target.name}</span>
+            <span className="trace-node target-node font-semibold truncate">{result.target.name}</span>
             <span className="trace-arrow">requires</span>
             <span className="trace-node">{result.materials.length} material records</span>
             <span className="trace-arrow">obtained from</span>
@@ -89,42 +112,72 @@ export function KnowledgeConsole() {
               {new Set(result.materials.flatMap((item) => item.sources.map((source) => source.name))).size} sources
             </span>
           </div>
+
           <div className="material-list">
             {result.materials.map((material, index) => (
-              <article key={`${material.name}:${index}`}>
-                <span className="material-index">{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <h3>{material.name}</h3>
-                  {material.quantity ? <p>Required quantity: {String(material.quantity)}</p> : null}
-                  {material.quantities ? (
-                    <p>
-                      {Object.entries(material.quantities)
-                        .map(([name, amount]) => `${name} ×${amount}`)
-                        .join(" · ")}
+              <article key={`${material.name}:${index}`} className="flex flex-col sm:flex-row gap-4 p-4">
+                <span className="material-index font-mono font-bold text-sm text-[var(--accent)] shrink-0">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <h3 className="text-base font-bold text-white m-0">
+                      {material.name}
+                    </h3>
+                    {material.quantity !== null && material.quantity !== undefined && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] text-xs font-mono font-bold">
+                        Required: ×{material.quantity}
+                      </span>
+                    )}
+                  </div>
+
+                  {material.phase && material.phase !== "direct" && (
+                    <p className="text-xs text-[var(--text-muted)] mb-2 font-mono capitalize">
+                      Relation predicate: {material.phase.replace(/_/g, " ")}
                     </p>
-                  ) : null}
-                  <div className="source-list">
-                    {material.sources.map((source) => (
-                      <span key={`${source.type}:${source.name}`}>
-                        <strong>{source.name}</strong>
-                        {source.region ? ` · ${source.region}` : ""}
-                        {source.availableDays?.length
-                          ? ` · ${source.availableDays.join(", ")}`
-                          : ""}
+                  )}
+
+                  {/* Sources List */}
+                  <div className="source-list mt-2 flex flex-wrap gap-2">
+                    {material.sources.map((source, sIdx) => (
+                      <span
+                        key={`${source.type}:${source.name}:${sIdx}`}
+                        className="inline-flex flex-wrap items-center gap-1.5 bg-[var(--surface-2)] border border-white/5 rounded-lg px-2.5 py-1.5 text-xs"
+                      >
+                        <strong className="text-[var(--text-light)]">{source.name}</strong>
+                        {source.region ? (
+                          <span className="text-[var(--text-muted)]">({source.region})</span>
+                        ) : null}
+                        {source.availableDays && source.availableDays.length > 0 ? (
+                          <span className="text-[var(--gold)] font-mono text-[11px]">
+                            · {source.availableDays.join(", ")}
+                          </span>
+                        ) : null}
                       </span>
                     ))}
-                    {material.sources.length === 0 && material.sourceNotes?.length ? (
-                      <span>{material.sourceNotes.map(String).join(" · ")}</span>
+                    {material.sources.length === 0 && material.sourceNotes && material.sourceNotes.length > 0 ? (
+                      <div className="text-xs text-[var(--text-muted)] flex flex-wrap gap-2">
+                        {material.sourceNotes.map((note, nIdx) => (
+                          <span key={nIdx} className="bg-white/5 px-2 py-1 rounded">
+                            {note}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {material.sources.length === 0 && (!material.sourceNotes || material.sourceNotes.length === 0) ? (
+                      <span className="text-xs text-[var(--text-3)] italic">
+                        No direct drop sources recorded (World exploration / Crafting)
+                      </span>
                     ) : null}
                   </div>
                 </div>
               </article>
             ))}
           </div>
+
           {result.preview ? (
             <p className="preview-notice">
-              This trace uses the bundled preview. After Neon is connected and the first
-              sync completes, the same UI will traverse live database relations.
+              This trace uses the bundled projection artifact. Live queries are synchronized with Neon.
             </p>
           ) : null}
         </section>
@@ -140,4 +193,3 @@ export function KnowledgeConsole() {
     </div>
   );
 }
-
