@@ -22,7 +22,7 @@ export const syncRuns = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     status: text("status").$type<SyncStatus>().notNull().default("running"),
-    source: text("source").notNull().default("genshin-db-api-v5"),
+    source: text("source").notNull().default("genshin-data"),
     sourceRevision: text("source_revision"),
     contentDigest: varchar("content_digest", { length: 64 }),
     startedAt: timestamp("started_at", { withTimezone: true })

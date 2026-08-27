@@ -19,7 +19,7 @@ Upstream Data Sources & Projections
       |
       | periodic or manual sync
       v
-sync-genshin.ts / sync-banners.ts / ingest-teyvat.ts
+sync-banners.ts / ingest-teyvat.ts
       |
       +--------------> entities + aliases (legacy & teyvat_*)
       +--------------> relations (legacy & teyvat_*)
