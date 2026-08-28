@@ -7,7 +7,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = request.cookies.get("eteyvat_admin_session")?.value;
+  const session = request.cookies.get("e_teyvat_admin_session")?.value;
   if (!session || session !== "authenticated") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

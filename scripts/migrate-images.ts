@@ -73,7 +73,7 @@ async function run() {
         const key = `${entity.kind}/${entity.slug}.avif`;
         await s3Client.send(
           new PutObjectCommand({
-            Bucket: "eteyvat",
+            Bucket: "e-teyvat",
             Key: key,
             Body: avifBuffer,
             ContentType: "image/avif",

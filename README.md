@@ -1,6 +1,6 @@
 # Teyvat Knowledge Base
 
-**Website:** [https://eteyvat.vxnus.xyz](https://eteyvat.vxnus.xyz)
+**Website:** [https://e-teyvat.vxnus.xyz](https://e-teyvat.vxnus.xyz)
 
 Teyvat is an open structured knowledge base for **Genshin Impact**, designed for both humans and AI systems.
 
@@ -104,30 +104,30 @@ E Hub publisher ownership and authentication are intentionally outside this repo
 
 The Teyvat Knowledge Base is available as a public **Model Context Protocol (MCP)** server, letting any MCP-compatible AI agent access all 9 tools without writing custom fetch logic.
 
-**Endpoint:** `https://eteyvat.vxnus.xyz/api/mcp`
-
+**Endpoint:** `https://e-teyvat.vxnus.xyz/api/mcp`
+ 
 ### Connect with Streamable HTTP (recommended)
-
+ 
 Add this to your `mcp_config.json` or equivalent client config:
-
+ 
 ```json
 {
   "mcpServers": {
     "teyvat": {
-      "url": "https://eteyvat.vxnus.xyz/api/mcp"
+      "url": "https://e-teyvat.vxnus.xyz/api/mcp"
     }
   }
 }
 ```
-
+ 
 ### Connect via stdio proxy (for stdio-only clients)
-
+ 
 ```json
 {
   "mcpServers": {
     "teyvat": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://eteyvat.vxnus.xyz/api/mcp"]
+      "args": ["-y", "mcp-remote", "https://e-teyvat.vxnus.xyz/api/mcp"]
     }
   }
 }

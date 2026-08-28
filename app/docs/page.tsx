@@ -35,7 +35,7 @@ const apiEndpoints: ApiEndpoint[] = [
     title: "Health & System Status",
     description: "Returns health status, active dataset revision, entity/relation counts, and current game version telemetry.",
     category: "Core & Health",
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/health",
+    exampleRequest: "curl -X GET https://e-teyvat.vxnus.xyz/api/health",
     exampleResponse: JSON.stringify(
       {
         status: "ready",
@@ -67,7 +67,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "limit", type: "number", required: false, description: "Maximum records to return (1 to 50, default 24)." },
       { name: "page", type: "number", required: false, description: "Pagination page number (default 1)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/entities?kind=characters&q=nahida&limit=10\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/entities?kind=characters&q=nahida&limit=10\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -76,7 +76,7 @@ const apiEndpoints: ApiEndpoint[] = [
             kind: "characters",
             slug: "nahida",
             name: "Nahida",
-            image: "https://cdn.eteyvat.vxnus.xyz/characters/nahida.png",
+            image: "https://cdn.e-teyvat.vxnus.xyz/characters/nahida.png",
             description: "A caged bird secluded within the Sanctuary of Surasthana...",
           },
         ],
@@ -100,7 +100,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "kind", type: "string", required: true, description: "Entity kind folder (e.g. characters, weapons, artifacts)." },
       { name: "slug", type: "string", required: true, description: "Entity identifier slug (e.g. furina, splendor-of-tranquil-waters)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/entities/weapons/splendor-of-tranquil-waters",
+    exampleRequest: "curl -X GET https://e-teyvat.vxnus.xyz/api/v1/entities/weapons/splendor-of-tranquil-waters",
     exampleResponse: JSON.stringify(
       {
         entity: {
@@ -138,7 +138,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "target", type: "string", required: true, description: "Target entity name, slug, or alias (e.g. Furina, Splendor of Tranquil Waters)." },
       { name: "kind", type: "string", required: false, description: "Optional entity kind disambiguation (characters or weapons)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/farming?target=Furina\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/farming?target=Furina\"",
     exampleResponse: JSON.stringify(
       {
         target: {
@@ -189,7 +189,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "offset", type: "number", required: false, description: "Offset for pagination (default 0)." },
       { name: "pressureLevel", type: "string", required: false, description: "Filter by level: critical, elevated, normal, or recent." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/banners/rerun-pressure?limit=5\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/banners/rerun-pressure?limit=5\"",
     exampleResponse: JSON.stringify(
       {
         currentPhase: {
@@ -231,7 +231,7 @@ const apiEndpoints: ApiEndpoint[] = [
     parameters: [
       { name: "character", type: "string", required: true, description: "Character slug (e.g. nahida, zhongli, raiden-shogun)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/characters/nahida/banner-history",
+    exampleRequest: "curl -X GET https://e-teyvat.vxnus.xyz/api/v1/characters/nahida/banner-history",
     exampleResponse: JSON.stringify(
       {
         character: {
@@ -279,7 +279,7 @@ const apiEndpoints: ApiEndpoint[] = [
     parameters: [
       { name: "character", type: "string", required: true, description: "Character slug (e.g. furina, arlecchino)." },
     ],
-    exampleRequest: "curl -X GET https://eteyvat.vxnus.xyz/api/v1/characters/furina/rerun-analysis",
+    exampleRequest: "curl -X GET https://e-teyvat.vxnus.xyz/api/v1/characters/furina/rerun-analysis",
     exampleResponse: JSON.stringify(
       {
         character: {
@@ -326,7 +326,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "q", type: "string", required: true, description: "Search query text supporting English web-search syntax." },
       { name: "limit", type: "number", required: false, description: "Max results to return (1 to 50, default 8)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/knowledge/search?q=archon+quest+fontaine&limit=4\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/knowledge/search?q=archon+quest+fontaine&limit=4\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -360,7 +360,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "limit", type: "number", required: false, description: "Maximum results to return (default 20)." },
       { name: "page", type: "number", required: false, description: "Pagination page number (default 1)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/lore/search?q=Dandelion+Sea&category=book\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/lore/search?q=Dandelion+Sea&category=book\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -396,7 +396,7 @@ const apiEndpoints: ApiEndpoint[] = [
       { name: "limit", type: "number", required: false, description: "Records limit (default 24)." },
       { name: "page", type: "number", required: false, description: "Page number (default 1)." },
     ],
-    exampleRequest: "curl -X GET \"https://eteyvat.vxnus.xyz/api/v1/lore/books?q=Gunnhildr\"",
+    exampleRequest: "curl -X GET \"https://e-teyvat.vxnus.xyz/api/v1/lore/books?q=Gunnhildr\"",
     exampleResponse: JSON.stringify(
       {
         items: [
@@ -426,7 +426,7 @@ const apiEndpoints: ApiEndpoint[] = [
     headers: [
       { name: "Authorization", required: false, description: "Optional Bearer token containing publisher verification key." },
     ],
-    exampleRequest: "curl -X POST https://eteyvat.vxnus.xyz/api/e/verify -H \"Authorization: Bearer <KEY>\"",
+    exampleRequest: "curl -X POST https://e-teyvat.vxnus.xyz/api/e/verify -H \"Authorization: Bearer <KEY>\"",
     exampleResponse: JSON.stringify(
       {
         valid: true,
@@ -454,7 +454,7 @@ const apiEndpoints: ApiEndpoint[] = [
       },
     ],
     exampleRequest:
-      '# Add to mcp_config.json (Streamable HTTP clients)\n{\n  "mcpServers": {\n    "teyvat": {\n      "url": "https://eteyvat.vxnus.xyz/api/mcp"\n    }\n  }\n}\n\n# For stdio-only clients (via mcp-remote bridge)\n{\n  "mcpServers": {\n    "teyvat": {\n      "command": "npx",\n      "args": ["-y", "mcp-remote", "https://eteyvat.vxnus.xyz/api/mcp"]\n    }\n  }\n}',
+      '# Add to mcp_config.json (Streamable HTTP clients)\n{\n  "mcpServers": {\n    "teyvat": {\n      "url": "https://e-teyvat.vxnus.xyz/api/mcp"\n    }\n  }\n}\n\n# For stdio-only clients (via mcp-remote bridge)\n{\n  "mcpServers": {\n    "teyvat": {\n      "command": "npx",\n      "args": ["-y", "mcp-remote", "https://e-teyvat.vxnus.xyz/api/mcp"]\n    }\n  }\n}',
     exampleResponse: JSON.stringify(
       {
         jsonrpc: "2.0",
@@ -750,7 +750,7 @@ export default function ApiDocsPage() {
           </div>
           <p className="text-xs md:text-sm text-[var(--text-2)] leading-relaxed m-0 max-w-3xl">
             Add E-Teyvat to any MCP-compatible AI agent (Claude Desktop, Cursor, Antigravity, LangChain, and others)
-            by pointing it at <code className="font-mono text-[#62b4d5] bg-[rgba(98,180,213,0.1)] px-1 rounded">https://eteyvat.vxnus.xyz/api/mcp</code>.
+            by pointing it at <code className="font-mono text-[#62b4d5] bg-[rgba(98,180,213,0.1)] px-1 rounded">https://e-teyvat.vxnus.xyz/api/mcp</code>.
             All 9 tools are auto-discovered — no custom fetch code required.
           </p>
 
@@ -764,7 +764,7 @@ export default function ApiDocsPage() {
 {`{
   "mcpServers": {
     "teyvat": {
-      "url": "https://eteyvat.vxnus.xyz/api/mcp"
+      "url": "https://e-teyvat.vxnus.xyz/api/mcp"
     }
   }
 }`}
@@ -780,7 +780,7 @@ export default function ApiDocsPage() {
     "teyvat": {
       "command": "npx",
       "args": ["-y", "mcp-remote",
-        "https://eteyvat.vxnus.xyz/api/mcp"]
+        "https://e-teyvat.vxnus.xyz/api/mcp"]
     }
   }
 }`}

@@ -19,7 +19,7 @@ export async function GET() {
     },
     servers: [
       {
-        url: "https://eteyvat.vxnus.xyz",
+        url: "https://e-teyvat.vxnus.xyz",
         description: "Production Server",
       },
       {
@@ -722,7 +722,7 @@ export async function GET() {
             kind: { type: "string", example: "characters" },
             slug: { type: "string", example: "nahida" },
             name: { type: "string", example: "Nahida" },
-            image: { type: ["string", "null"], example: "https://cdn.eteyvat.vxnus.xyz/characters/nahida.png" },
+            image: { type: ["string", "null"], example: "https://cdn.e-teyvat.vxnus.xyz/characters/nahida.png" },
             description: { type: ["string", "null"], example: "A caged bird secluded within the Sanctuary of Surasthana..." },
           },
           required: ["id", "kind", "slug", "name"],

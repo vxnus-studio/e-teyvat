@@ -87,7 +87,7 @@ function imageFromData(data: Record<string, unknown>): string | null {
   const custom = typeof data.custom_image_url === "string" ? data.custom_image_url : (typeof data.customImageUrl === "string" ? data.customImageUrl : null);
   if (custom) {
     if (custom.startsWith("http")) return custom;
-    const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.eteyvat.vxnus.xyz";
+    const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.e-teyvat.vxnus.xyz";
     return `${cdnUrl}/${custom}`;
   }
   const icon = typeof data.icon === "string" ? data.icon : null;

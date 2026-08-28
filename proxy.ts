@@ -140,17 +140,17 @@ export function proxy(request: NextRequest) {
   }
 
   // ── Admin session guard ──────────────────────────────────────────────────
-
+ 
   if (path.startsWith("/admin") && !isLoginRoute) {
-    const session = request.cookies.get("eteyvat_admin_session")?.value;
-
+    const session = request.cookies.get("e_teyvat_admin_session")?.value;
+ 
     if (!session || session !== "authenticated") {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
-
+ 
   if (isLoginRoute) {
-    const session = request.cookies.get("eteyvat_admin_session")?.value;
+    const session = request.cookies.get("e_teyvat_admin_session")?.value;
     if (session === "authenticated") {
       return NextResponse.redirect(new URL("/admin", request.url));
     }

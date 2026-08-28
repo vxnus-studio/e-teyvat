@@ -12,7 +12,7 @@ const s3Client = new S3Client({
 });
 
 export async function POST(request: NextRequest) {
-  const session = request.cookies.get("eteyvat_admin_session")?.value;
+  const session = request.cookies.get("e_teyvat_admin_session")?.value;
   if (!session || session !== "authenticated") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: "eteyvat",
+        Bucket: "e-teyvat",
         Key: key,
         Body: avifBuffer,
         ContentType: "image/avif",
