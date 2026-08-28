@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "./_components/navigation";
 import { HomeRotation } from "./_components/home-rotation";
+import { getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
 
 const characterPreview = [
   { name: "Nahida", element: "Dendro", role: "Support", image: "/characters/nahida.png" },
@@ -9,7 +10,19 @@ const characterPreview = [
   { name: "Arlecchino", element: "Pyro", role: "DPS", image: "/characters/arlecchino.png" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  let characterCount = 134;
+
+  try {
+    const entityQueries = await getTeyvatPersistentEntityQueries();
+    const charactersResult = await entityQueries.listEntities({ kind: "characters", limit: 1 });
+    if (charactersResult.total > 0) {
+      characterCount = charactersResult.total;
+    }
+  } catch (err) {
+    console.error("Failed to query character count from DB:", err);
+  }
+
   return (
     <>
       <HomeRotation />
@@ -49,7 +62,11 @@ export default function Home() {
           <span className="section-eyebrow">Character Database</span>
           <h2 id="characters-title">Find builds for every character</h2>
           <p>Talents, materials, weapons, artifacts, teams, and rotations in one place.</p>
-          <div className="database-filters"><span>102 characters</span><span>7 elements</span><span>All regions</span></div>
+          <div className="database-filters">
+            <span>{characterCount} characters</span>
+            <span>7 elements</span>
+            <span>All regions</span>
+          </div>
           <Link className="primary-action" href="/database/characters/">Browse characters <Icon name="chevron" size={15} /></Link>
         </div>
         <div className="database-portraits">
