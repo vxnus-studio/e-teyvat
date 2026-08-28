@@ -19,7 +19,7 @@ type ApiEndpoint = {
   path: string;
   title: string;
   description: string;
-  category: "Core & Health" | "Entities & Relations" | "Farming & Domains" | "Banner Intelligence" | "AI & Knowledge Retrieval";
+  category: "Core & Health" | "Entities & Relations" | "Farming & Domains" | "Banner Intelligence" | "AI & Knowledge Retrieval" | "MCP Server";
   parameters?: Parameter[];
   headers?: { name: string; required: boolean; description: string }[];
   exampleRequest: string;
@@ -438,6 +438,47 @@ const apiEndpoints: ApiEndpoint[] = [
     ),
     notes: "Part of the @vxnus/e provider distribution protocol.",
   },
+  {
+    id: "mcp-server",
+    method: "POST" as const,
+    path: "/api/mcp",
+    title: "Public MCP Server",
+    description:
+      "Model Context Protocol (MCP) server endpoint. Exposes all 9 Teyvat Knowledge Base tools to any MCP-compatible AI agent — Claude Desktop, Cursor, Antigravity, LangChain, and others — without custom fetch logic. Implements the 2026-07-28 MCP specification (Streamable HTTP) with automatic fallback for 2025-era clients.",
+    category: "MCP Server" as const,
+    headers: [
+      {
+        name: "Content-Type",
+        required: true,
+        description: "Must be application/json for POST requests.",
+      },
+    ],
+    exampleRequest:
+      '# Add to mcp_config.json (Streamable HTTP clients)\n{\n  "mcpServers": {\n    "teyvat": {\n      "url": "https://eteyvat.vxnus.xyz/api/mcp"\n    }\n  }\n}\n\n# For stdio-only clients (via mcp-remote bridge)\n{\n  "mcpServers": {\n    "teyvat": {\n      "command": "npx",\n      "args": ["-y", "mcp-remote", "https://eteyvat.vxnus.xyz/api/mcp"]\n    }\n  }\n}',
+    exampleResponse: JSON.stringify(
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          tools: [
+            { name: "find_entity", description: "Search canonical entities by name, kind, or alias." },
+            { name: "get_entity", description: "Retrieve a single entity with outgoing graph relations." },
+            { name: "get_farming_sources", description: "Farming pathways, material costs & domain schedules." },
+            { name: "search_lore", description: "Full-text search across lore documents." },
+            { name: "get_lore_book", description: "Retrieve complete anthology text for a book." },
+            { name: "search_knowledge", description: "Full-text rank search over build guides & dialogue." },
+            { name: "get_banner_rerun_pressure", description: "Banner rerun pressure rankings." },
+            { name: "get_character_banner_history", description: "Historical banner appearances for a character." },
+            { name: "get_character_rerun_analysis", description: "Statistical rerun pressure analysis." },
+          ],
+        },
+      },
+      null,
+      2,
+    ),
+    notes:
+      "Rate limit: 60 requests per IP per 60 s. Responses include X-RateLimit-Limit and X-RateLimit-Window headers. Exceeding the limit returns HTTP 429 with a Retry-After: 60 header.",
+  },
 ];
 
 const categories = [
@@ -446,6 +487,7 @@ const categories = [
   "Farming & Domains",
   "Banner Intelligence",
   "AI & Knowledge Retrieval",
+  "MCP Server",
 ] as const;
 
 export default function ApiDocsPage() {
@@ -697,6 +739,87 @@ export default function ApiDocsPage() {
             );
           })}
         </div>
+
+        {/* MCP Server Connection Guide */}
+        <section className="bg-gradient-to-r from-[rgba(12,21,28,0.95)] to-[rgba(10,18,24,0.9)] border border-[rgba(98,180,213,0.28)] rounded-xl p-6 md:p-8 flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <Icon name="sparkles" size={20} />
+            <h3 className="text-base font-bold text-[#62b4d5] m-0">
+              MCP Server — One-Line AI Agent Integration
+            </h3>
+          </div>
+          <p className="text-xs md:text-sm text-[var(--text-2)] leading-relaxed m-0 max-w-3xl">
+            Add E-Teyvat to any MCP-compatible AI agent (Claude Desktop, Cursor, Antigravity, LangChain, and others)
+            by pointing it at <code className="font-mono text-[#62b4d5] bg-[rgba(98,180,213,0.1)] px-1 rounded">https://eteyvat.vxnus.xyz/api/mcp</code>.
+            All 9 tools are auto-discovered — no custom fetch code required.
+          </p>
+
+          {/* Connection snippets */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">
+                Streamable HTTP (recommended)
+              </span>
+              <pre className="bg-[#060c12] border border-[rgba(98,180,213,0.2)] p-3.5 rounded-lg text-xs font-mono text-[#a0cfe0] overflow-x-auto m-0 leading-relaxed">
+{`{
+  "mcpServers": {
+    "teyvat": {
+      "url": "https://eteyvat.vxnus.xyz/api/mcp"
+    }
+  }
+}`}
+              </pre>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-mono text-[var(--text-3)] uppercase tracking-wider">
+                stdio proxy (for stdio-only clients)
+              </span>
+              <pre className="bg-[#060c12] border border-[rgba(98,180,213,0.2)] p-3.5 rounded-lg text-xs font-mono text-[#a0cfe0] overflow-x-auto m-0 leading-relaxed">
+{`{
+  "mcpServers": {
+    "teyvat": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote",
+        "https://eteyvat.vxnus.xyz/api/mcp"]
+    }
+  }
+}`}
+              </pre>
+            </div>
+          </div>
+
+          {/* Tool grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { name: "find_entity", desc: "Search entities by name, kind, or alias" },
+              { name: "get_entity", desc: "Single entity with full graph relations" },
+              { name: "get_farming_sources", desc: "Material costs & domain schedules" },
+              { name: "search_lore", desc: "1,239 books, 299 artifact & weapon lore docs" },
+              { name: "get_lore_book", desc: "Full anthology text for an in-game book" },
+              { name: "search_knowledge", desc: "Build guides & character dialogue" },
+              { name: "get_banner_rerun_pressure", desc: "Rerun pressure rankings (all chars)" },
+              { name: "get_character_banner_history", desc: "Historical banner appearances" },
+              { name: "get_character_rerun_analysis", desc: "Statistical rerun pressure analysis" },
+            ].map((t) => (
+              <div key={t.name} className="bg-[#060c12] border border-[rgba(98,180,213,0.15)] p-3.5 rounded-lg flex flex-col gap-1">
+                <code className="text-xs font-mono text-[#62b4d5] font-bold">{t.name}</code>
+                <span className="text-xs text-[var(--text-3)] leading-snug">{t.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Rate-limit notice */}
+          <div className="text-xs text-[var(--text-3)] bg-[rgba(98,180,213,0.06)] border border-[rgba(98,180,213,0.18)] p-3 rounded-lg flex items-start gap-2">
+            <span className="text-[#62b4d5] font-mono font-bold shrink-0">RATE LIMIT:</span>
+            <span>
+              60 requests / IP / 60 s. Responses carry{" "}
+              <code className="font-mono">X-RateLimit-Limit</code> and{" "}
+              <code className="font-mono">X-RateLimit-Window</code> headers.
+              Exceeding the limit returns <code className="font-mono">HTTP 429</code> with{" "}
+              <code className="font-mono">Retry-After: 60</code>.
+            </span>
+          </div>
+        </section>
 
         {/* AI Agent Recommendation Card */}
         <section className="bg-gradient-to-r from-[rgba(17,28,24,0.9)] to-[rgba(12,21,18,0.9)] border border-[rgba(98,213,163,0.25)] rounded-xl p-6 md:p-8 flex flex-col gap-4">

@@ -98,6 +98,54 @@ E Hub publisher ownership and authentication are intentionally outside this repo
 | `/api/v1/characters/:char/rerun-analysis` | GET | Implemented | Statistical rerun distribution & pressure analysis |
 | `/api/e/verify` | POST | Implemented | E Provider verification handshake |
 | `/api/openapi.json` | GET | Implemented | OpenAPI 3.1 Specification |
+| `/api/mcp` | GET/POST | Implemented | Public MCP server (all 9 tools) |
+
+## MCP Server
+
+The Teyvat Knowledge Base is available as a public **Model Context Protocol (MCP)** server, letting any MCP-compatible AI agent access all 9 tools without writing custom fetch logic.
+
+**Endpoint:** `https://eteyvat.vxnus.xyz/api/mcp`
+
+### Connect with Streamable HTTP (recommended)
+
+Add this to your `mcp_config.json` or equivalent client config:
+
+```json
+{
+  "mcpServers": {
+    "teyvat": {
+      "url": "https://eteyvat.vxnus.xyz/api/mcp"
+    }
+  }
+}
+```
+
+### Connect via stdio proxy (for stdio-only clients)
+
+```json
+{
+  "mcpServers": {
+    "teyvat": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://eteyvat.vxnus.xyz/api/mcp"]
+    }
+  }
+}
+```
+
+### Available tools
+
+| Tool | Description |
+| ---- | ----------- |
+| `find_entity` | Search entities by name, partial name, or alias |
+| `get_entity` | Retrieve a single entity with outgoing graph relations |
+| `get_farming_sources` | Farming pathways, material costs & domain schedules |
+| `search_lore` | Full-text search across 1,239 books, 299 artifact histories & weapon legends |
+| `get_lore_book` | Retrieve complete anthology text for an in-game book |
+| `search_knowledge` | Full-text rank search over character dialogue & build guides |
+| `get_banner_rerun_pressure` | Ranked banner rerun pressure scores for all characters |
+| `get_character_banner_history` | Historical banner appearances for a character |
+| `get_character_rerun_analysis` | Statistical rerun distribution & pressure analysis |
 
 ## Acknowledgments & Thanks To
 
