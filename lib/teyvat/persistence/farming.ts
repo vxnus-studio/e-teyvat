@@ -267,4 +267,230 @@ export class TeyvatPersistentFarmingQueries {
       preview: false,
     };
   }
+
+  async getDailyRotationSchedule(): Promise<{
+    days: Record<
+      number,
+      {
+        dayName: string;
+        chars: Array<{
+          name: string;
+          slug: string;
+          element: "Pyro" | "Hydro" | "Anemo" | "Electro" | "Dendro" | "Cryo" | "Geo";
+          rarity: number;
+          talentBook: string;
+          nation: string;
+        }>;
+        weapons: Array<{
+          name: string;
+          slug: string;
+          type: "Sword" | "Claymore" | "Polearm" | "Bow" | "Catalyst";
+          rarity: number;
+          material: string;
+          nation: string;
+        }>;
+      }
+    >;
+    revision: string;
+  }> {
+    const revision = await this.revision();
+
+    // 1. Fetch domain drop relations
+    const dropRelations = await this.db
+      .select()
+      .from(teyvatRelations)
+      .where(inArray(teyvatRelations.predicate, ["drops", "rewards"]));
+
+    const DAY_MAP: Record<string, number> = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+
+    const DAY_NAMES: Record<number, string> = {
+      0: "Sunday",
+      1: "Monday",
+      2: "Tuesday",
+      3: "Wednesday",
+      4: "Thursday",
+      5: "Friday",
+      6: "Saturday",
+    };
+
+    const excludedMatIds = new Set(["genshin:material:202", "genshin:material:102", "genshin:material:105"]);
+    const materialDays = new Map<string, Set<number>>();
+
+    for (const rel of dropRelations) {
+      if (excludedMatIds.has(rel.objectId)) continue;
+      const days = extractAvailableDays(rel.metadata as Record<string, unknown>);
+      if (!days.length || days.length > 3) continue;
+
+      const current = materialDays.get(rel.objectId) ?? new Set<number>();
+      for (const day of days) {
+        const dayIdx = DAY_MAP[day.toLowerCase()];
+        if (dayIdx !== undefined) current.add(dayIdx);
+      }
+      if (current.size > 0) {
+        materialDays.set(rel.objectId, current);
+      }
+    }
+
+    const scheduledMaterialIds = Array.from(materialDays.keys());
+
+    // 2. Fetch avatar and weapon requirement relations
+    const requirementRelations = scheduledMaterialIds.length
+      ? await this.db
+          .select()
+          .from(teyvatRelations)
+          .where(
+            and(
+              inArray(teyvatRelations.objectId, scheduledMaterialIds),
+              inArray(teyvatRelations.predicate, ["talent_material", "ascension_material"]),
+            ),
+          )
+      : [];
+
+    const neededSubjectIds = Array.from(new Set(requirementRelations.map((r) => r.subjectId)));
+    const neededEntities = neededSubjectIds.length
+      ? await this.db
+          .select()
+          .from(teyvatEntities)
+          .where(inArray(teyvatEntities.id, neededSubjectIds))
+      : [];
+
+    const materialEntities = scheduledMaterialIds.length
+      ? await this.db
+          .select()
+          .from(teyvatEntities)
+          .where(inArray(teyvatEntities.id, scheduledMaterialIds))
+      : [];
+
+    const entityMap = new Map(neededEntities.map((e) => [e.id, e]));
+    const materialMap = new Map(materialEntities.map((m) => [m.id, m]));
+
+    const daysResult: Record<
+      number,
+      {
+        dayName: string;
+        chars: Map<string, {
+          name: string;
+          slug: string;
+          element: "Pyro" | "Hydro" | "Anemo" | "Electro" | "Dendro" | "Cryo" | "Geo";
+          rarity: number;
+          talentBook: string;
+          nation: string;
+        }>;
+        weapons: Map<string, {
+          name: string;
+          slug: string;
+          type: "Sword" | "Claymore" | "Polearm" | "Bow" | "Catalyst";
+          rarity: number;
+          material: string;
+          nation: string;
+        }>;
+      }
+    > = {
+      0: { dayName: "Sunday", chars: new Map(), weapons: new Map() },
+      1: { dayName: "Monday", chars: new Map(), weapons: new Map() },
+      2: { dayName: "Tuesday", chars: new Map(), weapons: new Map() },
+      3: { dayName: "Wednesday", chars: new Map(), weapons: new Map() },
+      4: { dayName: "Thursday", chars: new Map(), weapons: new Map() },
+      5: { dayName: "Friday", chars: new Map(), weapons: new Map() },
+      6: { dayName: "Saturday", chars: new Map(), weapons: new Map() },
+    };
+
+    for (const rel of requirementRelations) {
+      const subject = entityMap.get(rel.subjectId);
+      const material = materialMap.get(rel.objectId);
+      const days = materialDays.get(rel.objectId);
+      if (!subject || !material || !days) continue;
+
+      const data = (subject.data ?? {}) as Record<string, unknown>;
+
+      if (subject.kind === "avatar" && rel.predicate === "talent_material") {
+        const elementObj = data.element as Record<string, unknown> | undefined;
+        const element = (elementObj?.canonical as "Pyro" | "Hydro" | "Anemo" | "Electro" | "Dendro" | "Cryo" | "Geo") || "Pyro";
+        const rarity = (typeof data.rarity === "number" ? data.rarity : 5);
+        const region = typeof data.region === "string" ? data.region : "Mondstadt";
+        const nation = region.charAt(0).toUpperCase() + region.slice(1).toLowerCase();
+        const talentBook = material.name
+          .replace("Teachings of ", "")
+          .replace("Guide to ", "")
+          .replace("Philosophies of ", "");
+
+        const charObj = {
+          name: subject.name,
+          slug: subject.slug,
+          element,
+          rarity,
+          talentBook,
+          nation,
+        };
+
+        for (const dayIdx of days) {
+          daysResult[dayIdx].chars.set(subject.slug, charObj);
+        }
+        daysResult[0].chars.set(subject.slug, charObj);
+      } else if (subject.kind === "weapon" && rel.predicate === "ascension_material") {
+        const typeObj = data.type as Record<string, unknown> | undefined;
+        const typeStr = (typeof typeObj?.canonical === "string" ? typeObj.canonical : "Sword");
+        const type = (typeStr.charAt(0).toUpperCase() + typeStr.slice(1).toLowerCase()) as "Sword" | "Claymore" | "Polearm" | "Bow" | "Catalyst";
+        const rarity = (typeof data.rarity === "number" ? data.rarity : 4);
+
+        const wepObj = {
+          name: subject.name,
+          slug: subject.slug,
+          type,
+          rarity,
+          material: material.name,
+          nation: "",
+        };
+
+        for (const dayIdx of days) {
+          daysResult[dayIdx].weapons.set(subject.slug, wepObj);
+        }
+        daysResult[0].weapons.set(subject.slug, wepObj);
+      }
+    }
+
+    const outputDays: Record<
+      number,
+      {
+        dayName: string;
+        chars: Array<{
+          name: string;
+          slug: string;
+          element: "Pyro" | "Hydro" | "Anemo" | "Electro" | "Dendro" | "Cryo" | "Geo";
+          rarity: number;
+          talentBook: string;
+          nation: string;
+        }>;
+        weapons: Array<{
+          name: string;
+          slug: string;
+          type: "Sword" | "Claymore" | "Polearm" | "Bow" | "Catalyst";
+          rarity: number;
+          material: string;
+          nation: string;
+        }>;
+      }
+    > = {};
+
+    for (let day = 0; day <= 6; day++) {
+      outputDays[day] = {
+        dayName: DAY_NAMES[day],
+        chars: Array.from(daysResult[day].chars.values()).sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name)),
+        weapons: Array.from(daysResult[day].weapons.values()).sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name)),
+      };
+    }
+
+    return {
+      days: outputDays,
+      revision,
+    };
+  }
 }
