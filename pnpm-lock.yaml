@@ -24,8 +24,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(@vxnus/e@0.1.4)
       '@vxnus/ui-game':
-        specifier: ^0.1.0
-        version: 0.1.0(next@16.2.12(@babel/core@7.29.7(supports-color@7.2.0))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.2.0
+        version: 0.2.0(next@16.2.12(@babel/core@7.29.7(supports-color@7.2.0))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -1572,8 +1572,8 @@ packages:
   '@vxnus/e@0.1.4':
     resolution: {integrity: sha512-9AbBZkFqiEr5zUnYRvRvrobJVjH0us7CKPmTAxR1rXZKC6789cwSnPLkxDzRsdcvm7+emYf+xb3pk1GyQO7feg==}
 
-  '@vxnus/ui-game@0.1.0':
-    resolution: {integrity: sha512-GI+m8OYgoKO2wyeBKs31/o6i4pwLkNUCZvg+FFqyM+Sem7Y9xtt+3tV7dz6bzauJKb/Ny9GM9+LRLegmGuoB0Q==}
+  '@vxnus/ui-game@0.2.0':
+    resolution: {integrity: sha512-suSWikdT11wmCMKTlrInKLVZoBlkrUarHkOXkvJXsx93FVUQwXGcnWBoqkjS/4k2+3xLRxIzRGNBIj20G+hLkw==}
     peerDependencies:
       next: '>=15.0.0'
       react: '>=19.0.0'
@@ -4364,7 +4364,7 @@ snapshots:
 
   '@vxnus/e@0.1.4': {}
 
-  '@vxnus/ui-game@0.1.0(next@16.2.12(@babel/core@7.29.7(supports-color@7.2.0))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@vxnus/ui-game@0.2.0(next@16.2.12(@babel/core@7.29.7(supports-color@7.2.0))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       lucide-react: 1.34.0(react@19.2.4)
       next: 16.2.12(@babel/core@7.29.7(supports-color@7.2.0))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
