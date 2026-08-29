@@ -2,17 +2,21 @@ import { CharacterPortrait } from "@/app/database/banners/banner-visuals";
 import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
-import { ArrowLeft, ArrowRight, CalendarDays, Gem, Orbit, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
+import { ArrowRight, CalendarDays, Gem, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CharacterBuildsSection } from "./character-builds";
 import {
+  EntityHero,
+  FactsGrid,
   ProgressionCalculator,
   type AscensionPhase,
   type MaterialItem,
   type TalentLevel,
-} from "./progression-calculator";
+  type TagItem,
+  type FactItem,
+} from "@vxnus/ui-game";
 
 
 type DataRecord = Record<string, unknown>;
@@ -191,71 +195,43 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
   const weapon = toTitleCase(rawWeapon);
   const description = character.description ?? text(fetter.detail) ?? "";
 
+  const tags: TagItem[] = [];
+  if (element) tags.push({ label: element, icon: <Zap size={12} /> });
+  if (weapon && weapon !== "—") tags.push({ label: weapon, icon: <Sword size={12} /> });
+  if (affiliation && affiliation !== "—") tags.push({ label: affiliation, icon: <Gem size={12} /> });
+
+  const facts: FactItem[] = [
+    { label: "Affiliation", value: affiliation },
+    { label: "Birthday", value: birthday },
+    { label: "Constellation", value: constellation },
+    { label: "Ascension stat", value: substat },
+  ];
+
   return (
     <div className="character-detail-page">
-      <section className="character-detail-hero">
-        <Link className="banner-back-link" href="/database/characters">
-          <ArrowLeft size={13} /> Character index
-        </Link>
-        <div className="character-detail-copy">
-          <span className="banner-kicker">
-            <Orbit size={13} /> Entity profile / {element.toLowerCase()}
-          </span>
-          <span className="character-stars">{"✦".repeat(rarity)}</span>
-          <h1>
-            {character.name}
-            {title ? <em>{title}</em> : null}
-          </h1>
-          {description ? <p>{description}</p> : null}
-          <div className="character-tags">
-            {element ? (
-              <span>
-                <Zap size={12} />
-                {element}
-              </span>
-            ) : null}
-            {weapon && weapon !== "—" ? (
-              <span>
-                <Sword size={12} />
-                {weapon}
-              </span>
-            ) : null}
-            {affiliation && affiliation !== "—" ? (
-              <span>
-                <Gem size={12} />
-                {affiliation}
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <div className="character-detail-art">
-          <span className="history-orbit" />
+      <EntityHero
+        name={character.name}
+        subtitle={title ? title : null}
+        eyebrow={`Entity profile / ${element.toLowerCase()}`}
+        stars={rarity}
+        description={description}
+        backHref="/database/characters"
+        backLabel="Character index"
+        tags={tags}
+        image={character.image}
+        gameVersion={character.gameVersion}
+        signalLabel="Canonical record"
+        artSlot={
           <CharacterPortrait
             slug={character.slug}
             name={character.name}
             imageUrl={character.image}
             sizes="(max-width: 700px) 76vw, 430px"
           />
-        </div>
-        <div className="history-hero-signal">
-          <span><i /> Canonical record</span>
-          <strong>REVISION {character.gameVersion ?? "LIVE"}</strong>
-        </div>
-      </section>
+        }
+      />
 
-      <section className="character-facts">
-        {[
-          ["Affiliation", affiliation],
-          ["Birthday", birthday],
-          ["Constellation", constellation],
-          ["Ascension stat", substat],
-        ].map(([label, value]) => (
-          <article key={label}>
-            <small>{label}</small>
-            <strong>{value}</strong>
-          </article>
-        ))}
-      </section>
+      <FactsGrid facts={facts} />
 
       {/* Signature Weapon Highlight */}
       {signatureWeapon && (
@@ -348,6 +324,8 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
           totalAscensionMaterials={totalAscensionMaterials}
           talentLevels={talentLevels}
           totalTalentMaterials={totalTalentMaterials}
+          titlePrefix="Character"
+          maxAscensionLevel="90"
         />
       </section>
 
