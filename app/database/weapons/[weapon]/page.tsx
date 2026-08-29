@@ -7,7 +7,7 @@ import {
   ProgressionCalculator,
   type AscensionPhase,
   type MaterialItem,
-} from "@/app/characters/[character]/progression-calculator";
+} from "@vxnus/ui-game";
 
 type DataRecord = Record<string, unknown>;
 
