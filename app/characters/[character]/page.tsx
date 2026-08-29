@@ -1,4 +1,3 @@
-import { CharacterPortrait } from "@/app/database/banners/banner-visuals";
 import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
@@ -221,14 +220,6 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
         image={character.image}
         gameVersion={character.gameVersion}
         signalLabel="Canonical record"
-        renderImage={(src) => (
-          <CharacterPortrait
-            slug={character.slug}
-            name={character.name}
-            imageUrl={src}
-            sizes="(max-width: 700px) 76vw, 430px"
-          />
-        )}
       />
 
       <FactsGrid facts={facts} />
