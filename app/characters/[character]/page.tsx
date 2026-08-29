@@ -221,14 +221,14 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
         image={character.image}
         gameVersion={character.gameVersion}
         signalLabel="Canonical record"
-        artSlot={
+        renderImage={(src) => (
           <CharacterPortrait
             slug={character.slug}
             name={character.name}
-            imageUrl={character.image}
+            imageUrl={src}
             sizes="(max-width: 700px) 76vw, 430px"
           />
-        }
+        )}
       />
 
       <FactsGrid facts={facts} />
