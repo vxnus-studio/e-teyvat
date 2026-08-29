@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../node_modules/@vxnus/ui-game/dist";
 
 :root {
   --bg: #0a110f;
