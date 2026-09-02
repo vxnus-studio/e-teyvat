@@ -20,7 +20,7 @@ function askQuestion(query: string): Promise<string> {
 
 async function main() {
   console.log("==================================================");
-  console.log("       E-Teyvat Managed Neon Auth Provisioning     ");
+  console.log("     E-Teyvat Managed Neon Auth Provisioning       ");
   console.log("==================================================\n");
 
   const neonAuthUrl = process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL;
@@ -31,7 +31,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Connected to Neon Auth: ${neonAuthUrl}\n`);
+  const baseUrl = neonAuthUrl.replace(/\/$/, "");
+  console.log(`Connected to Neon Auth Base: ${baseUrl}\n`);
 
   const adminEmail = await askQuestion("Enter Admin Email (e.g. admin@e-teyvat.vxnus.xyz): ");
   if (!adminEmail) {
@@ -40,47 +41,73 @@ async function main() {
   }
 
   const adminPassword = await askQuestion("Enter Admin Password: ");
-  if (!adminPassword || adminPassword.length < 6) {
-    console.error("❌ Password must be at least 6 characters long.");
+  if (!adminPassword || adminPassword.length < 8) {
+    console.error("❌ Password must be at least 8 characters long for Neon Auth.");
     process.exit(1);
   }
 
   const name = (await askQuestion("Enter Admin Name [default: Archon Admin]: ")) || "Archon Admin";
 
-  console.log("\nProvisioning user via Neon Auth service API...");
+  console.log("\nProvisioning admin user on Neon Managed Auth server...");
 
-  try {
-    const res = await fetch(`${neonAuthUrl.replace(/\/$/, "")}/api/v1/auth/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: adminEmail,
-        password: adminPassword,
-        name,
-        role: "admin",
-      }),
-    });
+  // Standard Better Auth endpoints supported by Neon Auth:
+  // 1. /sign-up/email (Standard Better Auth)
+  // 2. /api/v1/auth/signup (Neon REST API)
+  const candidateEndpoints = [
+    { url: `${baseUrl}/sign-up/email`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
+    { url: `${baseUrl}/api/v1/auth/signup`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
+    { url: `${baseUrl}/signup`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
+  ];
 
-    const data = await res.json();
+  let success = false;
+  let lastError = "";
 
-    if (res.ok || res.status === 201) {
-      console.log("\n✅ Admin User Successfully Created in Neon Auth!");
-      console.log("--------------------------------------------------");
-      console.log(`• ID:       ${data.id || data.user?.id || "neon-user"}`);
-      console.log(`• Email:    ${adminEmail}`);
-      console.log(`• Role:     admin`);
-      console.log(`• Auth URL: ${neonAuthUrl}`);
-      console.log("--------------------------------------------------");
-      console.log("You can now sign in at /admin/login\n");
-    } else {
-      console.error("\n⚠️  Neon Auth API returned:", data.error || data.message || res.statusText);
-      console.log("If the user already exists in Neon Auth, you can log in directly at /admin/login.\n");
+  for (const endpoint of candidateEndpoints) {
+    try {
+      const res = await fetch(endpoint.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(endpoint.body),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok || res.status === 200 || res.status === 201) {
+        console.log("\n✅ Admin User Successfully Provisioned in Neon Auth!");
+        console.log("--------------------------------------------------");
+        console.log(`• ID:       ${data.user?.id || data.id || "neon-user"}`);
+        console.log(`• Name:     ${name}`);
+        console.log(`• Email:    ${adminEmail}`);
+        console.log(`• Role:     admin`);
+        console.log(`• Auth URL: ${baseUrl}`);
+        console.log("--------------------------------------------------");
+        console.log("You can now log in at: /admin/login\n");
+        success = true;
+        break;
+      } else {
+        lastError = data.message || data.error || res.statusText || `HTTP ${res.status}`;
+        // If user already exists
+        if (typeof lastError === "string" && lastError.toLowerCase().includes("already exists")) {
+          console.log("\nℹ️  User already registered in Neon Auth with this email.");
+          console.log("You can directly sign in at /admin/login\n");
+          success = true;
+          break;
+        }
+      }
+    } catch (err: any) {
+      lastError = err.message || String(err);
     }
-  } catch (err) {
-    console.error("\n❌ Failed to communicate with Neon Auth service:", err);
-    console.log("Check that NEON_AUTH_BASE_URL is accessible and valid.\n");
+  }
+
+  if (!success) {
+    console.error(`\n⚠️  Could not provision user via Neon Auth endpoints.`);
+    console.error(`Reason: ${lastError}`);
+    console.log("\nTroubleshooting tips:");
+    console.log("1. Verify NEON_AUTH_BASE_URL in .env.local matches your Neon Console configuration.");
+    console.log("2. Ensure Managed Auth is enabled on your Neon branch under Auth -> Configuration.");
+    console.log("3. If you signed up via the Neon Web UI, you can sign in directly at /admin/login.\n");
   }
 }
 

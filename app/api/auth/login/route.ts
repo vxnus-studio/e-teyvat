@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const { email, password, token } = await request.json();
     const authUrl = getNeonAuthBaseUrl();
 
-    // If client supplied a pre-authenticated token from Neon Auth widget / frontend OAuth
+    // 1. Direct Token pass-through from client
     if (token) {
       const response = NextResponse.json({ success: true });
       const cookieOpts = {
@@ -23,42 +23,58 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Call managed Neon Auth login endpoint
-    try {
-      const neonRes = await fetch(`${authUrl}/api/v1/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    // 2. Authenticate against Managed Better Auth / Neon Auth service
+    if (authUrl && email && password) {
+      const endpoints = [
+        `${authUrl}/sign-in/email`,
+        `${authUrl}/api/v1/auth/login`,
+        `${authUrl}/login`,
+      ];
 
-      const neonData = await neonRes.json();
+      for (const endpoint of endpoints) {
+        try {
+          const neonRes = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
 
-      if (neonRes.ok && (neonData.token || neonData.session_token || neonData.access_token)) {
-        const sessionToken = neonData.token || neonData.session_token || neonData.access_token;
-        const response = NextResponse.json({
-          success: true,
-          user: neonData.user || { email, role: "admin" },
-        });
+          const neonData = await neonRes.json().catch(() => ({}));
 
-        const cookieOpts = {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax" as const,
-          path: "/",
-          maxAge: 60 * 60 * 24 * 7,
-        };
+          if (neonRes.ok) {
+            const sessionToken =
+              neonData.token ||
+              neonData.session?.token ||
+              neonData.session_token ||
+              neonData.access_token ||
+              "authenticated";
 
-        response.cookies.set(NEON_TOKEN_COOKIE, sessionToken, cookieOpts);
-        response.cookies.set(NEON_SESSION_COOKIE, sessionToken, cookieOpts);
-        response.cookies.set("e_teyvat_admin_session", "authenticated", cookieOpts);
+            const response = NextResponse.json({
+              success: true,
+              user: neonData.user || { email, role: "admin", name: email.split("@")[0] },
+            });
 
-        return response;
+            const cookieOpts = {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax" as const,
+              path: "/",
+              maxAge: 60 * 60 * 24 * 7,
+            };
+
+            response.cookies.set(NEON_TOKEN_COOKIE, sessionToken, cookieOpts);
+            response.cookies.set(NEON_SESSION_COOKIE, sessionToken, cookieOpts);
+            response.cookies.set("e_teyvat_admin_session", "authenticated", cookieOpts);
+
+            return response;
+          }
+        } catch (neonErr) {
+          console.warn(`Neon Auth endpoint attempt (${endpoint}) failed:`, neonErr);
+        }
       }
-    } catch (neonErr) {
-      console.warn("Direct Neon Auth endpoint call:", neonErr);
     }
 
-    // Passcode fallback if local password is set
+    // 3. Passcode fallback if local password is set
     if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
       const response = NextResponse.json({
         success: true,
