@@ -5,7 +5,7 @@ import { normalize } from "./entities.ts";
 export interface LoreDocumentViewModel {
   id: string;
   entityId: string;
-  category: "book" | "artifact" | "weapon" | "monster" | "character" | "gcg" | "food" | "namecard";
+  category: "book" | "artifact" | "weapon" | "monster" | "character" | "gcg" | "food" | "namecard" | "story" | "quote";
   title: string;
   entityName: string;
   entitySlug: string;
@@ -49,6 +49,8 @@ export interface LoreSearchResult {
     weapons: number;
     monsters: number;
     characters: number;
+    stories: number;
+    quotes: number;
     foods: number;
     namecards: number;
   };
@@ -63,6 +65,8 @@ export interface LoreOverviewResult {
   weaponLoreCount: number;
   monsterLoreCount: number;
   characterProfileCount: number;
+  characterStoryCount: number;
+  voicelineCount: number;
   foodFlavorCount: number;
   namecardCount: number;
   totalDocuments: number;
@@ -187,6 +191,18 @@ export class TeyvatLoreQueries {
       } else if (doc.id.startsWith("genshin:document:doc_gcg")) {
         category = "gcg";
         title = `${parent?.name ?? "Card"} Lore`;
+      } else if (doc.id.startsWith("genshin:document:doc_story")) {
+        category = "story";
+        const metaTitle = (doc.metadata as Record<string, unknown> | undefined)?.title;
+        title = typeof metaTitle === "string" && metaTitle.trim()
+          ? `${parent?.name ?? "Character"} — ${metaTitle}`
+          : `${parent?.name ?? "Character"} — Story Chapter`;
+      } else if (doc.id.startsWith("genshin:document:doc_quote")) {
+        category = "quote";
+        const metaTitle = (doc.metadata as Record<string, unknown> | undefined)?.title;
+        title = typeof metaTitle === "string" && metaTitle.trim()
+          ? `${parent?.name ?? "Character"} — Voiceline: ${metaTitle}`
+          : `${parent?.name ?? "Character"} — Voiceline`;
       }
 
       this.loreDocuments.push({
@@ -320,6 +336,8 @@ export class TeyvatLoreQueries {
     const weaponStories = this.loreDocuments.filter((d) => d.category === "weapon").length;
     const monsterStories = this.loreDocuments.filter((d) => d.category === "monster").length;
     const characterProfiles = this.loreDocuments.filter((d) => d.category === "character").length;
+    const characterStories = this.loreDocuments.filter((d) => d.category === "story").length;
+    const voicelines = this.loreDocuments.filter((d) => d.category === "quote").length;
     const foodFlavors = this.loreDocuments.filter((d) => d.category === "food").length;
     const namecardLore = this.loreDocuments.filter((d) => d.category === "namecard").length;
 
@@ -330,6 +348,8 @@ export class TeyvatLoreQueries {
       weaponLoreCount: weaponStories,
       monsterLoreCount: monsterStories,
       characterProfileCount: characterProfiles,
+      characterStoryCount: characterStories,
+      voicelineCount: voicelines,
       foodFlavorCount: foodFlavors,
       namecardCount: namecardLore,
       totalDocuments: this.loreDocuments.length,
@@ -385,8 +405,8 @@ export class TeyvatLoreQueries {
       score += matchCount * 10;
     }
 
-    // Prefer primary canonical texts (books and artifacts)
-    if (doc.category === "book" || doc.category === "artifact") {
+    // Prefer primary canonical texts (books, stories, artifacts)
+    if (doc.category === "story" || doc.category === "book" || doc.category === "artifact") {
       score += 5;
     }
 
@@ -449,6 +469,8 @@ export class TeyvatLoreQueries {
       weapons: filtered.filter((d) => d.category === "weapon").length,
       monsters: filtered.filter((d) => d.category === "monster").length,
       characters: filtered.filter((d) => d.category === "character").length,
+      stories: filtered.filter((d) => d.category === "story").length,
+      quotes: filtered.filter((d) => d.category === "quote").length,
       foods: filtered.filter((d) => d.category === "food").length,
       namecards: filtered.filter((d) => d.category === "namecard").length,
     };

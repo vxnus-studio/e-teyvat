@@ -3,7 +3,7 @@ export interface TemporalSemantics { validFrom?: string; validUntil?: string; [k
 export interface Entity { id: string; namespace: string; kind: string; slug: string; name: string; data: Record<string, unknown>; provenance?: Provenance; temporal?: TemporalSemantics; }
 export interface Alias { id: string; entityId: string; alias: string; }
 export interface Relation { id: string; subjectId: string; predicate: string; objectId: string; metadata?: Record<string, unknown>; provenance?: Provenance; temporal?: TemporalSemantics; }
-export interface Document { id: string; entityId: string; content: string; provenance?: Provenance; }
+export interface Document { id: string; entityId: string; content: string; metadata?: Record<string, unknown>; provenance?: Provenance; }
 export interface BatchDataset { entities: Entity[]; aliases: Alias[]; relations: Relation[]; documents: Document[]; }
 export interface BatchIngestResult { entitiesInserted: number; aliasesInserted: number; relationsInserted: number; documentsInserted: number; }
 

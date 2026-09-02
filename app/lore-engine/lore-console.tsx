@@ -63,6 +63,8 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
 
   const categories = [
     { id: "all", label: "All Lore", count: overview.totalDocuments },
+    { id: "story", label: "Character Stories", count: overview.characterStoryCount },
+    { id: "quote", label: "Voicelines", count: overview.voicelineCount },
     { id: "book", label: "In-Game Books", count: overview.bookVolumeCount },
     { id: "artifact", label: "Artifact Lore", count: overview.artifactStoryCount },
     { id: "weapon", label: "Weapon Legends", count: overview.weaponLoreCount },
@@ -75,7 +77,17 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
   return (
     <div className="flex flex-col gap-8">
       {/* Overview Stat Cards */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" aria-label="Lore telemetry">
+      <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10 gap-3" aria-label="Lore telemetry">
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Char Stories</span>
+          <strong className="text-2xl font-bold text-amber-400">{overview.characterStoryCount}</strong>
+          <span className="text-[11px] text-[var(--text-2)]">5-part & Vision stories</span>
+        </div>
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Voicelines</span>
+          <strong className="text-2xl font-bold text-indigo-400">{overview.voicelineCount}</strong>
+          <span className="text-[11px] text-[var(--text-2)]">Dialogue transcripts</span>
+        </div>
         <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
           <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Book Volumes</span>
           <strong className="text-2xl font-bold text-[var(--gold)]">{overview.bookVolumeCount}</strong>
@@ -116,7 +128,7 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
           <strong className="text-sm font-mono text-[var(--green-2)] truncate mt-1">
             {overview.revision.slice(0, 8)}
           </strong>
-          <span className="text-[10px] font-mono text-[var(--text-3)]">Phase 1 Lore Index</span>
+          <span className="text-[10px] font-mono text-[var(--text-3)]">Phase 2 Lore Corpus</span>
         </div>
       </section>
 
@@ -125,10 +137,10 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
         <span className="text-xl shrink-0 mt-0.5">⚠️</span>
         <div className="flex flex-col gap-1 text-xs">
           <strong className="text-amber-400 font-mono uppercase tracking-wider text-xs">
-            System Notice: Deterministic Entity & Document Search Only (No AI Reasoning)
+            System Notice: Deterministic Canonical Narrative Archive & Retrieval
           </strong>
           <p className="text-[var(--text-2)] leading-relaxed m-0">
-            Autonomous generative AI inference, synthesis, and reasoning capabilities are <strong>currently not active</strong>. The Lore Engine operates exclusively as a deterministic lexical search index over canonical in-game book volumes, artifact histories, weapon legends, and monster profiles. Results provide verbatim source evidence for human readers and AI agents.
+            Autonomous generative AI inference, synthesis, and reasoning capabilities are <strong>currently not active</strong>. The Lore Engine operates exclusively as a deterministic lexical search index over canonical in-game book volumes, character story chapters, voicelines, artifact histories, weapon legends, and monster profiles. Results provide verbatim source evidence for human readers and AI agents.
           </p>
         </div>
       </section>
@@ -144,7 +156,7 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                 setSearchQuery(e.target.value);
                 handleSearch(e.target.value, activeCategory);
               }}
-              placeholder="Search lore by keyword, ancient god, book title, weapon legend, or historical event..."
+              placeholder="Search lore by keyword, ancient god, book title, character story, weapon legend, or voiceline..."
               className="w-full bg-[#0a110f] border border-[var(--line-strong)] focus:border-[var(--green)] rounded-lg px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-3)] outline-none transition-colors"
             />
             {isLoading && (
@@ -197,6 +209,8 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((doc) => {
               const badgeColors: Record<string, string> = {
+                story: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+                quote: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
                 book: "bg-amber-500/10 text-[var(--gold)] border-amber-500/30",
                 artifact: "bg-emerald-500/10 text-[var(--green)] border-emerald-500/30",
                 weapon: "bg-sky-500/10 text-sky-400 border-sky-500/30",
@@ -206,6 +220,8 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                 food: "bg-teal-500/10 text-teal-400 border-teal-500/30",
                 namecard: "bg-violet-500/10 text-violet-400 border-violet-500/30",
               };
+
+              const isCharacterDoc = doc.category === "story" || doc.category === "quote" || doc.category === "character";
 
               return (
                 <article
@@ -219,7 +235,7 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                           badgeColors[doc.category] || "bg-gray-500/10 text-gray-300 border-gray-500/20"
                         }`}
                       >
-                        {doc.category}
+                        {doc.category === "story" ? "Character Story" : doc.category === "quote" ? "Voiceline" : doc.category}
                       </span>
                       {doc.volumeNumber && (
                         <span className="text-[10px] font-mono text-[var(--text-3)]">
@@ -240,11 +256,11 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                           />
                         </div>
                       )}
-                      <div>
-                        <h3 className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--green)] transition-colors m-0 leading-tight">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-[var(--text)] group-hover:text-[var(--green)] transition-colors m-0 leading-tight truncate">
                           {doc.title}
                         </h3>
-                        <span className="text-xs text-[var(--text-3)]">{doc.entityName}</span>
+                        <span className="text-xs text-[var(--text-3)] truncate block">{doc.entityName}</span>
                       </div>
                     </div>
 
@@ -269,9 +285,17 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                       <Icon name="chevron" size={11} />
                     </button>
 
-                    {doc.entitySlug && doc.entityKind && (
+                    {doc.entitySlug && (
                       <Link
-                        href={`/database/${doc.entityKind === "avatar" ? "characters" : doc.entityKind === "weapon" ? "weapons" : doc.entityKind === "reliquary" ? "artifacts" : "enemies"}`}
+                        href={`/database/${
+                          isCharacterDoc || doc.entityKind === "avatar"
+                            ? "characters"
+                            : doc.entityKind === "weapon"
+                            ? "weapons"
+                            : doc.entityKind === "reliquary"
+                            ? "artifacts"
+                            : "enemies"
+                        }`}
                         className="text-[11px] font-mono text-[var(--text-3)] hover:text-[var(--text)] transition-colors"
                       >
                         View Entity
@@ -376,10 +400,10 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
         </div>
       )}
 
-      {/* Single Document Modal */}
+      {/* Single Document Modal with Rich Narrative Layout */}
       {readingDoc && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
           onClick={() => setReadingDoc(null)}
           role="dialog"
           aria-modal="true"
@@ -388,28 +412,81 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
             className="bg-[var(--surface)] border border-[var(--line-strong)] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-[var(--line)] bg-[#090f0d] flex items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-mono text-[var(--green)] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {readingDoc.category} Lore
-                </span>
-                <h2 className="text-lg font-bold text-[var(--text)] m-0 mt-1">
-                  {readingDoc.title}
-                </h2>
+            {/* Modal Header */}
+            <div className="p-5 md:p-6 border-b border-[var(--line)] bg-[#090f0d] flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {readingDoc.icon && (
+                  <div className="w-11 h-11 rounded-xl bg-[var(--surface-2)] border border-[var(--line)] relative shrink-0 p-1 flex items-center justify-center">
+                    <Image
+                      src={readingDoc.icon}
+                      alt={readingDoc.entityName}
+                      width={38}
+                      height={38}
+                      className="object-contain"
+                    />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--surface-2)] border border-[var(--line)] text-[var(--green)]">
+                      {readingDoc.category === "story" ? "Character Story Chapter" : readingDoc.category === "quote" ? "Spoken Voiceline" : `${readingDoc.category} Lore`}
+                    </span>
+                    <span className="text-xs text-[var(--text-3)] font-mono truncate">
+                      {readingDoc.entityName}
+                    </span>
+                  </div>
+                  <h2 className="text-base md:text-lg font-bold text-[var(--text)] m-0 mt-1 truncate">
+                    {readingDoc.title}
+                  </h2>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setReadingDoc(null)}
-                className="text-[var(--text-3)] hover:text-white p-2 rounded-lg bg-[var(--surface-2)] transition-colors cursor-pointer"
+                className="text-[var(--text-3)] hover:text-white p-2 rounded-lg bg-[var(--surface-2)] transition-colors cursor-pointer shrink-0"
                 aria-label="Close reader"
               >
                 <Icon name="x" size={18} />
               </button>
             </div>
 
-            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-4 text-sm leading-relaxed text-[var(--text-2)] bg-[#0a110f]">
-              <div className="whitespace-pre-line text-sm text-[var(--text-2)] leading-relaxed font-sans">
-                {readingDoc.content.replace(/\\n/g, "\n").replace(/\\"/g, '"')}
+            {/* Reading Body */}
+            <div className="p-6 md:p-8 overflow-y-auto flex flex-col gap-6 text-sm leading-relaxed text-[var(--text)] bg-[#0a110f]">
+              {readingDoc.category === "quote" ? (
+                <div className="border-l-2 border-indigo-500/60 pl-4 py-1 flex flex-col gap-2">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-400">
+                    Dialogue Transcript
+                  </span>
+                  <blockquote className="whitespace-pre-line text-sm md:text-base text-[var(--text)] leading-relaxed italic m-0">
+                    &quot;{readingDoc.content.replace(/\\n/g, "\n").replace(/\\"/g, '"')}&quot;
+                  </blockquote>
+                </div>
+              ) : readingDoc.category === "story" ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between border-b border-[var(--line)] pb-2 text-xs font-mono text-[var(--text-3)]">
+                    <span className="text-amber-400 font-bold uppercase tracking-wider">Canonical Narrative Story</span>
+                    <span>Teyvat Chronicle Archive</span>
+                  </div>
+                  <div className="whitespace-pre-line text-sm md:text-base text-[var(--text-2)] leading-relaxed font-serif tracking-normal pt-1">
+                    {readingDoc.content.replace(/\\n/g, "\n\n").replace(/\\"/g, '"')}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between border-b border-[var(--line)] pb-2 text-xs font-mono text-[var(--text-3)]">
+                    <span className="text-[var(--green)] font-bold uppercase tracking-wider">Archival Record</span>
+                    <span>Verified Canonical Evidence</span>
+                  </div>
+                  <div className="whitespace-pre-line text-sm text-[var(--text-2)] leading-relaxed font-sans pt-1">
+                    {readingDoc.content.replace(/\\n/g, "\n").replace(/\\"/g, '"')}
+                  </div>
+                </div>
+              )}
+
+              {/* Provenance Footer */}
+              <div className="pt-4 border-t border-[var(--line)] flex items-center justify-between text-[11px] font-mono text-[var(--text-3)]">
+                <span>ID: {readingDoc.id}</span>
+                <span>Category: {readingDoc.category}</span>
               </div>
             </div>
           </div>
