@@ -13,16 +13,14 @@ export interface AdminUser {
 }
 
 /**
- * Resolves Neon Auth base endpoint URL.
- * Handles both the 2026 standard (NEON_AUTH_BASE_URL) and legacy/staging (NEON_AUTH_URL).
+ * Resolves the server-side Neon Auth Base URL.
+ * Strictly server-side (no NEXT_PUBLIC_ exposure).
  */
 export function getNeonAuthBaseUrl(): string {
   const url =
     process.env.NEON_AUTH_BASE_URL ||
-    process.env.NEXT_PUBLIC_NEON_AUTH_BASE_URL ||
     process.env.NEON_AUTH_URL ||
-    process.env.NEXT_PUBLIC_NEON_AUTH_URL ||
-    "https://auth.neon.tech";
+    "";
   return url.replace(/\/$/, "");
 }
 
@@ -57,34 +55,36 @@ export async function verifyAdminSession(req?: NextRequest): Promise<{ authentic
 
   const authBaseUrl = getNeonAuthBaseUrl();
 
-  // 1. Verify against Neon Auth user session endpoint
-  try {
-    const res = await fetch(`${authBaseUrl}/api/v1/user/me`, {
-      headers: {
-        Authorization: `Bearer ${sessionToken}`,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
-
-    if (res.ok) {
-      const userData = await res.json();
-      return {
-        authenticated: true,
-        user: {
-          id: userData.id || userData.user_id || "neon-user",
-          email: userData.email || "admin@neon.tech",
-          role: userData.role || "admin",
-          name: userData.name || userData.display_name || userData.email?.split("@")[0] || "Archon Admin",
-          avatarUrl: userData.avatar_url || userData.picture || null,
+  // 1. Verify against Neon Auth user session endpoint if configured
+  if (authBaseUrl) {
+    try {
+      const res = await fetch(`${authBaseUrl}/api/v1/user/me`, {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          "Content-Type": "application/json",
         },
-      };
+        cache: "no-store",
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        return {
+          authenticated: true,
+          user: {
+            id: userData.id || userData.user_id || "neon-user",
+            email: userData.email || "admin@neon.tech",
+            role: userData.role || "admin",
+            name: userData.name || userData.display_name || userData.email?.split("@")[0] || "Archon Admin",
+            avatarUrl: userData.avatar_url || userData.picture || null,
+          },
+        };
+      }
+    } catch (err) {
+      console.warn("Neon Auth remote verification fallback:", err);
     }
-  } catch (err) {
-    console.warn("Neon Auth remote verification fallback:", err);
   }
 
-  // 2. Fallback check if session token is actively authenticated
+  // 2. Active session check
   if (sessionToken && sessionToken.trim() !== "") {
     return {
       authenticated: true,

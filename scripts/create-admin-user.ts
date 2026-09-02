@@ -23,15 +23,11 @@ async function main() {
   console.log("       E-Teyvat Managed Neon Auth Provisioning     ");
   console.log("==================================================\n");
 
-  const neonAuthUrl =
-    process.env.NEON_AUTH_BASE_URL ||
-    process.env.NEXT_PUBLIC_NEON_AUTH_BASE_URL ||
-    process.env.NEON_AUTH_URL ||
-    process.env.NEXT_PUBLIC_NEON_AUTH_URL;
+  const neonAuthUrl = process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL;
 
   if (!neonAuthUrl) {
     console.error("❌ Error: NEON_AUTH_BASE_URL is not configured in .env.local.");
-    console.log("Please add NEON_AUTH_BASE_URL to your .env.local (e.g. https://ep-xxx.auth.neon.tech)\n");
+    console.log("Please add NEON_AUTH_BASE_URL to your .env.local (e.g. https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth)\n");
     process.exit(1);
   }
 
@@ -58,9 +54,6 @@ async function main() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.NEON_AUTH_API_KEY
-          ? { Authorization: `Bearer ${process.env.NEON_AUTH_API_KEY}` }
-          : {}),
       },
       body: JSON.stringify({
         email: adminEmail,
