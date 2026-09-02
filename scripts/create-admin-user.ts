@@ -23,16 +23,22 @@ async function main() {
   console.log("     E-Teyvat Managed Neon Auth Provisioning       ");
   console.log("==================================================\n");
 
-  const neonAuthUrl = process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL;
+  const rawAuthUrl = process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL;
 
-  if (!neonAuthUrl) {
+  if (!rawAuthUrl) {
     console.error("❌ Error: NEON_AUTH_BASE_URL is not configured in .env.local.");
-    console.log("Please add NEON_AUTH_BASE_URL to your .env.local (e.g. https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth)\n");
+    console.log("Please check your Neon Console: Project -> Branch -> Auth -> Configuration");
+    console.log("Expected format: https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth\n");
     process.exit(1);
   }
 
-  const baseUrl = neonAuthUrl.replace(/\/$/, "");
-  console.log(`Connected to Neon Auth Base: ${baseUrl}\n`);
+  // Ensure trailing slash is removed and /auth is properly handled
+  let cleanBase = rawAuthUrl.replace(/\/$/, "");
+  
+  // Neon Auth Base URLs can be:
+  // 1) https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth
+  // 2) https://ep-xxx.auth.neon.tech
+  console.log(`Configured Neon Auth Base: ${cleanBase}\n`);
 
   const adminEmail = await askQuestion("Enter Admin Email (e.g. admin@e-teyvat.vxnus.xyz): ");
   if (!adminEmail) {
@@ -42,37 +48,50 @@ async function main() {
 
   const adminPassword = await askQuestion("Enter Admin Password: ");
   if (!adminPassword || adminPassword.length < 8) {
-    console.error("❌ Password must be at least 8 characters long for Neon Auth.");
+    console.error("❌ Password must be at least 8 characters long.");
     process.exit(1);
   }
 
   const name = (await askQuestion("Enter Admin Name [default: Archon Admin]: ")) || "Archon Admin";
 
-  console.log("\nProvisioning admin user on Neon Managed Auth server...");
+  console.log("\nTesting endpoints on your Neon Auth server...");
 
-  // Standard Better Auth endpoints supported by Neon Auth:
-  // 1. /sign-up/email (Standard Better Auth)
-  // 2. /api/v1/auth/signup (Neon REST API)
-  const candidateEndpoints = [
-    { url: `${baseUrl}/sign-up/email`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
-    { url: `${baseUrl}/api/v1/auth/signup`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
-    { url: `${baseUrl}/signup`, body: { email: adminEmail, password: adminPassword, name, role: "admin" } },
+  // Try both direct and sub-path variants depending on whether the user gave the root or /auth path
+  const candidateUrls = [
+    `${cleanBase}/sign-up/email`,
+    `${cleanBase}/auth/sign-up/email`,
+    `${cleanBase.replace(/\/auth$/, "")}/sign-up/email`,
+    `${cleanBase.replace(/\/auth$/, "")}/auth/sign-up/email`,
+    `${cleanBase}/api/v1/auth/signup`,
+    `${cleanBase}/signup`,
   ];
 
   let success = false;
-  let lastError = "";
+  let lastAttemptInfo: { url: string; status: number; text: string } | null = null;
 
-  for (const endpoint of candidateEndpoints) {
+  for (const url of candidateUrls) {
     try {
-      const res = await fetch(endpoint.url, {
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
-        body: JSON.stringify(endpoint.body),
+        body: JSON.stringify({
+          email: adminEmail,
+          password: adminPassword,
+          name,
+          role: "admin",
+        }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      lastAttemptInfo = { url, status: res.status, text: data.message || data.error || text || res.statusText };
 
       if (res.ok || res.status === 200 || res.status === 201) {
         console.log("\n✅ Admin User Successfully Provisioned in Neon Auth!");
@@ -81,33 +100,31 @@ async function main() {
         console.log(`• Name:     ${name}`);
         console.log(`• Email:    ${adminEmail}`);
         console.log(`• Role:     admin`);
-        console.log(`• Auth URL: ${baseUrl}`);
+        console.log(`• Endpoint: ${url}`);
         console.log("--------------------------------------------------");
-        console.log("You can now log in at: /admin/login\n");
+        console.log("You can now sign in at: /admin/login\n");
         success = true;
         break;
-      } else {
-        lastError = data.message || data.error || res.statusText || `HTTP ${res.status}`;
-        // If user already exists
-        if (typeof lastError === "string" && lastError.toLowerCase().includes("already exists")) {
-          console.log("\nℹ️  User already registered in Neon Auth with this email.");
-          console.log("You can directly sign in at /admin/login\n");
-          success = true;
-          break;
-        }
+      } else if (res.status === 400 && typeof lastAttemptInfo.text === "string" && lastAttemptInfo.text.toLowerCase().includes("already exists")) {
+        console.log("\nℹ️  User already exists in Neon Auth with this email.");
+        console.log("You can log in directly at: /admin/login\n");
+        success = true;
+        break;
       }
     } catch (err: any) {
-      lastError = err.message || String(err);
+      lastAttemptInfo = { url, status: 0, text: err.message || String(err) };
     }
   }
 
-  if (!success) {
-    console.error(`\n⚠️  Could not provision user via Neon Auth endpoints.`);
-    console.error(`Reason: ${lastError}`);
-    console.log("\nTroubleshooting tips:");
-    console.log("1. Verify NEON_AUTH_BASE_URL in .env.local matches your Neon Console configuration.");
-    console.log("2. Ensure Managed Auth is enabled on your Neon branch under Auth -> Configuration.");
-    console.log("3. If you signed up via the Neon Web UI, you can sign in directly at /admin/login.\n");
+  if (!success && lastAttemptInfo) {
+    console.error(`\n❌ Could not reach signup endpoint on Neon Auth.`);
+    console.error(`Last Attempted URL: ${lastAttemptInfo.url}`);
+    console.error(`Response (HTTP ${lastAttemptInfo.status}): ${lastAttemptInfo.text.substring(0, 120)}`);
+    console.log("\n🔍 Verification Checklist:");
+    console.log("1. Check Neon Console: Project -> Branch -> Auth -> Configuration.");
+    console.log("2. Verify that NEON_AUTH_BASE_URL includes the exact path shown in Neon (typically ending in `/neondb/auth`).");
+    console.log(`   Example: https://ep-cool-wave-123456.neonauth.us-east-1.aws.neon.tech/neondb/auth`);
+    console.log("3. If email/password signup is disabled in Neon Auth configuration, enable Email Provider in the Neon Console.\n");
   }
 }
 
