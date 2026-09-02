@@ -90,15 +90,27 @@ E Hub publisher ownership and authentication are intentionally outside this repo
 | `/api/v1/entities/:kind/:slug` | GET | Implemented | Retrieve a single entity and outgoing relations |
 | `/api/v1/characters/:char/builds` | GET | Implemented | Curated character builds, weapons, artifacts & rotations |
 | `/api/v1/farming` | GET | Implemented | Farming pathways, material costs & domain schedules |
-| `/api/v1/lore/search` | GET | Implemented | Search 1,239 book volumes, relics & weapon lore |
-| `/api/v1/lore/books` | GET | Implemented | List in-game book chronicles & volume counts |
-| `/api/v1/lore/books/:slug` | GET | Implemented | Retrieve full multi-volume text anthology |
+| `/api/v1/lore/overview` | GET | Implemented | Aggregate lore telemetry (categories, volume counts, revision) |
+| `/api/v1/lore/search` | GET | Implemented | Search 12,900+ narrative texts (books, stories, voicelines, relics) |
+| `/api/v1/lore/books` | GET | Implemented | List 603 in-game books with 1,239 volume anthology chapters |
+| `/api/v1/lore/books/:slug` | GET | Implemented | Retrieve full multi-volume text anthology with complete manuscripts |
 | `/api/v1/banners/rerun-pressure` | GET | Implemented | Character banner rerun pressure rankings |
 | `/api/v1/characters/:char/banner-history` | GET | Implemented | Historical character banner appearance timeline |
 | `/api/v1/characters/:char/rerun-analysis` | GET | Implemented | Statistical rerun distribution & pressure analysis |
 | `/api/e/verify` | POST | Implemented | E Provider verification handshake |
-| `/api/openapi.json` | GET | Implemented | OpenAPI 3.1 Specification |
 | `/api/mcp` | GET/POST | Implemented | Public MCP server (all 9 tools) |
+| `/api/openapi.json` | GET | Implemented | OpenAPI 3.1 Specification |
+
+## The Lore Engine Corpus (12,964+ Documents)
+
+The database includes full-length narrative manuscripts, character story chapters, and spoken transcripts:
+- **1,151 In-Game Book Volumes (`book`)**: Full-length novel manuscripts (including *Perinheri*, *Pale Princess*, *Breeze Amidst the Pages*).
+- **942 Character Story Chapters (`story`)**: Full 5-part character stories, Vision chronicles, and quest stories.
+- **8,524 Spoken Voicelines (`quote`)**: Complete audio dialogue transcripts with conversational category filters.
+- **299 Artifact Set Relic Histories (`artifact`)**: Ancient civilization and deity histories.
+- **270 Weapon Legends (`weapon`)**: Forged weapon backgrounds.
+- **576 Bestiary Combat Profiles (`monster`)**: Monster lore and combat overviews.
+- **444 Food Flavor Records (`food`)** & **289 Namecard Vignettes (`namecard`)**.
 
 ## MCP Server
 
