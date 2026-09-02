@@ -68,12 +68,14 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
     { id: "weapon", label: "Weapon Legends", count: overview.weaponLoreCount },
     { id: "monster", label: "Bestiary Lore", count: overview.monsterLoreCount },
     { id: "character", label: "Character Profiles", count: overview.characterProfileCount },
+    { id: "food", label: "Culinary Lore", count: overview.foodFlavorCount },
+    { id: "namecard", label: "Namecard Lore", count: overview.namecardCount },
   ];
 
   return (
     <div className="flex flex-col gap-8">
       {/* Overview Stat Cards */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" aria-label="Lore telemetry">
+      <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" aria-label="Lore telemetry">
         <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
           <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Book Volumes</span>
           <strong className="text-2xl font-bold text-[var(--gold)]">{overview.bookVolumeCount}</strong>
@@ -98,6 +100,16 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
           <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Cast Profiles</span>
           <strong className="text-2xl font-bold text-amber-300">{overview.characterProfileCount}</strong>
           <span className="text-[11px] text-[var(--text-2)]">Character chronicles</span>
+        </div>
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Culinary Lore</span>
+          <strong className="text-2xl font-bold text-teal-400">{overview.foodFlavorCount}</strong>
+          <span className="text-[11px] text-[var(--text-2)]">Food flavor lore</span>
+        </div>
+        <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
+          <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Namecards</span>
+          <strong className="text-2xl font-bold text-purple-300">{overview.namecardCount}</strong>
+          <span className="text-[11px] text-[var(--text-2)]">Profile chronicles</span>
         </div>
         <div className="bg-[var(--surface)] border border-[var(--line)] rounded-xl p-4 flex flex-col gap-1">
           <span className="text-xs font-mono text-[var(--text-3)] uppercase tracking-wider">Revision</span>
@@ -191,6 +203,8 @@ export function LoreConsole({ overview, initialItems }: LoreConsoleProps) {
                 monster: "bg-rose-500/10 text-rose-400 border-rose-500/30",
                 character: "bg-purple-500/10 text-purple-400 border-purple-500/30",
                 gcg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
+                food: "bg-teal-500/10 text-teal-400 border-teal-500/30",
+                namecard: "bg-violet-500/10 text-violet-400 border-violet-500/30",
               };
 
               return (

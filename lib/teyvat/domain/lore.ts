@@ -5,7 +5,7 @@ import { normalize } from "./entities.ts";
 export interface LoreDocumentViewModel {
   id: string;
   entityId: string;
-  category: "book" | "artifact" | "weapon" | "monster" | "character" | "gcg";
+  category: "book" | "artifact" | "weapon" | "monster" | "character" | "gcg" | "food" | "namecard";
   title: string;
   entityName: string;
   entitySlug: string;
@@ -49,6 +49,8 @@ export interface LoreSearchResult {
     weapons: number;
     monsters: number;
     characters: number;
+    foods: number;
+    namecards: number;
   };
   revision: string;
   preview: boolean;
@@ -61,6 +63,8 @@ export interface LoreOverviewResult {
   weaponLoreCount: number;
   monsterLoreCount: number;
   characterProfileCount: number;
+  foodFlavorCount: number;
+  namecardCount: number;
   totalDocuments: number;
   revision: string;
 }
@@ -87,12 +91,57 @@ function imageFromData(data: Record<string, unknown>): string | null {
   return null;
 }
 
+/**
+ * Curated alternate lore names for entities whose canonical aliases are absent
+ * from the raw game data. Keys are normalized query terms; values are normalized
+ * canonical entity names that should match.
+ *
+ * These cover Archon true-names, epithets, and other well-known lore aliases.
+ */
+const LORE_NAME_ALIASES: Record<string, string[]> = {
+  // Geo Archon
+  morax: ["zhongli"],
+  "rex lapis": ["zhongli"],
+  rexlapis: ["zhongli"],
+  // Electro Archon
+  baal: ["raiden shogun"],
+  makoto: ["raiden shogun"],
+  beelzebul: ["raiden shogun"],
+  raidenshogun: ["raiden shogun"],
+  // Anemo Archon
+  barbatos: ["venti"],
+  // Cryo Archon
+  tsaritsa: ["tsaritsa"],
+  // Pyro Archon
+  murata: ["murata"],
+  // Hydro Archon
+  focalors: ["furina"],
+  egeria: ["egeria"],
+  // Dendro Archon
+  rukkhadevata: ["nahida"],
+  buer: ["nahida"],
+  // Other major lore figures
+  guizhong: ["guizhong"],
+  "guili assembly": ["guili"],
+  osial: ["osial"],
+  azhdaha: ["azhdaha"],
+  "tartaglia": ["tartaglia", "childe"],
+  childe: ["tartaglia", "childe"],
+  "the knave": ["arlecchino"],
+  "pierro": ["pierro"],
+  "capitano": ["capitano"],
+  signora: ["signora", "la signora"],
+  "la signora": ["signora"],
+};
+
 export class TeyvatLoreQueries {
   private readonly projection: TeyvatProjection;
   private readonly byId = new Map<string, Entity>();
   private readonly books = new Map<string, Entity>();
   private readonly docsByEntity = new Map<string, Document[]>();
   private readonly loreDocuments: LoreDocumentViewModel[] = [];
+  /** entityId → normalized alias strings (from projection.aliases) */
+  private readonly aliasesByEntityId = new Map<string, string[]>();
 
   constructor(projection: TeyvatProjection) {
     this.projection = projection;
@@ -109,6 +158,13 @@ export class TeyvatLoreQueries {
       const list = this.docsByEntity.get(doc.entityId) ?? [];
       list.push(doc);
       this.docsByEntity.set(doc.entityId, list);
+    }
+
+    // Index aliases by entityId for fast alias-based search
+    for (const alias of projection.aliases) {
+      const list = this.aliasesByEntityId.get(alias.entityId) ?? [];
+      list.push(normalize(alias.alias));
+      this.aliasesByEntityId.set(alias.entityId, list);
     }
 
     // Index all documents with readable narrative text
@@ -213,6 +269,48 @@ export class TeyvatLoreQueries {
           });
         }
       }
+
+      // Index culinary records & food flavor lore
+      if (entity.kind === "food") {
+        const data = entity.data as Record<string, unknown>;
+        const desc = extractText(data.description);
+        if (desc && desc.trim().length > 5) {
+          this.loreDocuments.push({
+            id: `lore:food:${entity.slug}`,
+            entityId: entity.id,
+            category: "food",
+            title: `${entity.name} — Culinary Lore`,
+            entityName: entity.name,
+            entitySlug: entity.slug,
+            entityKind: "food",
+            content: desc,
+            snippet: desc.slice(0, 240).replace(/\\n/g, " ").trim() + (desc.length > 240 ? "..." : ""),
+            rarity: typeof data.rarity === "number" ? data.rarity : null,
+            icon: imageFromData(data),
+          });
+        }
+      }
+
+      // Index namecard lore & flavor text
+      if (entity.kind === "namecard") {
+        const data = entity.data as Record<string, unknown>;
+        const desc = extractText(data.description);
+        const cleaned = desc ? desc.replace(/^Namecard style\.\s*/i, "").trim() : null;
+        if (cleaned && cleaned.length > 5) {
+          this.loreDocuments.push({
+            id: `lore:namecard:${entity.slug}`,
+            entityId: entity.id,
+            category: "namecard",
+            title: `${entity.name} — Namecard Chronicle`,
+            entityName: entity.name,
+            entitySlug: entity.slug,
+            entityKind: "namecard",
+            content: cleaned,
+            snippet: cleaned.slice(0, 240).replace(/\\n/g, " ").trim() + (cleaned.length > 240 ? "..." : ""),
+            icon: imageFromData(data),
+          });
+        }
+      }
     }
   }
 
@@ -222,6 +320,8 @@ export class TeyvatLoreQueries {
     const weaponStories = this.loreDocuments.filter((d) => d.category === "weapon").length;
     const monsterStories = this.loreDocuments.filter((d) => d.category === "monster").length;
     const characterProfiles = this.loreDocuments.filter((d) => d.category === "character").length;
+    const foodFlavors = this.loreDocuments.filter((d) => d.category === "food").length;
+    const namecardLore = this.loreDocuments.filter((d) => d.category === "namecard").length;
 
     return {
       bookCount: Array.from(new Set(this.projection.entities.filter((e) => e.kind === "book").map((e) => e.id))).length,
@@ -230,9 +330,81 @@ export class TeyvatLoreQueries {
       weaponLoreCount: weaponStories,
       monsterLoreCount: monsterStories,
       characterProfileCount: characterProfiles,
+      foodFlavorCount: foodFlavors,
+      namecardCount: namecardLore,
       totalDocuments: this.loreDocuments.length,
       revision: this.projection.revision,
     };
+  }
+
+  private scoreDoc(
+    doc: LoreDocumentViewModel,
+    normalizedQuery: string,
+    rawQuery: string,
+    loreMappedNames: string[],
+    normalizedLoreMapped: string[]
+  ): number {
+    let score = 0;
+    const normalizedEntityName = normalize(doc.entityName);
+    const normalizedTitle = normalize(doc.title);
+    const lowerContent = doc.content.toLowerCase();
+    const lowerRaw = rawQuery.toLowerCase();
+
+    // Exact entity name match (highest relevance)
+    if (normalizedEntityName === normalizedQuery) {
+      score += 120;
+    } else if (normalizedEntityName.startsWith(normalizedQuery)) {
+      score += 80;
+    } else if (normalizedEntityName.includes(normalizedQuery)) {
+      score += 60;
+    }
+
+    // Curated lore alias match (e.g., searching "Morax" for Zhongli)
+    if (normalizedLoreMapped.length > 0 && normalizedLoreMapped.some((m) => normalizedEntityName.includes(m))) {
+      score += 100;
+    }
+
+    // Projection alias match
+    const entityAliases = this.aliasesByEntityId.get(doc.entityId) ?? [];
+    if (entityAliases.some((a) => a === normalizedQuery)) {
+      score += 90;
+    } else if (entityAliases.some((a) => a.includes(normalizedQuery))) {
+      score += 50;
+    }
+
+    // Exact or prefix title match
+    if (normalizedTitle === normalizedQuery) {
+      score += 70;
+    } else if (normalizedTitle.includes(normalizedQuery) || doc.title.toLowerCase().includes(lowerRaw)) {
+      score += 40;
+    }
+
+    // Content match frequency (capped at 5 occurrences)
+    if (lowerRaw.length >= 2 && lowerContent.includes(lowerRaw)) {
+      const matchCount = Math.min((lowerContent.split(lowerRaw).length - 1), 5);
+      score += matchCount * 10;
+    }
+
+    // Prefer primary canonical texts (books and artifacts)
+    if (doc.category === "book" || doc.category === "artifact") {
+      score += 5;
+    }
+
+    return score;
+  }
+
+  private buildSnippet(content: string, rawQuery: string, length = 240): string {
+    if (!rawQuery) {
+      return content.slice(0, length).replace(/\\n/g, " ").trim() + (content.length > length ? "..." : "");
+    }
+    const idx = content.toLowerCase().indexOf(rawQuery.toLowerCase());
+    if (idx === -1) {
+      return content.slice(0, length).replace(/\\n/g, " ").trim() + (content.length > length ? "..." : "");
+    }
+    const start = Math.max(0, idx - 60);
+    const end = Math.min(content.length, start + length);
+    const snippet = content.slice(start, end).replace(/\\n/g, " ").trim();
+    return (start > 0 ? "..." : "") + snippet + (end < content.length ? "..." : "");
   }
 
   search(options: { query?: string; category?: string; limit?: number; page?: number } = {}): LoreSearchResult {
@@ -243,12 +415,31 @@ export class TeyvatLoreQueries {
     let filtered = this.loreDocuments;
 
     if (rawQuery) {
+      // Resolve curated lore-name aliases (e.g. "Morax" → ["zhongli"])
+      const loreMappedNames = LORE_NAME_ALIASES[rawQuery.toLowerCase()] ?? LORE_NAME_ALIASES[normalizedQuery] ?? [];
+      const normalizedLoreMapped = loreMappedNames.map((m) => normalize(m));
+
       filtered = filtered.filter((doc) => {
+        const normalizedEntityName = normalize(doc.entityName);
         const titleMatch = normalize(doc.title).includes(normalizedQuery) || doc.title.toLowerCase().includes(rawQuery.toLowerCase());
-        const entityMatch = normalize(doc.entityName).includes(normalizedQuery);
+        const entityMatch = normalizedEntityName.includes(normalizedQuery);
         const contentMatch = doc.content.toLowerCase().includes(rawQuery.toLowerCase());
-        return titleMatch || entityMatch || contentMatch;
+        // Match against projection aliases for this entity
+        const entityAliases = this.aliasesByEntityId.get(doc.entityId) ?? [];
+        const aliasMatch = entityAliases.some((a) => a.includes(normalizedQuery));
+        // Match via curated lore-name map (e.g. searching "Morax" expands to "zhongli")
+        const loreMappedMatch = normalizedLoreMapped.length > 0 && normalizedLoreMapped.some((mapped) => normalizedEntityName.includes(mapped));
+        return titleMatch || entityMatch || contentMatch || aliasMatch || loreMappedMatch;
       });
+
+      // Rank documents by relevance score descending
+      filtered = filtered
+        .map((doc) => ({
+          doc,
+          score: this.scoreDoc(doc, normalizedQuery, rawQuery, loreMappedNames, normalizedLoreMapped),
+        }))
+        .sort((a, b) => b.score - a.score)
+        .map(({ doc }) => doc);
     }
 
     const counts = {
@@ -258,6 +449,8 @@ export class TeyvatLoreQueries {
       weapons: filtered.filter((d) => d.category === "weapon").length,
       monsters: filtered.filter((d) => d.category === "monster").length,
       characters: filtered.filter((d) => d.category === "character").length,
+      foods: filtered.filter((d) => d.category === "food").length,
+      namecards: filtered.filter((d) => d.category === "namecard").length,
     };
 
     if (category) {
@@ -267,7 +460,12 @@ export class TeyvatLoreQueries {
     const limit = Math.max(1, Math.min(50, options.limit ?? 20));
     const page = Math.max(1, options.page ?? 1);
     const startIndex = (page - 1) * limit;
-    const items = filtered.slice(startIndex, startIndex + limit);
+    const slice = filtered.slice(startIndex, startIndex + limit);
+
+    const items = slice.map((doc) => ({
+      ...doc,
+      snippet: this.buildSnippet(doc.content, rawQuery),
+    }));
 
     return {
       items,
