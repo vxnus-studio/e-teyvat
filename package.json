@@ -21,7 +21,8 @@
     "teyvat:verify-db": "node --experimental-strip-types scripts/verify-teyvat-db.ts",
     "teyvat:verify-parity": "node --experimental-strip-types scripts/verify-teyvat-parity.ts",
     "teyvat:verify-farming": "node --experimental-strip-types scripts/verify-teyvat-farming.ts",
-    "teyvat:embed": "node --experimental-strip-types scripts/embed-teyvat.ts"
+    "teyvat:embed": "node --experimental-strip-types scripts/embed-teyvat.ts",
+    "auth:create-admin": "node --experimental-strip-types scripts/create-admin-user.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1095.0",
