@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
       const response = NextResponse.json({
         success: true,
-        user: { email: email || process.env.ADMIN_EMAIL || "e-teyvat@krzgn.xyz", role: "admin", name: "Archon Administrator" },
+        user: { email: email || process.env.ADMIN_EMAIL || "admin", role: "admin", name: "Archon Administrator" },
       });
       response.cookies.set("e_teyvat_admin_session", "authenticated", {
         httpOnly: true,

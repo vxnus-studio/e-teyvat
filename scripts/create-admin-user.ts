@@ -26,30 +26,31 @@ async function main() {
   const rawAuthUrl = process.env.NEON_AUTH_BASE_URL || process.env.NEON_AUTH_URL;
 
   if (!rawAuthUrl) {
-    console.error("❌ Error: NEON_AUTH_BASE_URL is not configured in .env.local.");
+    console.error("❌ Error: NEON_AUTH_BASE_URL is not configured in environment or .env.local.");
+    console.log("Please set NEON_AUTH_BASE_URL (e.g. https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth)\n");
     process.exit(1);
   }
 
   const cleanBase = rawAuthUrl.replace(/\/$/, "");
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  console.log(`Connected to Neon Auth Base: ${cleanBase}`);
+  console.log(`Connected to Neon Auth Base: ${cleanBase}\n`);
 
-  const defaultEmail = process.env.ADMIN_EMAIL || "e-teyvat@krzgn.xyz";
-  const defaultPass = process.env.ADMIN_PASSWORD || "";
+  const envEmail = process.env.ADMIN_EMAIL;
+  const envPass = process.env.ADMIN_PASSWORD;
 
-  const emailPrompt = defaultEmail ? `Enter Admin Email [default: ${defaultEmail}]: ` : "Enter Admin Email: ";
+  const emailPrompt = envEmail ? `Enter Admin Email [default: ${envEmail}]: ` : "Enter Admin Email: ";
   const emailInput = await askQuestion(emailPrompt);
-  const adminEmail = emailInput || defaultEmail;
+  const adminEmail = emailInput || envEmail;
 
   if (!adminEmail) {
     console.error("❌ Email is required.");
     process.exit(1);
   }
 
-  const passPrompt = defaultPass ? `Enter Admin Password [press Enter to use .env default]: ` : "Enter Admin Password: ";
+  const passPrompt = envPass ? `Enter Admin Password [press Enter to use .env default]: ` : "Enter Admin Password: ";
   const passInput = await askQuestion(passPrompt);
-  const adminPassword = passInput || defaultPass;
+  const adminPassword = passInput || envPass;
 
   if (!adminPassword || adminPassword.length < 8) {
     console.error("❌ Password must be at least 8 characters long.");
