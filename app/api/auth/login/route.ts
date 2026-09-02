@@ -24,72 +24,65 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // 2. Authenticate against Neon Managed Better Auth server
-    if (authUrl && email && password) {
-      try {
-        const neonRes = await fetch(`${authUrl}/sign-in/email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Origin": origin,
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const neonData = await neonRes.json().catch(() => ({}));
-
-        if (neonRes.ok && (neonData.token || neonData.session?.token || neonData.user)) {
-          const sessionToken = neonData.token || neonData.session?.token || "authenticated";
-
-          const response = NextResponse.json({
-            success: true,
-            user: neonData.user || { email, role: "admin", name: email.split("@")[0] },
-          });
-
-          const cookieOpts = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax" as const,
-            path: "/",
-            maxAge: 60 * 60 * 24 * 7,
-          };
-
-          response.cookies.set(NEON_TOKEN_COOKIE, sessionToken, cookieOpts);
-          response.cookies.set(NEON_SESSION_COOKIE, sessionToken, cookieOpts);
-          response.cookies.set("e_teyvat_admin_session", "authenticated", cookieOpts);
-
-          return response;
-        } else {
-          console.warn("Neon Auth sign-in rejected:", neonData.message || neonRes.statusText);
-        }
-      } catch (neonErr) {
-        console.warn("Neon Auth sign-in fetch error:", neonErr);
-      }
+    if (!authUrl) {
+      return NextResponse.json(
+        { error: "NEON_AUTH_BASE_URL is not configured on the server." },
+        { status: 500 }
+      );
     }
 
-    // 3. Admin Passcode fallback if local password is configured
-    if (process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD) {
+    const normalizedEmail = (email || "").trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Authenticate strictly against Neon Managed Auth server
+    const neonRes = await fetch(`${authUrl}/sign-in/email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Origin": origin,
+      },
+      body: JSON.stringify({ email: normalizedEmail, password }),
+    });
+
+    const neonData = await neonRes.json().catch(() => ({}));
+
+    if (neonRes.ok && (neonData.token || neonData.session?.token || neonData.user)) {
+      const sessionToken = neonData.token || neonData.session?.token || "authenticated";
+
       const response = NextResponse.json({
         success: true,
-        user: { email: email || process.env.ADMIN_EMAIL || "admin", role: "admin", name: "Archon Administrator" },
+        user: neonData.user || { email: normalizedEmail, role: "admin", name: normalizedEmail.split("@")[0] },
       });
-      response.cookies.set("e_teyvat_admin_session", "authenticated", {
+
+      const cookieOpts = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "lax" as const,
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
-      });
+      };
+
+      response.cookies.set(NEON_TOKEN_COOKIE, sessionToken, cookieOpts);
+      response.cookies.set(NEON_SESSION_COOKIE, sessionToken, cookieOpts);
+      response.cookies.set("e_teyvat_admin_session", "authenticated", cookieOpts);
+
       return response;
     }
 
-    return NextResponse.json(
-      { error: "Authentication failed. Please verify your email and password." },
-      { status: 401 }
-    );
-  } catch (err) {
-    console.error("Login route error:", err);
-    return NextResponse.json({ error: "Invalid login request" }, { status: 400 });
+    const errorMsg =
+      neonData.message ||
+      neonData.error ||
+      (neonRes.status === 401 ? "Invalid email or password." : "Authentication failed against Neon Auth.");
+
+    return NextResponse.json({ error: errorMsg }, { status: neonRes.status || 401 });
+  } catch (err: any) {
+    console.error("Neon Auth sign-in error:", err);
+    return NextResponse.json({ error: err.message || "Invalid login request" }, { status: 500 });
   }
 }

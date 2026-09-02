@@ -36,21 +36,15 @@ async function main() {
 
   console.log(`Connected to Neon Auth Base: ${cleanBase}\n`);
 
-  const envEmail = process.env.ADMIN_EMAIL;
-  const envPass = process.env.ADMIN_PASSWORD;
+  const emailInput = await askQuestion("Enter Admin Email: ");
+  const adminEmail = emailInput.trim().toLowerCase();
 
-  const emailPrompt = envEmail ? `Enter Admin Email [default: ${envEmail}]: ` : "Enter Admin Email: ";
-  const emailInput = await askQuestion(emailPrompt);
-  const adminEmail = emailInput || envEmail;
-
-  if (!adminEmail) {
-    console.error("❌ Email is required.");
+  if (!adminEmail || !adminEmail.includes("@")) {
+    console.error("❌ A valid email is required.");
     process.exit(1);
   }
 
-  const passPrompt = envPass ? `Enter Admin Password [press Enter to use .env default]: ` : "Enter Admin Password: ";
-  const passInput = await askQuestion(passPrompt);
-  const adminPassword = passInput || envPass;
+  const adminPassword = await askQuestion("Enter Admin Password (min 8 chars): ");
 
   if (!adminPassword || adminPassword.length < 8) {
     console.error("❌ Password must be at least 8 characters long.");

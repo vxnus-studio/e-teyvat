@@ -60,15 +60,16 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5 font-mono">
-              Admin Email / Identifier
+              Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@e-teyvat.vxnus.xyz (or leave blank)"
+                placeholder="admin@example.com"
                 className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
               />
             </div>
@@ -76,7 +77,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5 font-mono">
-              Passcode / Token
+              Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />

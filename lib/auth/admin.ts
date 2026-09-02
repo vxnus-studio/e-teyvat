@@ -55,29 +55,35 @@ export async function verifyAdminSession(req?: NextRequest): Promise<{ authentic
 
   const authBaseUrl = getNeonAuthBaseUrl();
 
-  // 1. Verify against Neon Auth user session endpoint if configured
+  // 1. Verify against Neon Auth session endpoint if configured
   if (authBaseUrl) {
     try {
-      const res = await fetch(`${authBaseUrl}/api/v1/user/me`, {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      });
+      const headers = {
+        Authorization: `Bearer ${sessionToken}`,
+        Cookie: `better-auth.session_token=${sessionToken}; neon_auth_session=${sessionToken}`,
+        "Content-Type": "application/json",
+      };
 
-      if (res.ok) {
-        const userData = await res.json();
-        return {
-          authenticated: true,
-          user: {
-            id: userData.id || userData.user_id || "neon-user",
-            email: userData.email || "admin@neon.tech",
-            role: userData.role || "admin",
-            name: userData.name || userData.display_name || userData.email?.split("@")[0] || "Archon Admin",
-            avatarUrl: userData.avatar_url || userData.picture || null,
-          },
-        };
+      const res = await fetch(`${authBaseUrl}/get-session`, {
+        headers,
+        cache: "no-store",
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const data = await res.json();
+        const user = data.user || data;
+        if (user && user.email) {
+          return {
+            authenticated: true,
+            user: {
+              id: user.id || "neon-user",
+              email: user.email,
+              role: user.role || "admin",
+              name: user.name || user.email.split("@")[0] || "Archon Admin",
+              avatarUrl: user.image || user.avatar_url || user.picture || null,
+            },
+          };
+        }
       }
     } catch (err) {
       console.warn("Neon Auth remote verification fallback:", err);
