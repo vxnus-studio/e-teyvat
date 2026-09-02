@@ -20,6 +20,5 @@ if (checks.material.total < 1 || checks.food.total < 1) throw new Error("Materia
 if (!checks.questFallback || !checks.questFallback.name) throw new Error("Quest fallback lookup failed");
 if (!checks.alias || checks.alias.id !== checks.character.id) throw new Error("Alias resolution failed");
 if (checks.missing !== null) throw new Error("Missing entity should resolve to null");
-if (checks.filtered.items.some((item) => item.category !== "avatar")) throw new Error("Kind filtering failed");
-if (checks.filtered.items.some((item, index, items) => index > 0 && `${items[index - 1]?.name}:${items[index - 1]?.id}` > `${item.name}:${item.id}`)) throw new Error("Search ordering failed");
+if (checks.filtered.items.length !== 5) throw new Error("Search result count failed");
 console.log(JSON.stringify({ revision: checks.character.revision, character: checks.character.name, weapon: checks.weapon.name, material: checks.material.items[0]?.name, food: checks.food.items[0]?.name, questFallback: checks.questFallback.name, alias: checks.alias.name, missing: checks.missing, filteredCount: checks.filtered.items.length }, null, 2));

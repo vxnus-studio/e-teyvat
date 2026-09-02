@@ -42,7 +42,7 @@ export async function GET() {
     const revision = revisionRows[0];
     const entityCount = countResult[0]?.count ? Number(countResult[0].count) : (revision?.entityCount ?? 0);
     const currentPhase = bannerOverview?.currentPhase;
-    const versionLabel = currentPhase ? `v${currentPhase.phaseKey}` : "v7.0.1";
+    const versionLabel = currentPhase ? `v${currentPhase.phaseKey}` : "v7.0.2";
     const phaseLabel = currentPhase ? `Version ${currentPhase.version} P${currentPhase.phaseNumber}` : null;
     const rev = revision?.revision ?? null;
     const shortRevision = rev ? rev.slice(0, 7) : null;

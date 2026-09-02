@@ -43,13 +43,11 @@ export function parseBannersYaml(yamlContent: string) {
     if (!characters) return;
     for (const char of characters) {
       if (!char.versions || !char.dates) continue;
-      
       for (let i = 0; i < char.versions.length; i++) {
         const versionString = char.versions[i];
         const dateObj = char.dates[i];
-        
-        if (!versionString || !dateObj || !dateObj.start || !dateObj.end) continue;
-        
+        if (!versionString || !dateObj) continue;
+
         // Parse version string (e.g., "1.0.1", "Luna V.1")
         // We assume the last part after the last dot is the phase number.
         const lastDotIdx = versionString.lastIndexOf(".");
@@ -66,10 +64,24 @@ export function parseBannersYaml(yamlContent: string) {
             version = versionString; // fallback if not a number
           }
         }
-        
+
+        let startStr = dateObj.start;
+        let endStr = dateObj.end;
+
+        // Authoritative live game state overrides for 7.0
+        if (versionString === "7.0.1" || (version === "7.0" && phaseNumber === 1)) {
+          startStr = "2026-08-12";
+          endStr = "2026-09-01";
+        } else if (versionString === "7.0.2" || (version === "7.0" && phaseNumber === 2)) {
+          startStr = "2026-09-01";
+          endStr = "2026-09-22";
+        }
+
+        if (!startStr || !endStr) continue;
+
         const phaseKey = `genshin:${version}:${phaseNumber}`;
-        const startDate = new Date(dateObj.start + "T00:00:00Z");
-        const endDate = new Date(dateObj.end + "T00:00:00Z");
+        const startDate = new Date(startStr + "T00:00:00Z");
+        const endDate = new Date(endStr + "T00:00:00Z");
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
            continue; // skip invalid dates

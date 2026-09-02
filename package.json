@@ -12,6 +12,7 @@
     "db:migrate": "node --experimental-strip-types scripts/migrate-database.ts",
     "db:studio": "drizzle-kit studio",
     "sync:banners": "node --experimental-strip-types scripts/sync-banners.ts",
+    "sync:all": "node --experimental-strip-types scripts/update-dataset.ts",
     "projection:verify": "node --experimental-strip-types scripts/verify-projection.ts",
     "teyvat:build": "node --experimental-strip-types scripts/build-teyvat-artifact.ts",
     "teyvat:verify-artifact": "node --experimental-strip-types scripts/verify-teyvat-artifact.ts",

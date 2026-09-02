@@ -1,11 +1,11 @@
 {
   "projectionVersion": "teyvat-e-projection-v1",
-  "revision": "3b795cf4ed616d2ca421eeb61af540ded40570e62051bf07e770bdd2803b67b0",
+  "revision": "c56d2960a4c7aae5dbe43c411ade670d6d2606c7d5c5c4c05c862abe575cc5e3",
   "source": {
-    "entitiesSha256": "43d239ccabc3c0c96b6d46d8c72f344ec09a2a49c602bf9d708c604177b7e499",
-    "relationsSha256": "755e6b28a569cac3828c826fec2cb957fde016fdcef7421a1449422f4a022f18",
+    "entitiesSha256": "a466d4730e4e4eb991b1137979b40927c20f9e84122a0c54f681277b1c845870",
+    "relationsSha256": "107afe1819270084b607b905fab8a3e8a142eb20e81079fd6a42f894899494e0",
     "documentsSha256": "52a36527032fd979f52ceae1177d82f68a6c2e63559d24eaa8ac07f6189e70c9",
-    "combinedSha256": "980cf17b0ff637821866287bc92f471186101661dd2817a172ceb86715515930"
+    "combinedSha256": "fb25793b7570eacd27b63ee3fdbf9f22e786f7346f3ea1f2520a235014e05dc1"
   },
   "counts": {
     "entities": 8696,
@@ -13,7 +13,7 @@
     "relations": 14244,
     "documents": 11610
   },
-  "artifactSha256": "684e58bb01e9fc2f53053fa9dcde22eff79fc5fa6db4120b344dd737b151f97a",
-  "artifactBytes": 61945169,
-  "generatedAt": "2026-08-27T04:01:57.699Z"
+  "artifactSha256": "27934904dace922a6b7a53e52e0a72042950e4a52eaca4f64df138160c48b618",
+  "artifactBytes": 38862209,
+  "generatedAt": "2026-09-02T08:38:55.258Z"
 }

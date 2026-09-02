@@ -7,13 +7,17 @@ export function dataRoot(): string {
     const raw = process.env.GENSHIN_DATA_ROOT;
     return raw.endsWith("normalized") ? resolve(raw) : resolve(raw, "data", "normalized");
   }
-  const candidates = [join(process.cwd(), "..", "gi-data"), join(process.cwd(), "..", "genshin-data")];
+  const candidates = [
+    join(process.cwd(), "..", "game-data", "gi-data"),
+    join(process.cwd(), "..", "gi-data"),
+    join(process.cwd(), "..", "genshin-data")
+  ];
   for (const candidate of candidates) {
     if (existsSync(join(candidate, "data", "normalized", "entities", "canonical_entities.json"))) {
       return resolve(candidate, "data", "normalized");
     }
   }
-  return resolve(join(process.cwd(), "..", "gi-data"), "data", "normalized");
+  return resolve(join(process.cwd(), "..", "game-data", "gi-data"), "data", "normalized");
 }
 
 function readJson<T>(path: string): T {
