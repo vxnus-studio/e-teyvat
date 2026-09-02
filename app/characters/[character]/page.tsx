@@ -1,4 +1,4 @@
-import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries } from "@/lib/teyvat/engine";
+import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries, getTeyvatLoreQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
 import { ArrowRight, CalendarDays, Gem, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CharacterBuildsSection } from "./character-builds";
+import { CharacterLoreSection } from "./character-lore-section";
 import {
   EntityHero,
   FactsGrid,
@@ -80,6 +81,10 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
   // Character Build Recommendations lookup
   const buildQueries = getTeyvatBuildQueries();
   const builds = await buildQueries.getCharacterBuilds(slug);
+
+  // Character Canonical Lore & Voicelines lookup
+  const loreQueries = await getTeyvatLoreQueries();
+  const characterLore = loreQueries.getCharacterLore(slug);
 
   // Signature Weapon lookup
   const signatureSlug = getSignatureWeaponSlug(slug);
@@ -319,6 +324,9 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
           maxAscensionLevel="90"
         />
       </section>
+
+      {/* Character Lore & Voicelines Section */}
+      <CharacterLoreSection lore={characterLore} characterName={character.name} />
 
       <section className="character-bottom-grid">
         <article>

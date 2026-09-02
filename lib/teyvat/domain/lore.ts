@@ -18,6 +18,26 @@ export interface LoreDocumentViewModel {
   provenance?: Record<string, unknown>;
 }
 
+export interface LoreCharacterDetailViewModel {
+  id: string;
+  slug: string;
+  name: string;
+  rarity: number | null;
+  icon: string | null;
+  profileDetail: string | null;
+  stories: Array<{
+    id: string;
+    title: string;
+    content: string;
+  }>;
+  voicelines: Array<{
+    id: string;
+    title: string;
+    content: string;
+  }>;
+  revision: string;
+}
+
 export interface LoreBookVolumeViewModel {
   id: string;
   volumeNumber: number;
@@ -583,6 +603,52 @@ export class TeyvatLoreQueries {
       volumeCount: typeof data.volume_count === "number" ? data.volume_count : volumes.length,
       volumes,
       description: typeof data.description === "string" ? data.description : null,
+      revision: this.projection.revision,
+    };
+  }
+
+  getCharacterLore(idOrSlug: string): LoreCharacterDetailViewModel | null {
+    const avatar = this.projection.entities.find(
+      (e) => e.kind === "avatar" && (e.id === idOrSlug || e.slug === idOrSlug)
+    );
+    if (!avatar) return null;
+
+    const data = avatar.data as Record<string, unknown>;
+    const fetter = (data.fetter ?? {}) as Record<string, unknown>;
+    const detail = extractText(fetter.detail);
+    const docs = this.docsByEntity.get(avatar.id) ?? [];
+
+    const stories = docs
+      .filter((d) => d.id.includes("doc_story") && Boolean(d.content?.trim()))
+      .map((d) => {
+        const metaTitle = (d.metadata as Record<string, unknown> | undefined)?.title;
+        return {
+          id: d.id,
+          title: typeof metaTitle === "string" && metaTitle.trim() ? metaTitle.trim() : "Story Chapter",
+          content: d.content,
+        };
+      });
+
+    const voicelines = docs
+      .filter((d) => d.id.includes("doc_quote") && Boolean(d.content?.trim()))
+      .map((d) => {
+        const metaTitle = (d.metadata as Record<string, unknown> | undefined)?.title;
+        return {
+          id: d.id,
+          title: typeof metaTitle === "string" && metaTitle.trim() ? metaTitle.trim() : "Voiceline",
+          content: d.content,
+        };
+      });
+
+    return {
+      id: avatar.id,
+      slug: avatar.slug,
+      name: avatar.name,
+      rarity: typeof data.rarity === "number" ? data.rarity : 4,
+      icon: imageFromData(data),
+      profileDetail: detail,
+      stories,
+      voicelines,
       revision: this.projection.revision,
     };
   }
