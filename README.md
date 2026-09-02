@@ -145,16 +145,17 @@ Add this to your `mcp_config.json` or equivalent client config:
 }
 ```
 
-### Available tools
+### Available tools (10 Tools)
 
 | Tool | Description |
 | ---- | ----------- |
 | `find_entity` | Search entities by name, partial name, or alias |
 | `get_entity` | Retrieve a single entity with outgoing graph relations |
 | `get_farming_sources` | Farming pathways, material costs & domain schedules |
-| `search_lore` | Full-text search across 1,239 books, 299 artifact histories & weapon legends |
-| `get_lore_book` | Retrieve complete anthology text for an in-game book |
-| `search_knowledge` | Full-text rank search over character dialogue & build guides |
+| `search_lore` | Full-text search across 12,900+ narrative documents (books, stories, voicelines, relics) |
+| `get_lore_book` | Retrieve complete multi-volume novel manuscripts for an in-game book |
+| `get_character_lore` | Retrieve full 5-part character stories, Vision origin, and spoken voiceline transcripts |
+| `search_knowledge` | Full-text rank search over chunked character dialogue & build guides |
 | `get_banner_rerun_pressure` | Ranked banner rerun pressure scores for all characters |
 | `get_character_banner_history` | Historical banner appearances for a character |
 | `get_character_rerun_analysis` | Statistical rerun distribution & pressure analysis |

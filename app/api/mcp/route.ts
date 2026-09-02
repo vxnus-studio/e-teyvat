@@ -11,8 +11,9 @@
  *   find_entity                   – Search/resolve entities by name, kind, or alias
  *   get_entity                    – Retrieve a single entity with outgoing relations
  *   get_farming_sources           – Farming pathways, material costs & domain schedules
- *   search_lore                   – Full-text search across lore documents
+ *   search_lore                   – Full-text search across 12,900+ narrative documents
  *   get_lore_book                 – Retrieve the full anthology text for a book
+ *   get_character_lore            – Retrieve full story chapters & voicelines for a character
  *   search_knowledge              – Full-text search over character dialogue & build guides
  *   get_banner_rerun_pressure     – Banner rerun pressure rankings
  *   get_character_banner_history  – Historical banner appearances for a character
@@ -184,14 +185,14 @@ const handler = createMcpHandler((server) => {
     {
       title: "Search Lore",
       description:
-        "Full-text search across Genshin Impact's in-game narrative archive: 1,239 book volumes, 299 artifact histories, weapon legends, and monster profiles. Returns verbatim source evidence for grounded lore reasoning.",
+        "Full-text search across Genshin Impact's narrative archive (12,960+ documents): 1,151 full book volumes, 942 character story chapters, 8,524 spoken voiceline transcripts, 299 artifact relic histories, 270 weapon legends, 576 bestiary profiles, and culinary records. Supports divine alias resolution (e.g. Morax -> Zhongli, Barbatos -> Venti) and query-aware snippet windowing.",
       inputSchema: z.object({
         q: z
           .string()
           .optional()
-          .describe("Search query (PostgreSQL websearch syntax supported, e.g. Fontaine OR Archon)."),
+          .describe("Search query (supports true-names/aliases like Morax, Rex Lapis, or phrases like Crimson Moon)."),
         category: z
-          .enum(["book", "artifact", "weapon", "monster", "character", "all"])
+          .enum(["book", "story", "quote", "artifact", "weapon", "monster", "character", "food", "namecard", "all"])
           .optional()
           .default("all")
           .describe("Document category filter. Defaults to 'all'."),
@@ -237,12 +238,12 @@ const handler = createMcpHandler((server) => {
     {
       title: "Get Lore Book",
       description:
-        "Retrieve the complete multi-volume anthology text for an in-game book chronicle (e.g. Teyvat Travel Guide, Pale Princess and the Six Pygmies). Use search_lore to discover book slugs.",
+        "Retrieve the complete multi-volume novel text for an in-game book chronicle (e.g. perinheri, teyvat-travel-guide, the-pale-princess-and-the-six-pygmies). Use search_lore to discover book slugs.",
       inputSchema: z.object({
         slug: z
           .string()
           .describe(
-            "URL-friendly book identifier (e.g. teyvat-travel-guide, pale-princess-and-the-six-pygmies).",
+            "URL-friendly book identifier (e.g. perinheri, teyvat-travel-guide, the-pale-princess-and-the-six-pygmies).",
           ),
       }),
     },
@@ -254,6 +255,36 @@ const handler = createMcpHandler((server) => {
         return jsonContent(book);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to retrieve book.";
+        return errorContent(message);
+      }
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // get_character_lore
+  // -------------------------------------------------------------------------
+  server.registerTool(
+    "get_character_lore",
+    {
+      title: "Get Character Lore",
+      description:
+        "Retrieve complete canonical story chapters (Character Details, Story 1-5, Vision, Quests) and all spoken voiceline transcripts for a playable Genshin Impact character.",
+      inputSchema: z.object({
+        character: z
+          .string()
+          .describe(
+            "Character slug or identifier (e.g. zhongli, furina, raiden-shogun, ayaka, nahida, arlecchino).",
+          ),
+      }),
+    },
+    async ({ character }) => {
+      try {
+        const loreQueries = await getTeyvatLoreQueries();
+        const lore = loreQueries.getCharacterLore(character);
+        if (!lore) return errorContent(`Character lore for '${character}' not found.`);
+        return jsonContent(lore);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to retrieve character lore.";
         return errorContent(message);
       }
     },
