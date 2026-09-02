@@ -618,8 +618,14 @@ export class TeyvatLoreQueries {
     const detail = extractText(fetter.detail);
     const docs = this.docsByEntity.get(avatar.id) ?? [];
 
+    const parseIndex = (id: string): number => {
+      const match = id.match(/_(\d+)$/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
     const stories = docs
       .filter((d) => d.id.includes("doc_story") && Boolean(d.content?.trim()))
+      .sort((a, b) => parseIndex(a.id) - parseIndex(b.id))
       .map((d) => {
         const metaTitle = (d.metadata as Record<string, unknown> | undefined)?.title;
         return {
@@ -631,6 +637,7 @@ export class TeyvatLoreQueries {
 
     const voicelines = docs
       .filter((d) => d.id.includes("doc_quote") && Boolean(d.content?.trim()))
+      .sort((a, b) => parseIndex(a.id) - parseIndex(b.id))
       .map((d) => {
         const metaTitle = (d.metadata as Record<string, unknown> | undefined)?.title;
         return {
