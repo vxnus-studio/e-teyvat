@@ -124,18 +124,23 @@ export default function SignatureWeaponMatcherPage() {
   };
 
   const filteredCharacters = characters.filter((char) => {
+    if (!char) return false;
+    const name = String(char.name || "");
+    const slug = String(char.slug || "");
+    const elem = String(char.element || "");
+
     if (query) {
-      const q = query.toLowerCase();
-      if (!char.name.toLowerCase().includes(q) && !char.slug.toLowerCase().includes(q)) {
+      const q = query.toLowerCase().trim();
+      if (!name.toLowerCase().includes(q) && !slug.toLowerCase().includes(q)) {
         return false;
       }
     }
 
-    if (elementFilter !== "all" && char.element.toLowerCase() !== elementFilter.toLowerCase()) {
+    if (elementFilter !== "all" && elem.toLowerCase() !== elementFilter.toLowerCase()) {
       return false;
     }
 
-    const hasSignature = char.signatureWeapon !== null;
+    const hasSignature = char.signatureWeapon !== null && char.signatureWeapon !== undefined;
     if (statusFilter === "matched" && !hasSignature) return false;
     if (statusFilter === "unmatched" && hasSignature) return false;
 
@@ -143,9 +148,12 @@ export default function SignatureWeaponMatcherPage() {
   });
 
   const candidateWeapons = weapons.filter((w) => {
+    if (!w) return false;
     if (weaponQuery) {
-      const q = weaponQuery.toLowerCase();
-      return w.name.toLowerCase().includes(q) || w.slug.toLowerCase().includes(q);
+      const q = weaponQuery.toLowerCase().trim();
+      const name = String(w.name || "");
+      const slug = String(w.slug || "");
+      return name.toLowerCase().includes(q) || slug.toLowerCase().includes(q);
     }
     return true;
   });
@@ -272,18 +280,18 @@ export default function SignatureWeaponMatcherPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-[var(--surface)] border border-[var(--border)] p-1 shrink-0 overflow-hidden relative">
                       {char.image ? (
-                        <img src={char.image} alt={char.name} className="w-full h-full object-contain" />
+                        <img src={char.image} alt={char.name || char.slug} className="w-full h-full object-contain" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center font-bold text-xs text-[var(--accent)]">
-                          {char.name.substring(0, 2).toUpperCase()}
+                          {(char.name || char.slug || "??").substring(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-bold text-white truncate leading-tight">{char.name}</div>
+                      <div className="text-sm font-bold text-white truncate leading-tight">{char.name || char.slug}</div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[var(--surface-raised)] border border-[var(--border)] text-[var(--accent)]">
-                          {char.element}
+                          {String(char.element || "Anemo")}
                         </span>
                         <span className="text-[10px] font-mono text-[var(--text-muted)]">{char.slug}</span>
                       </div>

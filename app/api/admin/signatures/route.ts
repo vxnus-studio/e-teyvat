@@ -1,9 +1,37 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { verifyAdminSession } from "../../../../lib/auth/admin";
-import { CHARACTER_SIGNATURE_WEAPONS } from "../../../../lib/teyvat/signatures";
+import { CHARACTER_SIGNATURE_WEAPONS, getSignatureWeaponSlug } from "../../../../lib/teyvat/signatures";
 import { getDatabase } from "../../../../db/client";
 import { teyvatEntities } from "../../../../db/schema";
+
+function text(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (value && typeof value === "object" && typeof (value as { en?: unknown }).en === "string") {
+    const english = (value as { en: string }).en.trim();
+    return english || null;
+  }
+  if (value && typeof value === "object" && typeof (value as { canonical?: unknown }).canonical === "string") {
+    return (value as { canonical: string }).canonical.trim() || null;
+  }
+  return null;
+}
+
+function getImage(data: Record<string, unknown> | null): string | null {
+  if (!data) return null;
+  const custom = typeof data.custom_image_url === "string" ? data.custom_image_url : (typeof data.customImageUrl === "string" ? data.customImageUrl : null);
+  if (custom) {
+    if (custom.startsWith("http")) return custom;
+    const cdn = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.e-teyvat.vxnus.xyz";
+    return `${cdn}/${custom}`;
+  }
+  const icon = typeof data.icon === "string" ? data.icon : null;
+  if (icon?.startsWith("http")) return icon;
+  if (icon) return `https://enka.network/ui/${icon}.png`;
+  const images = data.images && typeof data.images === "object" && !Array.isArray(data.images) ? (data.images as Record<string, unknown>) : null;
+  const filename = images && Object.values(images).find((value) => typeof value === "string" && value.length > 0);
+  return typeof filename === "string" ? `https://enka.network/ui/${filename}.png` : null;
+}
 
 export async function GET(request: NextRequest) {
   const { authenticated } = await verifyAdminSession(request);
@@ -36,47 +64,49 @@ export async function GET(request: NextRequest) {
       .where(eq(teyvatEntities.kind, "weapon"))
       .orderBy(asc(teyvatEntities.name));
 
-    function getImage(data: Record<string, unknown> | null): string | null {
-      if (!data) return null;
-      const custom = data.custom_image_url || data.customImageUrl;
-      if (typeof custom === "string") {
-        if (custom.startsWith("http")) return custom;
-        const cdn = process.env.NEXT_PUBLIC_CDN_URL || "https://cdn.e-teyvat.vxnus.xyz";
-        return `${cdn}/${custom}`;
-      }
-      const icon = data.icon;
-      if (typeof icon === "string") return `https://enka.network/ui/${icon}.png`;
-      return null;
-    }
-
     const weaponMap = new Map(
-      weapons.map((w) => [
-        w.slug.toLowerCase(),
-        {
-          id: w.id,
-          slug: w.slug,
-          name: w.name,
-          image: getImage(w.data as Record<string, unknown>),
-          rarity: (w.data as Record<string, unknown>)?.rarity || (w.data as Record<string, unknown>)?.rankLevel || 4,
-          type: (w.data as Record<string, unknown>)?.weapon_type || (w.data as Record<string, unknown>)?.weaponType || "Sword",
-        },
-      ])
+      weapons.map((w) => {
+        const data = ((w.data && typeof w.data === "object") ? w.data : {}) as Record<string, unknown>;
+        const typeRaw = text(data.weapon_type) ?? text(data.weaponType) ?? "Sword";
+        const rarityRaw = typeof data.rarity === "number" ? data.rarity : (typeof data.rankLevel === "number" ? data.rankLevel : Number(data.rarity || data.rankLevel) || 4);
+
+        return [
+          (w.slug || "").toLowerCase(),
+          {
+            id: w.id,
+            slug: w.slug,
+            name: w.name || w.slug,
+            image: getImage(data),
+            rarity: rarityRaw,
+            type: typeRaw,
+          },
+        ];
+      })
     );
 
     const characterList = characters.map((c) => {
-      const charSlug = c.slug.toLowerCase();
-      const sigWeaponSlug = CHARACTER_SIGNATURE_WEAPONS[charSlug] || null;
-      const weaponObj = sigWeaponSlug ? weaponMap.get(sigWeaponSlug.toLowerCase()) || null : null;
-      const data = (c.data || {}) as Record<string, unknown>;
+      const charSlug = (c.slug || "").toLowerCase();
+      const data = ((c.data && typeof c.data === "object") ? c.data : {}) as Record<string, unknown>;
+      
+      const sigFromData = typeof data.signature_weapon_slug === "string" 
+        ? data.signature_weapon_slug 
+        : (typeof data.signatureWeaponSlug === "string" ? data.signatureWeaponSlug : null);
+
+      const sigWeaponSlug = sigFromData || getSignatureWeaponSlug(charSlug);
+      const weaponObj = sigWeaponSlug ? (weaponMap.get(sigWeaponSlug.toLowerCase()) || weaponMap.get(sigWeaponSlug.toLowerCase().replace(/_/g, "-"))) || null : null;
+
+      const elementRaw = text(data.element) ?? text(data.elementText) ?? text(data.element_type) ?? "Anemo";
+      const weaponTypeRaw = text(data.weapon_type) ?? text(data.weaponType) ?? "Sword";
+      const rarityRaw = typeof data.rarity === "number" ? data.rarity : (typeof data.rankLevel === "number" ? data.rankLevel : Number(data.rarity || data.rankLevel) || 4);
 
       return {
         id: c.id,
         slug: c.slug,
-        name: c.name,
+        name: c.name || c.slug,
         image: getImage(data),
-        rarity: data.rarity || data.rankLevel || 4,
-        element: data.element || data.elementText || "Anemo",
-        weaponType: data.weapon_type || data.weaponType || "Sword",
+        rarity: rarityRaw,
+        element: elementRaw,
+        weaponType: weaponTypeRaw,
         signatureWeapon: weaponObj
           ? {
               slug: weaponObj.slug,
@@ -91,14 +121,17 @@ export async function GET(request: NextRequest) {
     });
 
     const simpleWeapons = weapons.map((w) => {
-      const data = (w.data || {}) as Record<string, unknown>;
+      const data = ((w.data && typeof w.data === "object") ? w.data : {}) as Record<string, unknown>;
+      const typeRaw = text(data.weapon_type) ?? text(data.weaponType) ?? "Sword";
+      const rarityRaw = typeof data.rarity === "number" ? data.rarity : (typeof data.rankLevel === "number" ? data.rankLevel : Number(data.rarity || data.rankLevel) || 4);
+
       return {
         id: w.id,
         slug: w.slug,
-        name: w.name,
+        name: w.name || w.slug,
         image: getImage(data),
-        rarity: data.rarity || data.rankLevel || 4,
-        type: data.weapon_type || data.weaponType || "Sword",
+        rarity: rarityRaw,
+        type: typeRaw,
       };
     });
 
@@ -131,8 +164,35 @@ export async function POST(request: NextRequest) {
 
     if (cleanWp) {
       CHARACTER_SIGNATURE_WEAPONS[cleanChar] = cleanWp;
+      CHARACTER_SIGNATURE_WEAPONS[cleanChar.replace(/_/g, "-")] = cleanWp;
     } else {
       delete CHARACTER_SIGNATURE_WEAPONS[cleanChar];
+      delete CHARACTER_SIGNATURE_WEAPONS[cleanChar.replace(/_/g, "-")];
+    }
+
+    // Persist to database entity record if present
+    try {
+      const db = getDatabase();
+      const [existingChar] = await db
+        .select()
+        .from(teyvatEntities)
+        .where(eq(teyvatEntities.slug, cleanChar))
+        .limit(1);
+
+      if (existingChar) {
+        const updatedData = {
+          ...(existingChar.data as Record<string, unknown>),
+          signature_weapon_slug: cleanWp,
+          signatureWeaponSlug: cleanWp,
+        };
+
+        await db
+          .update(teyvatEntities)
+          .set({ data: updatedData })
+          .where(eq(teyvatEntities.id, existingChar.id));
+      }
+    } catch (dbErr) {
+      console.warn("Could not persist signature weapon to database directly:", dbErr);
     }
 
     return NextResponse.json({

@@ -66,6 +66,9 @@ export const CHARACTER_SIGNATURE_WEAPONS: Record<string, string> = {
   "odette": "whitelake-frostfeather",
 };
 
-export function getSignatureWeaponSlug(characterSlug: string): string | null {
-  return CHARACTER_SIGNATURE_WEAPONS[characterSlug.toLowerCase()] ?? null;
+export function getSignatureWeaponSlug(characterSlug?: string | null): string | null {
+  if (!characterSlug) return null;
+  const lower = characterSlug.toLowerCase().trim();
+  const kebab = lower.replace(/_/g, "-");
+  return CHARACTER_SIGNATURE_WEAPONS[kebab] ?? CHARACTER_SIGNATURE_WEAPONS[lower] ?? null;
 }
