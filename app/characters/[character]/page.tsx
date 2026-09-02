@@ -1,11 +1,9 @@
 import { getTeyvatBuildQueries, getTeyvatPersistentEntityQueries, getTeyvatLoreQueries } from "@/lib/teyvat/engine";
 import { getTeyvatBannerQueries } from "@/lib/teyvat/persistence/banners";
 import { getSignatureWeaponSlug } from "@/lib/teyvat/signatures";
-import { ArrowRight, CalendarDays, Gem, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, CalendarDays, Gem, Info, RadioTower, Sparkles, Sword, Zap } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CharacterBuildsSection } from "./character-builds";
 import { CharacterLoreSection } from "./character-lore-section";
 import {
   EntityHero,
@@ -229,78 +227,25 @@ export default async function CharacterDetailPage({ params }: { params: Promise<
 
       <FactsGrid facts={facts} />
 
-      {/* Signature Weapon Highlight */}
-      {signatureWeapon && (
-        <section className="mb-8">
-          <header className="banner-section-heading mb-4">
-            <div>
-              <span className="text-[var(--accent)] font-mono text-xs uppercase tracking-widest flex items-center gap-1.5">
-                <Sparkles size={13} /> Equipment Synergy
-              </span>
-              <h2 className="text-xl font-extrabold text-white">Signature Weapon</h2>
-            </div>
-            <p>Featured weapon pairing in Epitome Invocation wishes</p>
-          </header>
-
-          <Link
-            href={`/database/weapons/${signatureWeapon.slug}`}
-            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-gradient-to-r from-[var(--surface-sunken)] to-[var(--surface)] border border-white/10 hover:border-[var(--accent)] rounded-2xl p-5 md:p-6 transition-all hover:scale-[1.01] group shadow-lg"
-          >
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-black/50 relative overflow-hidden flex items-center justify-center p-2 border border-white/10 shrink-0 group-hover:border-[var(--accent)] transition-colors">
-                {signatureWeapon.image ? (
-                  <Image
-                    src={signatureWeapon.image}
-                    alt={signatureWeapon.name}
-                    width={70}
-                    height={70}
-                    className="object-contain drop-shadow-md group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <Sword size={28} className="text-[var(--accent)]" />
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-amber-400 font-bold text-xs tracking-widest">
-                    {"✦".repeat(signatureWeapon.rarity ?? 5)}
-                  </span>
-                  <span className="text-xs uppercase px-2 py-0.5 rounded bg-white/10 text-[var(--text-muted)] font-mono">
-                    {toTitleCase(text(signatureWeapon.canonicalData.type))}
-                  </span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-[var(--accent)] transition-colors">
-                  {signatureWeapon.name}
-                </h3>
-                {signatureWeapon.description && (
-                  <p className="text-xs sm:text-sm text-[var(--text-muted)] line-clamp-2 mt-1 max-w-2xl">
-                    {signatureWeapon.description}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent)] sm:self-center shrink-0">
-              <span>View weapon details</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
-        </section>
-      )}
-
-      {/* Character Build Recommendations Section */}
+      {/* Strategy, Equipment & Builds Empty State */}
       <section className="mb-10">
         <header className="banner-section-heading mb-4">
           <div>
             <span>01 / Build Strategy & Theorycrafting</span>
-            <h2>Build Recommendations</h2>
+            <h2>Build Recommendations & Synergy</h2>
           </div>
           <p>
-            Curated equipment, optimal artifact stats, team synergies, and combat rotations
+            Curated equipment, optimal artifact stats, signature weapon synergy, and team compositions
           </p>
         </header>
 
-        <CharacterBuildsSection builds={builds} characterName={character.name} />
+        <div className="rounded-2xl border border-white/10 bg-[var(--surface-sunken)] p-8 text-center text-[var(--text-muted)]">
+          <Info className="mx-auto mb-3 opacity-60 text-amber-400" size={28} />
+          <p className="font-semibold text-white">Data Synchronization in Progress</p>
+          <p className="text-xs mt-1 text-[var(--text-muted)] max-w-md mx-auto">
+            Currently the data still synced and maintained manually for signature weapons, recommended builds, and team compositions.
+          </p>
+        </div>
       </section>
 
       {/* Progression & Materials Section */}
