@@ -142,15 +142,6 @@ POST /api/e/verify
 
 Handshake verification endpoint for E knowledge provider registration. Validates authorization headers with the publisher key.
 
-## Future Plan: E Knowledge Provider Endpoints
-
-These endpoints are part of the planned `@vxnus/e` remote provider distribution roadmap:
-
-| Endpoint | Method | Status | Description |
-| --- | --- | --- | --- |
-| `/api/e/manifest` | GET | *Future Plan* | Dynamic dataset revision and capability manifest |
-| `/api/e/retrieve` | POST | *Future Plan* | Lexical and hybrid vector cited chunk retrieval |
-
 ## Admin & Mutation Endpoints (Internal)
 
 Protected by session cookies (`proxy.ts` middleware):

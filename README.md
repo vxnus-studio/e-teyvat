@@ -76,8 +76,6 @@ The importer hashes every source record, skips unchanged content, preserves exis
 ### E Knowledge Provider Status
 
 * `POST /api/e/verify` — Provider identity and key verification (**Implemented**)
-* `GET /api/e/manifest` — E manifest advertising dataset revision & capabilities (*Future Plan*)
-* `POST /api/e/retrieve` — E lexical/hybrid cited chunk retrieval (*Future Plan*)
 
 E Hub publisher ownership and authentication are intentionally outside this repository. This provider remains independently operated on Neon.
 
