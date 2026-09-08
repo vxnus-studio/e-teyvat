@@ -78,7 +78,7 @@ export async function ingestTeyvatArtifact(connectionString = process.env.DATABA
           id: "e-teyvat",
           title: "E-Teyvat",
           license: "CC-BY-4.0",
-          uri: "https://github.com/vxnuslabs/e-teyvat",
+          uri: "https://github.com/vxnus-studio/e-teyvat",
           metadata: {
             type: "application",
             licenseDescription: "Creative Commons Attribution 4.0 International",
